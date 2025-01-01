@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: api-gateway-service
+  cloud:
+    config:
+      uri: http://config-service:8888
+    loadbalancer:
+      ribbon:
+        enabled: false
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://discovery-service:8761/eureka/
