@@ -7,9 +7,3 @@ spring:
     loadbalancer:
       ribbon:
         enabled: false
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    serviceUrl:
-      defaultZone: http://discovery-service:8761/eureka/
