@@ -16,3 +16,5 @@
 /api-gateway-service/.dockerignore
 /api-gateway-service/mvnw
 /api-gateway-service/mvnw.cmd
+/dvdtheque-commons/target/*
+/dvdtheque-service/target/*
