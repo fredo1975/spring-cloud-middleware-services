@@ -18,6 +18,11 @@ services:
     container_name: discovery-service
     ports:
       - 8761:8761
+    healthcheck:
+      test: curl --fail http://discovery-service:8761 || exit 1
+      interval: 5s
+      timeout: 2s
+      retries: 3
     networks:
       - spring-cloud-network
     depends_on:
@@ -32,7 +37,7 @@ services:
     networks:
       - spring-cloud-network
     depends_on:
-      config-service:
+      discovery-service:
         condition: service_healthy
 networks:
   spring-cloud-network:
