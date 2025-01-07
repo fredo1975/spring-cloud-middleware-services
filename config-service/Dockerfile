@@ -89,4 +89,4 @@ COPY --from=extract build/target/extracted/application/ ./
 
 EXPOSE 8888
 
-ENTRYPOINT [ "java","-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "java","-Duser.home=/tmp","-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.launch.JarLauncher" ]

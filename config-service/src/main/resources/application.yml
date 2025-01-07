@@ -22,4 +22,4 @@ eureka:
     serviceUrl:
       defaultZone: http://discovery-service:8761/eureka/
   instance:
-    hostname: config-service
+    hostname: localhost
