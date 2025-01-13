@@ -3,7 +3,7 @@ spring:
     name: api-gateway-service
   cloud:
     config:
-      uri: http://config-service:8888
+      uri: http://localhost:8888
     loadbalancer:
       ribbon:
         enabled: false

@@ -17,4 +17,8 @@
 /api-gateway-service/mvnw
 /api-gateway-service/mvnw.cmd
 /dvdtheque-commons/target/*
+/dvdtheque-commons/mvnw
+/dvdtheque-commons/mvnw.cmd
 /dvdtheque-service/target/*
+/dvdtheque-service/mvnw
+/dvdtheque-service/mvnw.cmd
