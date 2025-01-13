@@ -1,59 +1,93 @@
 services:
+  localhost:
+    image: alpine:latest
+    command: sleep infinity
+    ports:
+      - "8080:8080" # Keycloak port
+      - "8083:8083" # dvdtheque-service port
+      - "8761:8761" # discovery-service port
+      - "8762:8762" # api-gateway-service port
+      - "8888:8888" # config-service port
+      - "7443:7443" # Keycloak https port
+      - "8763:8763" # dvdtheque-batch-service port
+      - "8764:8764" # dvdtheque-tmdb-service port
+      - "8765:8765" # dvdtheque-allocine-service port
+      - "61613:61613" # stomp relay port
+      - "61614:61614" # stomp relay port
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_LOG_LEVEL: info
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
+      interval: 15s
+      timeout: 2s
+      retries: 15
+    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443" ]
+
+    volumes:
+      - keycloak:/opt/keycloak/data/
+    restart: always
+    network_mode: "service:localhost"
+
   config-service:
     build:
       context: ./config-service
     container_name: config-service
-    ports:
-      - 8888:8888
+
     healthcheck:
-      test: curl --fail http://config-service:8888/actuator/health || exit 1
+      test: curl --fail http://localhost:8888/actuator/health || exit 1
       interval: 5s
       timeout: 2s
       retries: 3
-    networks:
-      - spring-cloud-network
+    network_mode: "service:localhost"
+
   discovery-service:
     build:
       context: ./discovery-service
     container_name: discovery-service
-    ports:
-      - 8761:8761
+
     healthcheck:
-      test: curl --fail http://discovery-service:8761 || exit 1
+      test: curl --fail http://localhost:8761 || exit 1
       interval: 5s
       timeout: 2s
       retries: 3
-    networks:
-      - spring-cloud-network
+    network_mode: "service:localhost"
     depends_on:
       config-service:
         condition: service_healthy
+
   api-gateway-service:
     build:
       context: ./api-gateway-service
     container_name: api-gateway-service
-    ports:
-      - 8762:8762
-    networks:
-      - spring-cloud-network
+
+    network_mode: "service:localhost"
     depends_on:
       discovery-service:
         condition: service_healthy
+
   dvdtheque-commons:
     build:
       context: ./dvdtheque-commons
     container_name: dvdtheque-commons
+
   dvdtheque-service:
     build:
       context: ./dvdtheque-service
     container_name: dvdtheque-service
-    ports:
-      - 8083:8083
-    networks:
-      - spring-cloud-network
+
+    network_mode: "service:localhost"
     depends_on:
       discovery-service:
         condition: service_healthy
-networks:
-  spring-cloud-network:
-    driver: bridge
+
+volumes:
+  keycloak:
