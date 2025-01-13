@@ -14,7 +14,6 @@ services:
       - "8765:8765" # dvdtheque-allocine-service port
       - "61613:61613" # stomp relay port
       - "61614:61614" # stomp relay port
-
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
     environment:
@@ -31,29 +30,24 @@ services:
       timeout: 2s
       retries: 15
     command: [ "start-dev", "--http-port", "8080", "--https-port", "7443" ]
-
     volumes:
       - keycloak:/opt/keycloak/data/
     restart: always
     network_mode: "service:localhost"
-
   config-service:
     build:
       context: ./config-service
     container_name: config-service
-
     healthcheck:
       test: curl --fail http://localhost:8888/actuator/health || exit 1
       interval: 5s
       timeout: 2s
       retries: 3
     network_mode: "service:localhost"
-
   discovery-service:
     build:
       context: ./discovery-service
     container_name: discovery-service
-
     healthcheck:
       test: curl --fail http://localhost:8761 || exit 1
       interval: 5s
@@ -63,31 +57,25 @@ services:
     depends_on:
       config-service:
         condition: service_healthy
-
   api-gateway-service:
     build:
       context: ./api-gateway-service
     container_name: api-gateway-service
-
     network_mode: "service:localhost"
     depends_on:
       discovery-service:
         condition: service_healthy
-
   dvdtheque-commons:
     build:
       context: ./dvdtheque-commons
     container_name: dvdtheque-commons
-
   dvdtheque-service:
     build:
       context: ./dvdtheque-service
     container_name: dvdtheque-service
-
     network_mode: "service:localhost"
     depends_on:
       discovery-service:
         condition: service_healthy
-
 volumes:
   keycloak:
