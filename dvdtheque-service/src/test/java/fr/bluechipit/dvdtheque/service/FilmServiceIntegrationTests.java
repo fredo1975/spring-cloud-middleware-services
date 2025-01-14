@@ -21,6 +21,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.format.datetime.DateFormatter;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -41,10 +44,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {HazelcastConfigurationTest.class,
 		TestWebSocketConfig.class, DvdthequeRestApplication.class})
 @ActiveProfiles("test")
-public class FilmServiceIntegrationTests extends AbstractTransactionalJUnit4SpringContextTests {
+@Transactional
+public class FilmServiceIntegrationTests {
 	protected Logger logger = LoggerFactory.getLogger(FilmServiceIntegrationTests.class);
 
 	@Autowired

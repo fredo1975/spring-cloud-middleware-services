@@ -16,26 +16,35 @@ import org.apache.commons.collections.CollectionUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
+@ExtendWith(SpringExtension.class)
 @ActiveProfiles("test")
 @SpringBootTest(classes = {HazelcastConfigurationTest.class,
 		TestWebSocketConfig.class, DvdthequeRestApplication.class})
-public class PersonneServiceIntegrationTests extends AbstractTransactionalJUnit4SpringContextTests {
+@Transactional
+public class PersonneServiceIntegrationTests {
 	protected Logger logger = LoggerFactory.getLogger(PersonneServiceIntegrationTests.class);
 	@Autowired
 	protected IPersonneService personneService;
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 	@Autowired
 	protected IFilmService filmService;
 	@MockBean
