@@ -15,7 +15,7 @@ services:
       - "61613:61613" # stomp relay port
       - "61614:61614" # stomp relay port
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0.7
+    image: quay.io/keycloak/keycloak:20.0.3
     environment:
       KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8080
@@ -23,15 +23,15 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
-      KC_LOG_LEVEL: info
+      KC_LOG_LEVEL: debug
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
       interval: 15s
       timeout: 2s
       retries: 15
-    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443" ]
+    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443","--http-relative-path=/auth",]
     volumes:
-      - keycloak:/opt/keycloak/data/
+      - keycloak:/opt/keycloak-20.0.3/data/
     restart: always
     network_mode: "service:localhost"
   config-service:
@@ -77,5 +77,22 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
+  tmdb-service:
+    build:
+        context: ./dvdtheque-tmdb-service
+    container_name: dvdtheque-tmdb-service
+    network_mode: "service:localhost"
+    depends_on:
+        discovery-service:
+            condition: service_healthy
+  allocine-service:
+    build:
+        context: ./dvdtheque-allocine-service
+    container_name: dvdtheque-allocine-service
+    network_mode: "service:localhost"
+    depends_on:
+        discovery-service:
+            condition: service_healthy
+
 volumes:
   keycloak:
