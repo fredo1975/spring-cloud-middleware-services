@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 @Service
 @CacheConfig(cacheNames = {"ficheFilms","ficheFilmsByTitle"})
-@ComponentScan("fr.fredos.dvdtheque.common.specifications.filter")
+@ComponentScan({"fr.fredos.dvdtheque.common.specifications.filter","specifications.filter"})
 public class AllocineServiceImpl implements AllocineService {
 	protected Logger logger = LoggerFactory.getLogger(AllocineServiceImpl.class);
 	private final FicheFilmRepository ficheFilmRepository;

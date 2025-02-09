@@ -52,7 +52,7 @@ public class AllocineControllerTest {
 	@Autowired
     private ModelMapper modelMapper;
 	@Test
-	@WithMockUser(roles = "user")
+	@WithMockUser(roles = "batch")
 	public void getAllocineFicheFilmById() throws Exception {
 		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt())).thenReturn(Optional.of(new FicheFilm()));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byId")
@@ -63,7 +63,7 @@ public class AllocineControllerTest {
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 	}
 	@Test
-	@WithMockUser(roles = "user")
+	@WithMockUser(roles = "batch")
 	public void getAllocineFicheFilmByTitle() throws Exception {
 		Mockito.when(allocineService.retrieveFicheFilmByTitle(org.mockito.Mockito.anyString())).thenReturn(List.of(new FicheFilm()));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byTitle")
@@ -73,7 +73,7 @@ public class AllocineControllerTest {
 		.andExpect(status().isOk())
 		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 	}
-	
+
 	@Test
 	@WithMockUser(roles = "user")
 	public void paginatedSarch() throws Exception {

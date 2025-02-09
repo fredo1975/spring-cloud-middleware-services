@@ -17,7 +17,7 @@ import java.util.List;
 
 @Configuration
 @ComponentScan
-@Profile({ "prod1","prod2","dev1","dev2","local1","local2" })
+@Profile({ "prod1","prod2","dev1","dev2","local1","local2" ,"docker"})
 public class HazelcastConfiguration {
 	@Value("${hazelcast.cluster-name}")
 	private String clusterName;

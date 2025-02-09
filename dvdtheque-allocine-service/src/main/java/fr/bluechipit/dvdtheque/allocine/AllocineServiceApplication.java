@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableScheduling
-@ComponentScan(basePackages = {"specifications.filter"})
+//@ComponentScan(basePackages = {"specifications.filter","fr.bluechipit.dvdtheque.allocine.controller"})
 public class AllocineServiceApplication {
 	public static void main(String[] args){
         SpringApplication.run(AllocineServiceApplication.class,args);
