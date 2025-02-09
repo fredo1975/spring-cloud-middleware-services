@@ -1,0 +1,69 @@
+package fr.bluechipit.dvdtheque.allocine.service;
+
+import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
+import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
+import fr.bluechipit.dvdtheque.allocine.repository.FicheFilmRepository;
+import org.apache.commons.collections.CollectionUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.List;
+import java.util.Optional;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+public class AllocineServiceTest {
+	@Autowired
+	private FicheFilmRepository ficheFilmRepository;
+
+	@Test
+	public void testRemoveFilm() {
+		FicheFilm ficheFilmSaved = saveFilm();
+		final String title = ficheFilmSaved.getTitle();
+		ficheFilmRepository.delete(ficheFilmSaved);
+		List<FicheFilm> ficheFilmRetrieved = ficheFilmRepository.findByTitle(title);
+		assertTrue(CollectionUtils.isEmpty(ficheFilmRetrieved));
+	}
+	private FicheFilm saveFilm() {
+		FicheFilm ficheFilm = new FicheFilm("title",1,"url",1);
+		CritiquePresse cp = new CritiquePresse();
+		cp.setAuthor("author1");
+		cp.setBody("body1");
+		cp.setNewsSource("source1");
+		cp.setRating(4d);
+		cp.setFicheFilm(ficheFilm);
+		ficheFilm.addCritiquePresse(cp);
+		FicheFilm ficheFilmSaved = ficheFilmRepository.save(ficheFilm);
+		assertNotNull(ficheFilmSaved);
+		return ficheFilmSaved;
+	}
+	@Test
+	public void testFindByTitle() {
+		FicheFilm ficheFilmSaved = saveFilm();
+		assertNotNull(ficheFilmSaved);
+		List<FicheFilm> ficheFilmRetrieved = ficheFilmRepository.findByTitle("title");
+		assertNotNull(ficheFilmRetrieved);
+		assertNotNull(ficheFilmRetrieved.get(0));
+		assertNotNull(ficheFilmRetrieved.get(0).getCreationDate());
+		assertNotNull(ficheFilmRetrieved.get(0).getCritiquePresse());
+		assertTrue(ficheFilmRetrieved.get(0).getCritiquePresse().iterator().next().getNewsSource().equals("source1"));
+		System.out.println(ficheFilmRetrieved);
+	}
+	@Test
+	public void testFindById() {
+		FicheFilm ficheFilmSaved = saveFilm();
+		assertNotNull(ficheFilmSaved);
+		Optional<FicheFilm> ficheFilmRetrieved = ficheFilmRepository.findById(ficheFilmSaved.getId());
+		assertThat(ficheFilmRetrieved).isPresent();
+		assertThat(ficheFilmRetrieved.get().getCreationDate()).isNotNull();
+		assertThat(ficheFilmRetrieved.get().getCritiquePresse()).isNotNull();
+		assertThat(ficheFilmRetrieved.get().getCritiquePresse().iterator().next().getNewsSource()).isEqualTo("source1");
+		System.out.println(ficheFilmRetrieved);
+	}
+}

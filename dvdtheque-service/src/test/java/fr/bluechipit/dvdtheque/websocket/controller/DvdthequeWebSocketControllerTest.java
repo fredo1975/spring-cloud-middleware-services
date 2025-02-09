@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {HazelcastConfigurationTest.class,
-		TestWebSocketConfig.class, DvdthequeRestApplication.class},webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
+		TestWebSocketConfig.class, DvdthequeRestApplication.class},webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
 		properties = { "eureka.client.enabled:false", "spring.cloud.config.enabled:false" })
 @ActiveProfiles("test")
 public class DvdthequeWebSocketControllerTest {

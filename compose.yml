@@ -5,13 +5,13 @@ services:
     ports:
       - "8080:8080" # Keycloak port
       - "8083:8083" # dvdtheque-service port
+      - "5005:5005" # dvdtheque-service debug port
+      - "8087:8087" # dvdtheque-allocine-service port
+      - "8089:8089" # dvdtheque-batch-service port
       - "8761:8761" # discovery-service port
       - "8762:8762" # api-gateway-service port
       - "8888:8888" # config-service port
       - "7443:7443" # Keycloak https port
-      - "8763:8763" # dvdtheque-batch-service port
-      - "8764:8764" # dvdtheque-tmdb-service port
-      - "8765:8765" # dvdtheque-allocine-service port
       - "61613:61613" # stomp relay port
       - "61614:61614" # stomp relay port
   keycloak:
