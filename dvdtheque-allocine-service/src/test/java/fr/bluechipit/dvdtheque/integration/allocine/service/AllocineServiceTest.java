@@ -1,11 +1,12 @@
-package fr.fredos.dvdtheque.integration.allocine;
+package fr.bluechipit.dvdtheque.integration.allocine.service;
 
 import fr.bluechipit.dvdtheque.allocine.AllocineServiceApplication;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
-import fr.fredos.dvdtheque.allocine.integration.config.HazelcastConfiguration;
-import org.junit.jupiter.api.Test;
+import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
@@ -22,6 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
+@RunWith(SpringRunner.class)
 @SpringBootTest(classes = {HazelcastConfiguration.class, AllocineServiceApplication.class})
 @ActiveProfiles("test")
 public class AllocineServiceTest {

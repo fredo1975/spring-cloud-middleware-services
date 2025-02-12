@@ -4,19 +4,20 @@ import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.repository.FicheFilmRepository;
 import org.apache.commons.collections.CollectionUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(SpringExtension.class)
+@RunWith(SpringRunner.class)
 @DataJpaTest
 public class AllocineServiceTest {
 	@Autowired
@@ -40,25 +41,25 @@ public class AllocineServiceTest {
 		cp.setFicheFilm(ficheFilm);
 		ficheFilm.addCritiquePresse(cp);
 		FicheFilm ficheFilmSaved = ficheFilmRepository.save(ficheFilm);
-		assertNotNull(ficheFilmSaved);
+		Assertions.assertNotNull(ficheFilmSaved);
 		return ficheFilmSaved;
 	}
 	@Test
 	public void testFindByTitle() {
 		FicheFilm ficheFilmSaved = saveFilm();
-		assertNotNull(ficheFilmSaved);
+		Assertions.assertNotNull(ficheFilmSaved);
 		List<FicheFilm> ficheFilmRetrieved = ficheFilmRepository.findByTitle("title");
-		assertNotNull(ficheFilmRetrieved);
-		assertNotNull(ficheFilmRetrieved.get(0));
-		assertNotNull(ficheFilmRetrieved.get(0).getCreationDate());
-		assertNotNull(ficheFilmRetrieved.get(0).getCritiquePresse());
-		assertTrue(ficheFilmRetrieved.get(0).getCritiquePresse().iterator().next().getNewsSource().equals("source1"));
+		Assertions.assertNotNull(ficheFilmRetrieved);
+		Assertions.assertNotNull(ficheFilmRetrieved.get(0));
+		Assertions.assertNotNull(ficheFilmRetrieved.get(0).getCreationDate());
+		Assertions.assertNotNull(ficheFilmRetrieved.get(0).getCritiquePresse());
+        assertEquals("source1", ficheFilmRetrieved.get(0).getCritiquePresse().iterator().next().getNewsSource());
 		System.out.println(ficheFilmRetrieved);
 	}
 	@Test
 	public void testFindById() {
 		FicheFilm ficheFilmSaved = saveFilm();
-		assertNotNull(ficheFilmSaved);
+		Assertions.assertNotNull(ficheFilmSaved);
 		Optional<FicheFilm> ficheFilmRetrieved = ficheFilmRepository.findById(ficheFilmSaved.getId());
 		assertThat(ficheFilmRetrieved).isPresent();
 		assertThat(ficheFilmRetrieved.get().getCreationDate()).isNotNull();

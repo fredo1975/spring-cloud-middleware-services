@@ -4,7 +4,7 @@ package fr.bluechipit.dvdtheque.allocine.controller;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
-import fr.bluechipit.dvdtheque.allocine.integration.config.HazelcastConfiguration;
+import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

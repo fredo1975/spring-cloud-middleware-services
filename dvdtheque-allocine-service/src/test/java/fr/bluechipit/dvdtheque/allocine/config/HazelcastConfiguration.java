@@ -1,4 +1,4 @@
-package fr.bluechipit.dvdtheque.allocine.integration.config;
+package fr.bluechipit.dvdtheque.allocine.config;
 
 import com.hazelcast.config.AutoDetectionConfig;
 import com.hazelcast.config.Config;
