@@ -7,7 +7,11 @@ services:
       - "8083:8083" # dvdtheque-service port
       - "5005:5005" # dvdtheque-service debug port
       - "8087:8087" # dvdtheque-allocine-service port
+      - "5007:5007" # dvdtheque-allocine-service debug port
       - "8089:8089" # dvdtheque-batch-service port
+      - "5009:5009" # dvdtheque-batch-service debug port
+      - "8086:8086" # dvdtheque-tmdb-service port
+      - "5006:5006" # dvdtheque-tmdb-service debug port
       - "8761:8761" # discovery-service port
       - "8762:8762" # api-gateway-service port
       - "8888:8888" # config-service port
@@ -93,6 +97,13 @@ services:
     depends_on:
         discovery-service:
             condition: service_healthy
-
+  batch-service:
+    build:
+      context: ./dvdtheque-batch-service
+    container_name: dvdtheque-batch-service
+    network_mode: "service:localhost"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
 volumes:
   keycloak:

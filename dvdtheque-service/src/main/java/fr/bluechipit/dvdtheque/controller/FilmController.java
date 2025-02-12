@@ -3,7 +3,6 @@ package fr.bluechipit.dvdtheque.controller;
 import static java.lang.String.format;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,12 +40,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -725,31 +719,25 @@ public class FilmController {
 
 	@RolesAllowed("user")
 	@PostMapping("/films/import")
-	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) {
-		File resFile = null;
+	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) throws IOException {
+		/*File resFile = null;
 		try {
 			resFile = this.multipartFileUtil.createFileToImport(file);
 		} catch (Exception e) {
 			logger.error(e.getMessage());
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-		HttpEntity<?> request = new HttpEntity<>(resFile.getAbsolutePath());
+		}*/
+		byte[] csvBytes = file.getBytes();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		headers.setContentDisposition(ContentDisposition.builder("attachment").filename(file.getOriginalFilename()).build());
+
+		HttpEntity<?> request = new HttpEntity<>(csvBytes, headers);
 		ResponseEntity<String> resultsResponse = restTemplate.exchange(
 				environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_URL)
 						+ environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_IMPORT),
 				HttpMethod.POST, request, String.class);
 		logger.info(resultsResponse.getBody());
-		/*
-		 * try { JobParametersBuilder jobParametersBuilder = new JobParametersBuilder();
-		 * jobParametersBuilder.addString("INPUT_FILE_PATH", resFile.getAbsolutePath());
-		 * jobParametersBuilder.addLong("TIMESTAMP",new Date().getTime());
-		 * jobLauncher.run(importFilmsJob, jobParametersBuilder.toJobParameters()); }
-		 * catch (JobExecutionAlreadyRunningException |
-		 * JobInstanceAlreadyCompleteException | JobParametersInvalidException |
-		 * JobRestartException e) {
-		 * logger.error("an error occured while importFilmList",e); return
-		 * ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); }
-		 */
 		return ResponseEntity.noContent().build();
 	}
 

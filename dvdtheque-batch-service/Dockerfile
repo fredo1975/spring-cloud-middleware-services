@@ -87,6 +87,6 @@ COPY --from=extract build/target/extracted/spring-boot-loader/ ./
 COPY --from=extract build/target/extracted/snapshot-dependencies/ ./
 COPY --from=extract build/target/extracted/application/ ./
 
-EXPOSE 8083
+EXPOSE 8089
 
-ENTRYPOINT [ "java", "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-agentlib:jdwp=transport=dt_socket,address=*:5005,server=y,suspend=n","org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "java",  "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-agentlib:jdwp=transport=dt_socket,address=*:5009,server=y,suspend=n", "org.springframework.boot.loader.launch.JarLauncher"  ]

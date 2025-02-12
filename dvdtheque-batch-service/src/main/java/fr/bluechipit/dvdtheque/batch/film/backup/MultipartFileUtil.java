@@ -1,9 +1,4 @@
-package fr.bluechipit.dvdtheque.file.util;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Calendar;
+package fr.bluechipit.dvdtheque.batch.film.backup;
 
 import exceptions.DvdthequeCommonsException;
 import org.apache.commons.io.FilenameUtils;
@@ -16,14 +11,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Calendar;
+
 @Component
 public class MultipartFileUtil {
 	protected Logger logger = LoggerFactory.getLogger(MultipartFileUtil.class);
 	@Autowired
-    private ExcelFilmHandler excelFilmHandler;
+	private ExcelFilmHandler excelFilmHandler;
 	/**
-	 * 
+	 *
 	 * @param file
 	 * @return
 	 * @throws Exception
@@ -45,17 +45,17 @@ public class MultipartFileUtil {
 		}
 		if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"csv")) {
 			resFile = convFile;
-		} else if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xls") 
+		} else if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xls")
 				|| StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xlsx")) {
 			Workbook workBook;
 			try {
 				workBook = this.excelFilmHandler.createSheetFromFile(convFile);
 				String csv = this.excelFilmHandler.createCsvFromExcel(workBook);
 				FileOutputStream outputStream = new FileOutputStream(tempFile);
-			    byte[] strToBytes = csv.getBytes();
-			    outputStream.write(strToBytes);
-			    outputStream.close();
-			    resFile = tempFile;
+				byte[] strToBytes = csv.getBytes();
+				outputStream.write(strToBytes);
+				outputStream.close();
+				resFile = tempFile;
 			} catch (EncryptedDocumentException | IOException e) {
 				logger.error(e.getMessage());
 				throw e;
