@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -33,6 +34,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,19 +43,19 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 
 @ActiveProfiles("test-export")
 @SpringBootTest
-@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class,
-    StepScopeTestExecutionListener.class})
-	@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@WithMockUser(roles = "user")
 public class BatchExportFilmsConfigurationTest {
 	protected Logger logger = LoggerFactory.getLogger(BatchExportFilmsConfigurationTest.class);
 	@Autowired
@@ -65,6 +67,9 @@ public class BatchExportFilmsConfigurationTest {
 	
 	@Autowired
 	private JobRepository 			jobRepository;
+
+	@MockBean
+	AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientServiceAndManager;
 	
 	private Film buildfilm() {
 		Film film = new Film();
@@ -99,6 +104,23 @@ public class BatchExportFilmsConfigurationTest {
 		List<Film> l = new ArrayList<>();
 		l.add(buildfilm());
         ResponseEntity<List<Film>> filmList = new ResponseEntity<List<Film>>(l,HttpStatus.ACCEPTED);
+
+		OAuth2AuthorizedClient authorizedClient = new OAuth2AuthorizedClient(
+				ClientRegistration
+						.withRegistrationId("myRemoteService")
+						.clientId("dvdtheque")
+						.clientSecret("sd")
+						.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+						.tokenUri("sd")
+						.build(),
+				"some-keycloak",
+				new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+						"c29tZS10b2tlbg==",
+						Instant.now().minus(Duration.ofMinutes(1)),
+						Instant.now().plus(Duration.ofMinutes(4))));
+
+		Mockito.when(authorizedClientServiceAndManager.authorize(any())).thenReturn(authorizedClient);
+
         Mockito.when(restTemplate.exchange(Mockito.any(String.class),
         		Mockito.<HttpMethod> any(),
                 Mockito.<HttpEntity<?>> any(),
@@ -125,6 +147,7 @@ public class BatchExportFilmsConfigurationTest {
 		return Mockito.mock(Topic.class);
 	}
 
+	/*
 	@Bean
 	ClientRegistration dvdthequeClientRegistration(
 			@Value("${spring.security.oauth2.client.provider.keycloak.token-uri}") String token_uri,
@@ -148,7 +171,7 @@ public class BatchExportFilmsConfigurationTest {
 		return new AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository,
 				authorizedClientService);
 	}
-	
+
 	@Bean(name = "dataSource")
 	public DataSource dataSource() {
 	    EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
@@ -157,4 +180,6 @@ public class BatchExportFilmsConfigurationTest {
 	      .addScript("classpath:org/springframework/batch/core/schema-hsqldb.sql")
 	      .build();
 	}
+	 */
+
 }

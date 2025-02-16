@@ -104,7 +104,7 @@ public class BatchImportFilmsConfiguration{
 				watch.start();
 				jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.CLEAN_DB_INIT, null,0l,JmsStatus.CLEAN_DB_INIT.statusValue()));
 				OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId("keycloak")
-						.principal("fr/bluechipit/dvdtheque/batch")
+						.principal("batch")
 						.build();
 				OAuth2AuthorizedClient authorizedClient = this.authorizedClientServiceAndManager.authorize(authorizeRequest);
 				OAuth2AccessToken accessToken = Objects.requireNonNull(authorizedClient).getAccessToken();

@@ -39,6 +39,7 @@ public class BatchTestConfiguration {
 		return Mockito.mock(Topic.class);
 	}
 
+/*
 	@Bean
 	ClientRegistration dvdthequeClientRegistration(
 			@Value("${spring.security.oauth2.client.provider.keycloak.token-uri}") String token_uri,
@@ -61,5 +62,5 @@ public class BatchTestConfiguration {
 				clientRegistrationRepository, authorizedClients);
 		return new AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository,
 				authorizedClientService);
-	}
+	}*/
 }

@@ -31,12 +31,12 @@ spring:
       resourceserver:
         jwt:
           #jwk-set-uri: http://localhost:8080/auth/realms/dvdtheque-realm/protocol/openid-connect/certs
-          issuer-uri: http://localhost:8080/auth/realms/dvdtheque
+          issuer-uri: http://fake/auth/realms/dvdtheque
           user-name-attribute: preferred_username
       client:
         provider:
           keycloak:
-            token-uri: http://localhost:8080/auth/realms/dvdtheque/protocol/openid-connect/token
+            token-uri: http://fake/auth/realms/dvdtheque/protocol/openid-connect/token
         registration:
           keycloak:
             client-id: dvdtheque-api

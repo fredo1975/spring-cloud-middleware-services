@@ -4,6 +4,7 @@ import enums.DvdFormat;
 import model.Dvd;
 import model.DvdBuilder;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
@@ -13,10 +14,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ActiveProfiles;
@@ -24,63 +32,65 @@ import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Calendar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 
 @ActiveProfiles("test-import")
 @SpringBootTest
-@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class,
-    StepScopeTestExecutionListener.class})
-	@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@WithMockUser(roles = "user")
 public class BatchImportFilmsConfigurationTest{
 	//protected Logger logger = LoggerFactory.getLogger(BatchImportFilmsConfigurationTest.class);
 	@Autowired
 	@Qualifier(value = "importFilmsJob")
 	private Job 			job;
+
 	@Autowired
 	private RestTemplate 	restTemplate;
 	
 	@Autowired
 	private JobRepository 	jobRepository;
+
 	@Value("${csv.dvd.file.name.import}")
     private String path;
+
     private String INPUT_FILE_PATH="INPUT_FILE_PATH";
-	public static final String TITRE_FILM_2001 = "2001 : L'ODYSSÉE DE L'ESPACE";
-	public static final String TITRE_AD_ASTRA = "AD ASTRA";
-	public static final String TITRE_FILM_2046 = "2046";
-	public static final String TITRE_FILM_40_ans = "40 ANS : MODE D'EMPLOI";
-	//public static final String TITRE_FILM_40_ans = "THIS IS 40";
-	public static final String REAL_NOM = "STANLEY KUBRICK";
-	public static final String REAL_NOM2 = "WONG KAR-WAI";
-	public static final String REAL_NOM3 = "JUDD APATOW";
-	public static final String ACT1_NOM = "WILLIAM SYLVESTER";
-	public static final String ACT2_NOM = "LEONARD ROSSITER";
-	public static final String ACT3_NOM = "ROBERT BEATTY";
-	public static final String ACT4_NOM = "FRANK MILLER";
-	public static final String REAL_NOM_AD_ASTRA = "JAMES GRAY";
-	public static final String ACT1_AD_ASTRA = "GREG BRYK";
-	public static final String ACT2_AD_ASTRA = "LOREN DEAN";
-	public static final String ACT3_AD_ASTRA = "KIMBERLY ELISE";
-	public static final String ACT4_AD_ASTRA = "LISAGAY HAMILTON";
-	
+
+	@MockBean
+	AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientServiceAndManager;
+
 	@Test
 	public void launchImportFilmsJob() throws Exception {
-		//logger.info("******** path="+path);
 		Dvd dvd = new Dvd();
 		dvd.setFormat(DvdFormat.DVD);
 		dvd.setZone(2);
 		dvd.setAnnee(2022);
 		dvd.setRipped(false);
-		
-		ResponseEntity<Dvd> dvdRes = new ResponseEntity<Dvd>(dvd,HttpStatus.ACCEPTED);
-        Mockito.when(restTemplate.exchange(Mockito.any(String.class), 
-        		Mockito.<HttpMethod> any(),
-                Mockito.<HttpEntity<DvdBuilder>> any(),
-                Mockito.<Class<Dvd>> any()))
-        .thenReturn(dvdRes);
-        
+
+		OAuth2AuthorizedClient authorizedClient = new OAuth2AuthorizedClient(
+				ClientRegistration
+						.withRegistrationId("myRemoteService")
+						.clientId("dvdtheque")
+						.clientSecret("sd")
+						.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+						.tokenUri("sd")
+						.build(),
+				"some-keycloak",
+				new OAuth2AccessToken(OAuth2AccessToken.TokenType.BEARER,
+						"c29tZS10b2tlbg==",
+						Instant.now().minus(Duration.ofMinutes(1)),
+						Instant.now().plus(Duration.ofMinutes(4))));
+
+		Mockito.when(authorizedClientServiceAndManager.authorize(any())).thenReturn(authorizedClient);
+
+		ResponseEntity<Dvd> dvdRes = new ResponseEntity<>(dvd, HttpStatus.ACCEPTED);
+		Mockito.when(restTemplate.exchange(any(String.class), Mockito.<HttpMethod>any(), Mockito.<HttpEntity<DvdBuilder>>any(), Mockito.<Class<Dvd>>any()))
+				.thenReturn(dvdRes);
+
 		Calendar c = Calendar.getInstance();
 		JobParametersBuilder builder = new JobParametersBuilder();
 		builder.addDate("TIMESTAMP", c.getTime());
