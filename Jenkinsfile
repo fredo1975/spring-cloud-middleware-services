@@ -15,7 +15,7 @@ pipeline {
                 returnStdout: true
         )
 
-        def GIT_BRANCH_NAME = "${env}"
+        def GIT_BRANCH_NAME = "${env_deploy}"
         def VERSION = getArtifactVersion(GIT_BRANCH_NAME,GIT_COMMIT_SHORT)
         def ARTIFACT = "dvdtheque-rest-services-${VERSION}.jar"
         def TMDB_ARTIFACT = "dvdtheque-tmdb-service-${VERSION}.jar"
@@ -50,7 +50,7 @@ pipeline {
 		}
 		stage('Build for specific project') {
 		    when {
-                expression { params.project == 'dvdtheque-rest' }
+                expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}
             }
 		    steps {
                 echo "${project} Building dvdtheque-service"
@@ -62,6 +62,7 @@ pipeline {
                 }
                 dir("dvdtheque-service") {
                     sh """
+                        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
                         mvn -B clean compile
                     """
 
