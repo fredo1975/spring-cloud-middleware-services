@@ -49,15 +49,13 @@ pipeline {
 			}
 		}
 		stage('Build for specific project') {
+		    when {
+                expression { params.project == 'dvdtheque-rest' }
+                echo 'Building dvdtheque-service'
+            }
 		    steps {
-                when {
-                    expression { params.project == 'dvdtheque-rest' }
-                    withMaven {
-                    		 			sh """
-                    			 			echo 'Building dvdtheque-service'
-                    			      	"""
-                    		    	}
-                }
+                echo "${project}"
+
             }
 		}
         stage('Build for development') {
