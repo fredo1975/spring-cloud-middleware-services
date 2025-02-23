@@ -17,15 +17,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/dvdtheque-allocine-service")
 public class AllocineController {
-	private final AllocineService allocineService;
+	@Autowired
+	private AllocineService allocineService;
 
 	@Autowired
     private ModelMapper modelMapper;
 
-	@Autowired
-    public AllocineController(AllocineService allocineService) {
-        this.allocineService = allocineService;
-    }
 
 	@RolesAllowed({"batch"})
 	@GetMapping("/byTitle")
@@ -51,16 +48,12 @@ public class AllocineController {
 	@RolesAllowed({"batch"})
 	@GetMapping("/byId")
 	public ResponseEntity<FicheFilmDto> getAllocineFicheFilmById(@RequestParam(name = "id", required = true) Integer id) {
-		Optional<FicheFilm> ficheFilm = allocineService.retrieveFicheFilm(id.intValue());
-		if(ficheFilm.isPresent()) {
-			return ResponseEntity.ok(convertToDto(ficheFilm.get()));
-		}
-		return ResponseEntity.notFound().build();
-	}
+		Optional<FicheFilm> ficheFilm = allocineService.retrieveFicheFilm(id);
+        return ficheFilm.map(film -> ResponseEntity.ok(convertToDto(film))).orElseGet(() -> ResponseEntity.notFound().build());
+    }
 	private FicheFilmDto convertToDto(FicheFilm ficheFilm) {
 		if(ficheFilm != null) {
-			FicheFilmDto ficheFilmDto = modelMapper.map(ficheFilm, FicheFilmDto.class);
-		    return ficheFilmDto;
+            return modelMapper.map(ficheFilm, FicheFilmDto.class);
 		}
 		return null;
 	}
