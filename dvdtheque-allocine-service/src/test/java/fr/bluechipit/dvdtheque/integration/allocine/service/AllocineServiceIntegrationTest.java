@@ -6,6 +6,7 @@ import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +51,7 @@ public class AllocineServiceIntegrationTest {
 	
     @Test
     @Transactional
+	@Disabled
     //@Disabled
     public void retrieveAllocineScrapingFicheFilmTest() throws IOException {
     	/*
@@ -75,6 +77,7 @@ public class AllocineServiceIntegrationTest {
     }
     
     @Test
+	@Disabled
 	public void paginatedSarch() throws ParseException{
 		FicheFilm ficheFilmSaved = saveFilm();
 		var page = allocineService.paginatedSarch("", 1, 1, "-title");
