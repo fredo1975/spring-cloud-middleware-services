@@ -52,7 +52,7 @@ pipeline {
 		    steps {
                 echo "${project}"
                 when {
-                    expression { params.PROJECT == 'dvdtheque-rest' }
+                    expression { params.project == 'dvdtheque-rest' }
                 }
                 steps {
                     echo 'Building dvdtheque-service'
@@ -62,6 +62,7 @@ pipeline {
                 }
             }
 		}
+		/*
         stage('Build for development') {
         	when {
                 branch 'develop'
@@ -554,7 +555,7 @@ pipeline {
 				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
 			    }
 			}
-		}
+		}*/
     }
 }
 
