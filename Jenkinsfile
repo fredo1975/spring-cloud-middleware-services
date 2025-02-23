@@ -51,7 +51,6 @@ pipeline {
 		stage('Build for specific project') {
 		    when {
                 expression { params.project == 'dvdtheque-rest' }
-                echo 'Building dvdtheque-service'
             }
 		    steps {
                 echo "${project}"
