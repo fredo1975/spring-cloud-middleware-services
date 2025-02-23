@@ -50,7 +50,6 @@ pipeline {
 		}
 		stage('Build for specific project') {
 		    steps {
-                echo "${project}"
                 when {
                     expression { params.project == 'dvdtheque-rest' }
                     withMaven {
