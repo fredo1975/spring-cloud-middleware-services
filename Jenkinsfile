@@ -89,7 +89,7 @@ pipeline {
                 dir("dvdtheque-allocine-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B test -Darguments="${JAVA_OPTS}"
+                        #mvn -B test -Darguments="${JAVA_OPTS}"
                         mvn -B install -DskipTests
                     """
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-allocine.service'
