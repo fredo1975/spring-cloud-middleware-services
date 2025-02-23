@@ -43,7 +43,7 @@ pipeline {
 				}
 			}
 		}
-		stage('Build for specific project') {
+		stage('Building dvdtheque-service on dev env') {
 		    when {
                 expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}
             }
@@ -74,6 +74,8 @@ pipeline {
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
                 }
             }
+		}
+        stage('Building dvdtheque-service on dev env') {
             when {
                 expression { params.project == 'dvdtheque-allocine' && params.env_deploy == 'dev'}
             }
@@ -83,7 +85,7 @@ pipeline {
                     sh """
                         mvn -B clean install
                     """
-                    }
+                }
                 dir("dvdtheque-allocine-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
@@ -97,9 +99,8 @@ pipeline {
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-allocine.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-allocine.service'
                 }
-             }
-		}
-
+            }
+        }
 	    stage('Stopping Dev1 Tmdb service') {
         	when {
                 branch 'develop'
