@@ -53,7 +53,11 @@ pipeline {
                 echo "${project}"
                 when {
                     expression { params.project == 'dvdtheque-rest' }
-                    echo 'Building dvdtheque-service'
+                    withMaven {
+                    		 			sh """
+                    			 			echo 'Building dvdtheque-service'
+                    			      	"""
+                    		    	}
                 }
             }
 		}
