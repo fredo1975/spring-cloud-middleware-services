@@ -48,12 +48,11 @@ pipeline {
                 expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}
             }
 		    steps {
-                echo "${project} Building dvdtheque-service"
+                echo "Building dvdtheque-service on dev env"
                 dir("dvdtheque-commons") {
                     sh """
                         mvn -B clean install
                     """
-
                 }
                 dir("dvdtheque-service") {
                     sh """
@@ -61,7 +60,14 @@ pipeline {
                         mvn -B test -Darguments="${JAVA_OPTS}"
                         mvn -B install -DskipTests
                     """
-
+                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
+                    sh """
+                        scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
+                    """
+                    sh """
+                        scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
+                    """
+                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
                 }
             }
 		}
