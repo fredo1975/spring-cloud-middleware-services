@@ -53,16 +53,10 @@ pipeline {
                 echo "${project}"
                 when {
                     expression { params.project == 'dvdtheque-rest' }
-                }
-                steps {
                     echo 'Building dvdtheque-service'
-                    dir("${env.WORKSPACE}/dvdtheque-service"){
-                        sh "pwd"
-                    }
                 }
             }
 		}
-		/*
         stage('Build for development') {
         	when {
                 branch 'develop'
@@ -555,7 +549,7 @@ pipeline {
 				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
 			    }
 			}
-		}*/
+		}
     }
 }
 
