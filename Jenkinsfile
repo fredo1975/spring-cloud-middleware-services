@@ -56,7 +56,7 @@ pipeline {
                 echo "${project} Building dvdtheque-service"
                 dir("dvdtheque-commons") {
                     sh """
-                        mvn -B clean compile
+                        mvn -B clean install
                     """
 
                 }
