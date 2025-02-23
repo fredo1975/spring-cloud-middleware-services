@@ -35,9 +35,6 @@ pipeline {
                     echo "TMDB_ARTIFACT = ${TMDB_ARTIFACT}"
                     echo "BATCH_ARTIFACT = ${BATCH_ARTIFACT}"
                     echo "ALLOCINE_ARTIFACT = ${ALLOCINE_ARTIFACT}"
-                    echo "GIT_COMMIT_SHORT = ${GIT_COMMIT_SHORT}"
-                    echo "GIT_BRANCH_NAME = ${GIT_BRANCH_NAME}"
-                    echo "JAVA_OPTS = ${JAVA_OPTS}"
                     echo "JAVA_OPTS = ${PROJECT}"
                 '''
             }
