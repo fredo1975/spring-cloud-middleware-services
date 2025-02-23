@@ -115,8 +115,8 @@ pipeline {
                 dir("dvdtheque-tmdb-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B test -Darguments="${JAVA_OPTS}"
-                        mvn -B install -DskipTests
+                        mvn -B clean test -Darguments="${JAVA_OPTS}"
+                        mvn -B clean install -DskipTests
                     """
                     sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
@@ -147,8 +147,8 @@ pipeline {
                 dir("dvdtheque-batch-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B test -Darguments="${JAVA_OPTS}"
-                        mvn -B install -DskipTests
+                        mvn -B clean test -Darguments="${JAVA_OPTS}"
+                        mvn -B clean install -DskipTests
                     """
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-batch.service'
  				 	sh """
