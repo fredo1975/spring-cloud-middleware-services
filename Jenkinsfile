@@ -54,12 +54,16 @@ pipeline {
             }
 		    steps {
                 echo "${project} Building dvdtheque-service"
-
-                dir("dvdtheque-service") {
-                    sh "pwd"
+                dir("dvdtheque-commons") {
                     sh """
-                                        	    mvn -B clean compile
-                                        	"""
+                        mvn -B clean compile
+                    """
+
+                }
+                dir("dvdtheque-service") {
+                    sh """
+                        mvn -B clean compile
+                    """
 
                 }
             }
