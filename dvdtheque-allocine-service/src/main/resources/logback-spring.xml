@@ -39,7 +39,6 @@
  
     <!-- LOG "fr.fredos.dvdtheque.web.controller*" at TRACE level -->
     <logger name="fr.bluechipit.dvdtheque.allocine" level="info" additivity="false">
-        <appender-ref ref="RollingFile" />
         <appender-ref ref="Console" />
     </logger>
  
