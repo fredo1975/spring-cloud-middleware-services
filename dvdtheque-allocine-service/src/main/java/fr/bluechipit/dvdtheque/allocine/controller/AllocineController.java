@@ -23,7 +23,6 @@ public class AllocineController {
 	@Autowired
     private ModelMapper modelMapper;
 
-
 	@RolesAllowed({"batch"})
 	@GetMapping("/byTitle")
 	public ResponseEntity<List<FicheFilmDto>> getAllocineFicheFilmByTitle(@RequestParam(name = "title", required = false) String title,
