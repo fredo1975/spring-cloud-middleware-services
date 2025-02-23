@@ -53,8 +53,16 @@ pipeline {
                 expression { params.project == 'dvdtheque-rest' }
             }
 		    steps {
-                echo "${project}"
-
+                echo "${project} Building dvdtheque-service"
+                dir("dvdtheque-service") {
+                    sh "pwd"
+                }
+                withMaven {
+		 			sh """
+			 			mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DprocessAllModules -DnewVersion=${VERSION}
+			        	mvn -B clean compile
+			      	"""
+		    	}
             }
 		}
         stage('Build for development') {
