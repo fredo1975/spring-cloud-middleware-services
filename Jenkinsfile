@@ -53,8 +53,9 @@ pipeline {
                 expression { params.project == 'dvdtheque-rest' }
             }
 		    steps {
+		    /*
                 echo "${project} Building dvdtheque-service"
-                /*
+
                 dir("dvdtheque-service") {
                     sh "pwd"
                     withMaven {
