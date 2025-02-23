@@ -15,7 +15,7 @@ pipeline {
                 returnStdout: true
         )
 
-        def GIT_BRANCH_NAME = getGitBranchName()
+        def GIT_BRANCH_NAME = "${env}"
         def VERSION = getArtifactVersion(GIT_BRANCH_NAME,GIT_COMMIT_SHORT)
         def ARTIFACT = "dvdtheque-rest-services-${VERSION}.jar"
         def TMDB_ARTIFACT = "dvdtheque-tmdb-service-${VERSION}.jar"
@@ -37,7 +37,7 @@ pipeline {
                     echo "BATCH_ARTIFACT = ${BATCH_ARTIFACT}"
                     echo "ALLOCINE_ARTIFACT = ${ALLOCINE_ARTIFACT}"
                     echo "project = ${project}"
-                    echo "env = ${env}"
+                    echo "GIT_BRANCH_NAME = ${GIT_BRANCH_NAME}"
                 '''
             }
         }
@@ -542,12 +542,6 @@ pipeline {
 			}
 		}
     }
-}
-
-private String getGitBranchName(){
-	def gitBranchName
-	gitBranchName = ${env}
-	gitBranchName.trim()
 }
 
 private String getArtifactVersion(String gitBranchName,String gitCommit){
