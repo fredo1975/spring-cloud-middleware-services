@@ -15,12 +15,10 @@ pipeline {
                 returnStdout: true
         )
 
-        def GIT_BRANCH_NAME = "${env_deploy}"
+        def ENV = "${env_deploy}"
         def VERSION = getArtifactVersion(GIT_BRANCH_NAME,GIT_COMMIT_SHORT)
-        def ARTIFACT = "dvdtheque-rest-services-${VERSION}.jar"
-        def TMDB_ARTIFACT = "dvdtheque-tmdb-service-${VERSION}.jar"
-        def BATCH_ARTIFACT = "dvdtheque-batch-${VERSION}.jar"
-        def ALLOCINE_ARTIFACT = "dvdtheque-allocine-service-${VERSION}.jar"
+        def ARTIFACT = "dvdtheque-${VERSION}.jar"
+
     }
     stages {
         stage ('Initialize') {
@@ -33,11 +31,8 @@ pipeline {
                     echo "DEV_SERVER2_IP = ${DEV_SERVER2_IP}"
                     echo "VERSION = ${VERSION}"
                     echo "ARTIFACT = ${ARTIFACT}"
-                    echo "TMDB_ARTIFACT = ${TMDB_ARTIFACT}"
-                    echo "BATCH_ARTIFACT = ${BATCH_ARTIFACT}"
-                    echo "ALLOCINE_ARTIFACT = ${ALLOCINE_ARTIFACT}"
                     echo "project = ${project}"
-                    echo "GIT_BRANCH_NAME = ${GIT_BRANCH_NAME}"
+                    echo "ENV = ${ENV}"
                 '''
             }
         }
@@ -63,85 +58,14 @@ pipeline {
                 dir("dvdtheque-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B clean compile
+                        mvn -B test -Darguments="${JAVA_OPTS}"
+                        mvn -B install -DskipTests
                     """
 
                 }
             }
 		}
-        stage('Build for development') {
-        	when {
-                branch 'develop'
-            }
-            steps {
-		 		withMaven {
-		 			sh """
-			 			mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DprocessAllModules -DnewVersion=${VERSION}
-			        	mvn -B clean compile
-			      	"""
-		    	}
-		    }
-        }
-        stage('Build for production') {
-        	when {
-                branch 'master'
-            }
-            steps {
-		 		withMaven(mavenSettingsConfig: 'MyMavenSettings') {
-		 			sh """
-		 				mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DprocessAllModules -DnewVersion=${VERSION}
-				    	mvn -B clean compile
-					"""
-		    	}
-		    }
-        }
-        stage('Unit Tests') {
-        	when {
-                branch 'develop'
-            }
-        	steps {
-				withMaven(mavenSettingsConfig: 'MyMavenSettings') {
-			 		script {
-			 			sh ''' 
-			 				mvn -B test -Darguments="${JAVA_OPTS}"
-			 			'''
-			 		}
-	            }
-			}
-			post {
-				always {
-			    	junit '**/target/surefire-reports/*.xml'
-			    }
-			}   
-        }
-        stage('Deploy for development') {
-            when {
-                branch 'develop'
-            }
-            steps {
-		 		withMaven(mavenSettingsConfig: 'MyMavenSettings') {
-		 			script {
-			 			sh """
-					    	 mvn -B install -DskipTests
-					    """
-			 		}
-		    	}
-		    }
-        }
-        stage('Deploy for production') {
-            when {
-                branch 'master'
-            }
-            steps {
-		 		withMaven(mavenSettingsConfig: 'MyMavenSettings') {
-		 			script {
-			 			sh """
-					    	 mvn -B install -DskipTests
-					    """
-			 		}
-		    	}
-		    }
-        }
+
         stage('Stopping Dev1 Rest service') {
         	when {
                 branch 'develop'
