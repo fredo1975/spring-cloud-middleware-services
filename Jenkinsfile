@@ -75,7 +75,7 @@ pipeline {
                 }
             }
 		}
-        stage('Building dvdtheque-service on dev env') {
+        stage('Building dvdtheque-allocine on dev env') {
             when {
                 expression { params.project == 'dvdtheque-allocine' && params.env_deploy == 'dev'}
             }
