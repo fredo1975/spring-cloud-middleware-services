@@ -27,10 +27,10 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {HazelcastConfiguration.class, AllocineServiceApplication.class})
 @ActiveProfiles("test")
-public class AllocineServiceTest {
+public class AllocineServiceIntegrationTest {
 	@MockBean
 	JwtDecoder jwtDecoder;
-	protected Logger logger = LoggerFactory.getLogger(AllocineServiceTest.class);
+	protected Logger logger = LoggerFactory.getLogger(AllocineServiceIntegrationTest.class);
 	@Autowired
 	private AllocineService allocineService;
 	
