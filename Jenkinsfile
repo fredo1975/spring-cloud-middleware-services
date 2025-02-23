@@ -14,7 +14,8 @@ pipeline {
                 script: "printf \$(git rev-parse --short HEAD)",
                 returnStdout: true
         )
-        def GIT_BRANCH_NAME = getGitBranchName()
+        /*
+        def GIT_BRANCH_NAME = getGitBranchName()*/
         def VERSION = getArtifactVersion(GIT_BRANCH_NAME,GIT_COMMIT_SHORT)
         def ARTIFACT = "dvdtheque-rest-services-${VERSION}.jar"
         def TMDB_ARTIFACT = "dvdtheque-tmdb-service-${VERSION}.jar"
