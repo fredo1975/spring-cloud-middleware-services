@@ -51,6 +51,15 @@ pipeline {
 		stage('Build for specific project') {
 		    steps {
                 echo "${project}"
+                when {
+                    expression { params.project == "dvdtheque-rest" }
+                }
+                steps {
+                    echo 'Building dvdtheque-service'
+                    dir("${env.WORKSPACE}/dvdtheque-service"){
+                        sh "pwd"
+                    }
+                }
             }
 		}
         stage('Build for development') {
