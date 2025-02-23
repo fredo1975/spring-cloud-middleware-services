@@ -36,7 +36,7 @@ pipeline {
                     echo "TMDB_ARTIFACT = ${TMDB_ARTIFACT}"
                     echo "BATCH_ARTIFACT = ${BATCH_ARTIFACT}"
                     echo "ALLOCINE_ARTIFACT = ${ALLOCINE_ARTIFACT}"
-                    echo "JAVA_OPTS = ${PROJECT}"
+                    echo "PROJECT = ${project}"
                 '''
             }
         }
