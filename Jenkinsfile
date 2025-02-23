@@ -36,7 +36,8 @@ pipeline {
                     echo "TMDB_ARTIFACT = ${TMDB_ARTIFACT}"
                     echo "BATCH_ARTIFACT = ${BATCH_ARTIFACT}"
                     echo "ALLOCINE_ARTIFACT = ${ALLOCINE_ARTIFACT}"
-                    echo "PROJECT = ${project}"
+                    echo "project = ${project}"
+                    echo "env = ${env}"
                 '''
             }
         }
@@ -545,15 +546,15 @@ pipeline {
 
 private String getGitBranchName(){
 	def gitBranchName
-	gitBranchName = env.BRANCH_NAME
+	gitBranchName = ${env}
 	gitBranchName.trim()
 }
 
 private String getArtifactVersion(String gitBranchName,String gitCommit){
-	if(gitBranchName == "develop"){
+	if(gitBranchName == "dev"){
 		return "${gitCommit}-SNAPSHOT"
 	}
-	if(gitBranchName == "master"){
+	if(gitBranchName == "prod"){
 		return "${gitCommit}"
 	}
 	return ""
