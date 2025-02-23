@@ -16,7 +16,7 @@ pipeline {
         )
 
         def ENV = "${env_deploy}"
-        def VERSION = getArtifactVersion(GIT_BRANCH_NAME,GIT_COMMIT_SHORT)
+        def VERSION = getArtifactVersion(ENV,GIT_COMMIT_SHORT)
         def ARTIFACT = "dvdtheque-${VERSION}.jar"
 
     }
@@ -489,11 +489,11 @@ pipeline {
     }
 }
 
-private String getArtifactVersion(String gitBranchName,String gitCommit){
-	if(gitBranchName == "dev"){
+private String getArtifactVersion(String env,String gitCommit){
+	if(env == "dev"){
 		return "${gitCommit}-SNAPSHOT"
 	}
-	if(gitBranchName == "prod"){
+	if(env == "prod"){
 		return "${gitCommit}"
 	}
 	return ""
