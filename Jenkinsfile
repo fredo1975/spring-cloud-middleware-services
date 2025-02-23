@@ -52,7 +52,7 @@ pipeline {
 		    steps {
                 echo "${project}"
                 when {
-                    expression { params.project == 'dvdtheque-rest' }
+                    expression { params.PROJECT == 'dvdtheque-rest' }
                 }
                 steps {
                     echo 'Building dvdtheque-service'
