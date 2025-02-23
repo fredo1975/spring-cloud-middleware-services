@@ -48,6 +48,11 @@ pipeline {
 				}
 			}
 		}
+		stage('Build for specific project') {
+		    steps {
+                echo "${project}"
+            }
+		}
         stage('Build for development') {
         	when {
                 branch 'develop'
