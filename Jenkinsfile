@@ -58,7 +58,7 @@ pipeline {
                 dir("dvdtheque-service") {
                     sh "pwd"
                     sh """
-                                        	    echo "Building dvdtheque-service 2"
+                                        	    mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DprocessAllModules -DnewVersion=${VERSION}
                                         	"""
 
                 }
