@@ -29,7 +29,7 @@ public class MultipartFileUtil {
 	 * @throws Exception
 	 */
 	public File createFileToImport(MultipartFile file) throws Exception {
-		File resFile = null;
+		File resFile;
 		Calendar cal = Calendar.getInstance();
 		File tempFile = new File(System.getProperty("java.io.tmpdir")+"/"+ cal.getTimeInMillis() + "_"+file.getOriginalFilename());
 		File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+file.getOriginalFilename());
@@ -43,15 +43,14 @@ public class MultipartFileUtil {
 		if (!resource.exists()) {
 			throw new IllegalStateException("file does not exists " + resource.getPath());
 		}
+		logger.info("convFile.getAbsolutePath()="+convFile.getAbsolutePath());
 		if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"csv")) {
 			resFile = convFile;
 		} else if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xls")
 				|| StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xlsx")) {
 			Workbook workBook;
 			try {
-				logger.info("convFile.getAbsolutePath()="+convFile.getAbsolutePath());
 				workBook = this.excelFilmHandler.createSheetFromFile(convFile);
-
 				String csv = this.excelFilmHandler.createCsvFromExcel(workBook);
 				FileOutputStream outputStream = new FileOutputStream(tempFile);
 				byte[] strToBytes = csv.getBytes();
