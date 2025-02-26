@@ -43,7 +43,6 @@ public class MultipartFileUtil {
 		if (!resource.exists()) {
 			throw new IllegalStateException("file does not exists " + resource.getPath());
 		}
-		logger.info("convFile.getAbsolutePath()="+convFile.getAbsolutePath());
 		if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"csv")) {
 			resFile = convFile;
 		} else if(StringUtils.equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()),"xls")
