@@ -156,23 +156,32 @@ pipeline {
                 }
             }
 		}
+		stage('Building dvdtheque-tmdb-service on prod env') {
+		    when {
+                expression { params.project == 'dvdtheque-tmdb' && params.env_deploy == 'prod'}
+            }
+		    steps {
+                echo "Building dvdtheque-tmdb-service on prod env"
+                gitCheckout(params.env_deploy)
+                buildCommons()
+                dir("dvdtheque-tmdb-service") {
+                    buildService(params.env_deploy)
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
+                    sh """
+			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
+			 		"""
+			 		sh """
+			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
+			 		"""
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-tmdb.service'
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-tmdb.service'
+                }
+            }
+		}
 
-	    stage('Stopping Prod1 Tmdb service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
-	       	}
-	    }
-	    stage('Stopping Prod2 Tmdb service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
-	       	}
-	    }
 	    stage('Stopping Prod2 Allocine service') {
         	when {
                 branch 'master'
@@ -190,21 +199,6 @@ pipeline {
 	       	}
 	    }
 
-        stage('Copying production dvdtheque-tmdb-service') {
-	    	when {
-                branch 'master'
-            }
-            steps {
-                script {
-                	sh """
-			 			scp dvdtheque-tmdb-service/target/$TMDB_ARTIFACT jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
-			 		"""
-			 		sh """
-			 			scp dvdtheque-tmdb-service/target/$TMDB_ARTIFACT jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
-			 		"""
-			 	}
-            }
-        }
         stage('Copying production dvdtheque-allocine-service') {
 	    	when {
                 branch 'master'
@@ -230,22 +224,6 @@ pipeline {
             }
         }
 
-   		stage('Sarting Prod1 tmdb service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
-	        }
-   		}
-   		stage('Sarting Prod2 tmdb service') {
-   			when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-tmdb.service'
-	        }
-   		}
    		stage('Sarting Prod2 Allocine service') {
    			when {
                 branch 'master'
@@ -262,26 +240,7 @@ pipeline {
 	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
 	        }
    		}
-		stage('Check status Prod1 tmdb service') {
-			when {
-                branch 'master'
-            }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
-			    }
-			}
-		}
-		stage('Check status Prod2 tmdb service') {
-			when {
-                branch 'master'
-            }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-tmdb.service'
-			    }
-			}
-		}
+
 		stage('Check status Prod2 Allocine tmdb service') {
 			when {
                 branch 'master'
