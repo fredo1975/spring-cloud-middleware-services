@@ -181,85 +181,43 @@ pipeline {
                 }
             }
 		}
-
-	    stage('Stopping Prod2 Allocine service') {
-        	when {
-                branch 'master'
+		stage('Building dvdtheque-allocine-service on prod env') {
+		    when {
+                expression { params.project == 'dvdtheque-allocine' && params.env_deploy == 'prod'}
             }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-allocine.service'
-	       	}
-	    }
-	    stage('Stopping Prod Batch service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-batch.service'
-	       	}
-	    }
-
-        stage('Copying production dvdtheque-allocine-service') {
-	    	when {
-                branch 'master'
-            }
-            steps {
-                script {
-                	sh """
-			 			scp dvdtheque-allocine-service/target/$ALLOCINE_ARTIFACT jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_allocine_service/dvdtheque-allocine-service.jar
+		    steps {
+                echo "Building dvdtheque-allocine-service on prod env"
+                gitCheckout(params.env_deploy)
+                buildCommons()
+                dir("dvdtheque-allocine-service") {
+                    buildService(params.env_deploy)
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-allocine.service'
+                    sh """
+			 			scp target/dvdtheque-allocine-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_allocine_service/dvdtheque-allocine-service.jar
 			 		"""
-			 	}
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-allocine.service'
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-allocine.service'
+                }
             }
-        }
-        stage('Copying production dvdtheque-batch-service') {
-	    	when {
-                branch 'master'
-            }
-            steps {
-                script {
-                	sh """
-			 			scp dvdtheque-batch/target/$BATCH_ARTIFACT jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_batch_service/dvdtheque-batch.jar
-			 		"""
-			 	}
-            }
-        }
-
-   		stage('Sarting Prod2 Allocine service') {
-   			when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-allocine.service'
-	        }
-   		}
-   		stage('Sarting Prod2 Batch service') {
-   			when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
-	        }
-   		}
-
-		stage('Check status Prod2 Allocine tmdb service') {
-			when {
-                branch 'master'
-            }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-allocine.service'
-			    }
-			}
 		}
-		stage('Check status Prod2 Batch tmdb service') {
-			when {
-                branch 'master'
+		stage('Building dvdtheque-batch-service on prod env') {
+		    when {
+                expression { params.project == 'dvdtheque-batch' && params.env_deploy == 'prod'}
             }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
-			    }
-			}
+		    steps {
+                echo "Building dvdtheque-batch-service on prod env"
+                gitCheckout(params.env_deploy)
+                buildCommons()
+                dir("dvdtheque-batch-service") {
+                    buildService(params.env_deploy)
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-batch.service'
+                    sh """
+			 			scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/batch/dvdtheque-batch-service.jar
+			 		"""
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
+                }
+            }
 		}
     }
 }
