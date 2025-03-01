@@ -66,11 +66,6 @@ pipeline {
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
                 }
             }
-            post {
-             	always {
-             	    junit '**/target/surefire-reports/*.xml'
-             	 }
-            }
 		}
         stage('Building dvdtheque-allocine-service on dev env') {
             when {
@@ -149,10 +144,10 @@ pipeline {
 			 		sh """
 			 			scp dvdtheque-rest-services/target/$ARTIFACT jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
 			 		"""
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
                 }
             }
 		}
@@ -190,22 +185,6 @@ pipeline {
 	       	}
 	    }
 
-
-        stage('Copying production dvdtheque-rest-services') {
-	    	when {
-                branch 'master'
-            }
-            steps {
-                script {
-                	sh """
-			 			scp dvdtheque-rest-services/target/$ARTIFACT jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-			 		"""
-			 		sh """
-			 			scp dvdtheque-rest-services/target/$ARTIFACT jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-			 		"""
-			 	}
-            }
-        }
         stage('Copying production dvdtheque-tmdb-service') {
 	    	when {
                 branch 'master'
@@ -246,23 +225,6 @@ pipeline {
             }
         }
 
-
-   		stage('Sarting Prod1 Rest service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
-	        }
-   		}
-   		stage('Sarting Prod2 Rest service') {
-   			when {
-                branch 'master'
-            }
-        	steps {
-	        	sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
-	        }
-   		}
    		stage('Sarting Prod1 tmdb service') {
         	when {
                 branch 'master'
@@ -295,28 +257,6 @@ pipeline {
 	        	sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
 	        }
    		}
-
-
-		stage('Check status Prod1 Rest service') {
-			when {
-                branch 'master'
-            }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
-			    }
-			}
-		}
-		stage('Check status Prod2 Rest service') {
-			when {
-                branch 'master'
-            }
-			steps {
-				script {
-				    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
-			    }
-			}
-		}
 		stage('Check status Prod1 tmdb service') {
 			when {
                 branch 'master'
@@ -392,5 +332,4 @@ private void buildService(String env){
             mvn -B clean install -DskipTests
         """
     }
-
 }
