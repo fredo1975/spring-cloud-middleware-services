@@ -51,7 +51,7 @@ pipeline {
                 echo "Building dvdtheque-service on dev env"
                 buildCommons()
                 dir("dvdtheque-service") {
-                    buildService()
+                    buildService(params.env_deploy)
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
                     sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
                     sh """
@@ -66,6 +66,11 @@ pipeline {
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
                 }
             }
+            post {
+             	always {
+             	    junit '**/target/surefire-reports/*.xml'
+             	 }
+            }
 		}
         stage('Building dvdtheque-allocine-service on dev env') {
             when {
@@ -75,11 +80,7 @@ pipeline {
                 echo "Building dvdtheque-allocine-service on dev env"
                 buildCommons()
                 dir("dvdtheque-allocine-service") {
-                    sh """
-                        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        #mvn -B clean test -Darguments="${JAVA_OPTS}"
-                        mvn -B clean install -DskipTests
-                    """
+                    buildService(params.env_deploy)
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-allocine.service'
                     sh """
                         scp target/dvdtheque-allocine-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_allocine_service/dvdtheque-allocine-service.jar
@@ -97,11 +98,7 @@ pipeline {
                 echo "Building dvdtheque-tmdb-service on dev env"
                 buildCommons()
                 dir("dvdtheque-tmdb-service") {
-                    sh """
-                        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B clean test -Darguments="${JAVA_OPTS}"
-                        mvn -B clean install -DskipTests
-                    """
+                    buildService(params.env_deploy)
                     sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
  			 		sh """
@@ -125,11 +122,7 @@ pipeline {
                 echo "Building dvdtheque-batch-service on dev env"
                 buildCommons()
                 dir("dvdtheque-batch-service") {
-                    sh """
-                        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B clean test -Darguments="${JAVA_OPTS}"
-                        mvn -B clean install -DskipTests
-                    """
+                    buildService(params.env_deploy)
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-batch.service'
  				 	sh """
     			 		scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_batch_service/dvdtheque-batch.jar
@@ -139,23 +132,31 @@ pipeline {
                 }
             }
         }
+		stage('Building dvdtheque-service on prod env') {
+		    when {
+                expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'prod'}
+            }
+		    steps {
+                echo "Building dvdtheque-service on prod env"
+                buildCommons()
+                dir("dvdtheque-service") {
+                    buildService(params.env_deploy)
+                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
+                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
+                    sh """
+			 			scp dvdtheque-rest-services/target/$ARTIFACT jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
+			 		"""
+			 		sh """
+			 			scp dvdtheque-rest-services/target/$ARTIFACT jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
+			 		"""
+                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
+                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
+                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
+                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
+                }
+            }
+		}
 
-	    stage('Stopping Prod1 Rest service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
-	       	}
-	    }
-	    stage('Stopping Prod2 Rest service') {
-        	when {
-                branch 'master'
-            }
-        	steps {
-        		sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
-	       	}
-	    }
 	    stage('Stopping Prod1 Tmdb service') {
         	when {
                 branch 'master'
@@ -377,10 +378,18 @@ private void buildCommons(){
     }
 }
 
-private void buildService(){
-    sh """
-        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-        mvn -B clean test -Darguments="${JAVA_OPTS}"
-        mvn -B clean install -DskipTests
-    """
+private void buildService(String env){
+    if(env == "dev"){
+        sh """
+            mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
+            mvn -B clean test -Darguments="${JAVA_OPTS}"
+            mvn -B clean install -DskipTests
+        """
+    if(env == "prod"){
+        sh """
+            mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
+            mvn -B clean install -DskipTests
+        """
+    }
+
 }
