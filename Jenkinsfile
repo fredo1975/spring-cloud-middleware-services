@@ -49,6 +49,7 @@ pipeline {
             }
 		    steps {
                 echo "Building dvdtheque-service on dev env"
+                gitCheckout(params.env_deploy)
                 buildCommons()
                 dir("dvdtheque-service") {
                     buildService(params.env_deploy)
@@ -73,6 +74,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-allocine-service on dev env"
+                gitCheckout(params.env_deploy)
                 buildCommons()
                 dir("dvdtheque-allocine-service") {
                     buildService(params.env_deploy)
@@ -91,6 +93,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-tmdb-service on dev env"
+                gitCheckout(params.env_deploy)
                 buildCommons()
                 dir("dvdtheque-tmdb-service") {
                     buildService(params.env_deploy)
@@ -115,6 +118,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-batch-service on dev env"
+                gitCheckout(params.env_deploy)
                 buildCommons()
                 dir("dvdtheque-batch-service") {
                     buildService(params.env_deploy)
@@ -133,6 +137,7 @@ pipeline {
             }
 		    steps {
                 echo "Building dvdtheque-service on prod env"
+                gitCheckout(params.env_deploy)
                 buildCommons()
                 dir("dvdtheque-service") {
                     buildService(params.env_deploy)
@@ -300,6 +305,18 @@ pipeline {
     }
 }
 
+private void gitCheckout(String env){
+    if(env == "dev"){
+        sh """
+            git checkout develop
+        """
+    }
+    if(env == "prod"){
+        sh """
+            git checkout main
+        """
+   }
+}
 private String getArtifactVersion(String env,String gitCommit){
 	if(env == "dev"){
 		return "${gitCommit}-SNAPSHOT"
