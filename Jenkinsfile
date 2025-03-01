@@ -51,11 +51,7 @@ pipeline {
                 echo "Building dvdtheque-service on dev env"
                 buildCommons()
                 dir("dvdtheque-service") {
-                    sh """
-                        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
-                        mvn -B clean test -Darguments="${JAVA_OPTS}"
-                        mvn -B clean install -DskipTests
-                    """
+                    buildService()
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
                     sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
                     sh """
@@ -77,11 +73,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-allocine-service on dev env"
-                dir("dvdtheque-commons") {
-                    sh """
-                        mvn -B clean install
-                    """
-                }
+                buildCommons()
                 dir("dvdtheque-allocine-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
@@ -103,11 +95,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-tmdb-service on dev env"
-                dir("dvdtheque-commons") {
-                    sh """
-                        mvn -B clean install
-                    """
-                }
+                buildCommons()
                 dir("dvdtheque-tmdb-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
@@ -135,11 +123,7 @@ pipeline {
             }
             steps {
                 echo "Building dvdtheque-batch-service on dev env"
-                dir("dvdtheque-commons") {
-                    sh """
-                        mvn -B clean install
-                    """
-                }
+                buildCommons()
                 dir("dvdtheque-batch-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
@@ -391,4 +375,12 @@ private void buildCommons(){
             mvn -B clean install
         """
     }
+}
+
+private void buildService(){
+    sh """
+        mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
+        mvn -B clean test -Darguments="${JAVA_OPTS}"
+        mvn -B clean install -DskipTests
+    """
 }
