@@ -49,11 +49,7 @@ pipeline {
             }
 		    steps {
                 echo "Building dvdtheque-service on dev env"
-                dir("dvdtheque-commons") {
-                    sh """
-                        mvn -B clean install
-                    """
-                }
+                buildCommons()
                 dir("dvdtheque-service") {
                     sh """
                         mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
@@ -387,4 +383,12 @@ private String getArtifactVersion(String env,String gitCommit){
 		return "${gitCommit}"
 	}
 	return ""
+}
+
+private void buildCommons(){
+    dir("dvdtheque-commons") {
+        sh """
+            mvn -B clean install
+        """
+    }
 }
