@@ -309,11 +309,13 @@ private void gitCheckout(String env){
     if(env == "dev"){
         sh """
             git checkout develop
+            git pull
         """
     }
     if(env == "prod"){
         sh """
             git checkout main
+            git pull
         """
    }
 }
