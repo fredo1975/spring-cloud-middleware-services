@@ -212,7 +212,7 @@ pipeline {
                     buildService(params.env_deploy)
                     sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-batch.service'
                     sh """
-			 			scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/batch/dvdtheque-batch-service.jar
+			 			scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_batch_service/dvdtheque-batch-service.jar
 			 		"""
                     sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
                     sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
