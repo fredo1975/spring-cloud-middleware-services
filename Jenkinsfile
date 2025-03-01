@@ -385,6 +385,7 @@ private void buildService(String env){
             mvn -B clean test -Darguments="${JAVA_OPTS}"
             mvn -B clean install -DskipTests
         """
+    }
     if(env == "prod"){
         sh """
             mvn -B org.codehaus.mojo:versions-maven-plugin:2.8.1:set -DnewVersion=${VERSION}
