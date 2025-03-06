@@ -74,12 +74,8 @@ public class BatchExportFilmsConfiguration {
     			HttpMethod.GET, 
     			request, 
     			new ParameterizedTypeReference<List<Film>>(){});
-        if(filmList != null) {
-        	logger.info("Issued: filmList.getBody().size()=" + filmList.getBody().size());
-        	return new ListItemReader<>(filmList.getBody());
-        }
-        ResponseEntity<List<Film>> filmList2 = ResponseEntity.ok(new ArrayList<>());
-    	return new ListItemReader<>(filmList2.getBody());
+        logger.info("Issued: filmList.getBody().size()=" + Objects.requireNonNull(filmList.getBody()).size());
+        return new ListItemReader<>(filmList.getBody());
     }
     @Bean
     protected ExcelStreamFilmWriter excelFilmWriter() {
@@ -91,6 +87,7 @@ public class BatchExportFilmsConfiguration {
     	return new StepBuilder("exportFilms", jobRepository)
                 .<Film, Film>chunk(800,transactionManager).reader(dvdthequeServiceFilmReader())
                 .writer(excelFilmWriter())
+                .allowStartIfComplete(true)
                 .build();
     }
     @Bean
