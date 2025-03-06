@@ -33,6 +33,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -50,8 +52,8 @@ import java.util.Objects;
 @Configuration
 public class BatchImportFilmsConfiguration{
 	protected Logger logger = LoggerFactory.getLogger(BatchImportFilmsConfiguration.class);
-	private static String DVDTHEQUE_SERVICE_URL ="dvdtheque-service.url";
-	private static String DVDTHEQUE_SERVICE_CLEAN_ALL ="dvdtheque-service.cleanAllFilms";
+	private final static String DVDTHEQUE_SERVICE_URL ="dvdtheque-service.url";
+	private final static String DVDTHEQUE_SERVICE_CLEAN_ALL ="dvdtheque-service.cleanAllFilms";
 	@Autowired
 	private Environment 											environment;
     @Autowired
@@ -61,6 +63,8 @@ public class BatchImportFilmsConfiguration{
     @Autowired
     @Qualifier("rippedFlagTasklet")
     private Tasklet 												rippedFlagTasklet;
+	@Autowired
+	private TaskExecutor 											taskExecutor;
     @Autowired
     @Qualifier("retrieveDateInsertionTasklet")
     private Tasklet 												retrieveDateInsertionTasklet;
@@ -74,7 +78,7 @@ public class BatchImportFilmsConfiguration{
 		@Override
 		public void beforeJob(JobExecution jobExecution) {
 			//logger.debug("beforeJob");
-			jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.IMPORT_INIT, null,0l,JmsStatus.IMPORT_INIT.statusValue()));
+			jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.IMPORT_INIT, null,0l,JmsStatus.IMPORT_INIT.statusValue()));
 		}
 
 		@Override
@@ -158,7 +162,7 @@ public class BatchImportFilmsConfiguration{
     public FlatFileItemReader<FilmCsvImportFormat> reader(@Value("#{jobParameters[INPUT_FILE_PATH]}") String inputFilePath) {
     	StopWatch watch = new StopWatch();
 		watch.start();
-		jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILE_ITEM_READER_INIT, null,0l,JmsStatus.FILE_ITEM_READER_INIT.statusValue()));
+		jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILE_ITEM_READER_INIT, null,0l,JmsStatus.FILE_ITEM_READER_INIT.statusValue()));
 
 		FileSystemResource resource = new FileSystemResource(inputFilePath);
 		if (!resource.exists()) {
@@ -170,7 +174,7 @@ public class BatchImportFilmsConfiguration{
         LineMapper<FilmCsvImportFormat> filmCsvImportFormatLineMapper = createFilmCsvImportFormatLineMapper();
         csvFileReader.setLineMapper(filmCsvImportFormatLineMapper);
         watch.stop();
-        jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILE_ITEM_READER_COMPLETED, null,watch.getTime(),JmsStatus.FILE_ITEM_READER_COMPLETED.statusValue()));
+        jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILE_ITEM_READER_COMPLETED, null,watch.getTime(),JmsStatus.FILE_ITEM_READER_COMPLETED.statusValue()));
 		logger.debug("reader Time Elapsed: " + watch.getTime());
         return csvFileReader;
     }
@@ -178,14 +182,14 @@ public class BatchImportFilmsConfiguration{
     private LineMapper<FilmCsvImportFormat> createFilmCsvImportFormatLineMapper() {
     	StopWatch watch = new StopWatch();
 		watch.start();
-		jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILM_CSV_LINE_MAPPER_INIT, null,0l,JmsStatus.FILM_CSV_LINE_MAPPER_INIT.statusValue()));
+		jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILM_CSV_LINE_MAPPER_INIT, null,0l,JmsStatus.FILM_CSV_LINE_MAPPER_INIT.statusValue()));
         DefaultLineMapper<FilmCsvImportFormat> filmLineMapper = new DefaultLineMapper<>();
         LineTokenizer filmCsvImportFormatLineTokenizer = createFilmCsvImportFormatLineTokenizer();
         filmLineMapper.setLineTokenizer(filmCsvImportFormatLineTokenizer);
         FieldSetMapper<FilmCsvImportFormat> filmCsvImportFormatInformationMapper = createFilmCsvImportFormatInformationMapper();
         filmLineMapper.setFieldSetMapper(filmCsvImportFormatInformationMapper);
         watch.stop();
-        jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILM_CSV_LINE_MAPPER_COMPLETED, null,watch.getTime(),JmsStatus.FILM_CSV_LINE_MAPPER_COMPLETED.statusValue()));
+        jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILM_CSV_LINE_MAPPER_COMPLETED, null,watch.getTime(),JmsStatus.FILM_CSV_LINE_MAPPER_COMPLETED.statusValue()));
 		logger.debug("createFilmCsvImportFormatLineMapper Time Elapsed: " + watch.getTime());
         return filmLineMapper;
     }
@@ -193,13 +197,13 @@ public class BatchImportFilmsConfiguration{
     private LineTokenizer createFilmCsvImportFormatLineTokenizer() {
     	StopWatch watch = new StopWatch();
 		watch.start();
-		jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILM_CSV_LINE_TOKENIZER_INIT, null,0l,JmsStatus.FILM_CSV_LINE_TOKENIZER_INIT.statusValue()));
+		jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILM_CSV_LINE_TOKENIZER_INIT, null,0l,JmsStatus.FILM_CSV_LINE_TOKENIZER_INIT.statusValue()));
         DelimitedLineTokenizer filmCsvImportFormatLineTokenizer = new DelimitedLineTokenizer();
         filmCsvImportFormatLineTokenizer.setDelimiter(";");
         filmCsvImportFormatLineTokenizer.setNames(ExcelStreamFilmWriter.EXCEL_HEADER_TAB);
         filmCsvImportFormatLineTokenizer.setStrict(false);
         watch.stop();
-        jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.FILM_CSV_LINE_TOKENIZER_COMPLETED, null,watch.getTime(),JmsStatus.FILM_CSV_LINE_TOKENIZER_COMPLETED.statusValue()));
+        jmsMessageSender.sendMessage(new JmsStatusMessage<>(JmsStatus.FILM_CSV_LINE_TOKENIZER_COMPLETED, null,watch.getTime(),JmsStatus.FILM_CSV_LINE_TOKENIZER_COMPLETED.statusValue()));
 		logger.debug("createFilmCsvImportFormatLineTokenizer Time Elapsed: " + watch.getTime());
         return filmCsvImportFormatLineTokenizer;
     }
@@ -224,6 +228,12 @@ public class BatchImportFilmsConfiguration{
                 .reader(reader(null))
                 .processor(filmProcessor())
                 .writer(filmWriter())
+				.taskExecutor(taskExecutor)
                 .build();
     }
+
+	@Bean
+	public TaskExecutor taskExecutor() {
+		return new SimpleAsyncTaskExecutor("spring_batch");
+	}
 }
