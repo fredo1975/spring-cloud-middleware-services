@@ -43,6 +43,50 @@ pipeline {
 				}
 			}
 		}
+		stage('Building discovery-service on dev env') {
+        		    when {
+                        expression { params.project == 'eureka' && params.env_deploy == 'dev'}
+                    }
+        		    steps {
+                        echo "Building discovery-service on dev env"
+                        gitCheckout(params.env_deploy)
+                        buildCommons()
+                        dir("discovery-service") {
+                            buildService(params.env_deploy)
+                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
+                            sh """
+                                scp target/discovery-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
+                            """
+                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-discovery-server.service'
+                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-discovery-server.service'
+                        }
+                    }
+        		}
+        		stage('Building discovery-service on prod env') {
+                     when {
+                        expression { params.project == 'eureka' && params.env_deploy == 'prod'}
+                        }
+                        steps {
+                           echo "Building discovery-service on prod env"
+                           gitCheckout(params.env_deploy)
+                           buildCommons()
+                           dir("discovery-service") {
+                           buildService(params.env_deploy)
+                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-discovery-server.service'
+                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
+                           sh """
+                           scp target/discovery-service-${VERSION}.jar jenkins@${$PROD_SERVER1_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
+                           """
+                           sh """
+                            scp target/discovery-service-${VERSION}.jar jenkins@${$PROD_SERVER2_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
+                           """
+                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-discovery-server.service'
+                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-discovery-server.service'
+                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-discovery-server.service'
+                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-discovery-server.service'
+                        }
+                     }
+                 }
 		stage('Building dvdtheque-service on dev env') {
 		    when {
                 expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}
