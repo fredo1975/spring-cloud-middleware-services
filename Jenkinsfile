@@ -55,9 +55,6 @@ pipeline {
                             buildService(params.env_deploy)
                             sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
                             sh """
-                                scp target/discovery-service.jar-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
-                            """
-                            sh """
                                 scp target/discovery-service.jar-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
                             """
                             sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-discovery-server.service'
