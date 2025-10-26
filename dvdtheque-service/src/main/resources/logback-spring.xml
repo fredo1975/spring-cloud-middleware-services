@@ -31,16 +31,29 @@
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
     </appender>
-     
-    <!-- LOG everything at INFO level -->
-    <root level="info">
-        <appender-ref ref="Console" />
-    </root>
- 
-    <!-- LOG "fr.fredos.dvdtheque.web.controller*" at TRACE level -->
-    <logger name="fr.bluechipit.dvdtheque" level="info" additivity="false">
-        <appender-ref ref="Console" />
-        <appender-ref ref="RollingFile" />
-    </logger>
+
+    <!-- Profil par défaut : console + fichier (utile en dev/production non-containerisée) -->
+    <springProfile name="dev1,dev2,prod1,prod2">
+        <root level="INFO">
+            <appender-ref ref="Console" />
+            <appender-ref ref="RollingFile" />
+        </root>
+
+        <logger name="fr.bluechipit.dvdtheque" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="RollingFile" />
+        </logger>
+    </springProfile>
+
+    <!-- Profil docker : n'utiliser que la console (logs vers stdout/stderr) -->
+    <springProfile name="docker">
+        <root level="INFO">
+            <appender-ref ref="Console" />
+        </root>
+
+        <logger name="fr.bluechipit.dvdtheque" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+        </logger>
+    </springProfile>
  
 </configuration>
