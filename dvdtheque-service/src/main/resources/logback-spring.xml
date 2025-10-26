@@ -40,6 +40,7 @@
     <!-- LOG "fr.fredos.dvdtheque.web.controller*" at TRACE level -->
     <logger name="fr.bluechipit.dvdtheque" level="info" additivity="false">
         <appender-ref ref="Console" />
+        <appender-ref ref="RollingFile" />
     </logger>
  
 </configuration>
