@@ -5,6 +5,7 @@
 /config-service/.mvn/wrapper/maven-wrapper.properties
 /config-service/mvnw
 /config-service/mvnw.cmd
+/config-service/target/*
 /discovery-service/.mvn/wrapper/maven-wrapper.properties
 /discovery-service/target/classes/fr/bluechipit/discovery/service/DiscoveryServerApplication.class
 /discovery-service/target/classes/application.yml
@@ -12,10 +13,12 @@
 /discovery-service/.dockerignore
 /discovery-service/mvnw
 /discovery-service/mvnw.cmd
+/discovery-service/target/*
 /api-gateway-service/.mvn/wrapper/maven-wrapper.properties
 /api-gateway-service/.dockerignore
 /api-gateway-service/mvnw
 /api-gateway-service/mvnw.cmd
+/api-gateway-service/target/*
 /dvdtheque-commons/target/*
 /dvdtheque-commons/mvnw
 /dvdtheque-commons/mvnw.cmd
