@@ -5,7 +5,7 @@ pipeline {
         jdk 'jdk21'
     }
     environment {
-    	def DEV_SERVER1_IP = '192.168.1.103'
+    	//def DEV_SERVER1_IP = '192.168.1.103'
     	def DEV_SERVER2_IP = '192.168.1.105'
     	def PROD_SERVER1_IP = '192.168.1.108'
     	def PROD_SERVER2_IP = '192.168.1.106'
@@ -98,16 +98,16 @@ pipeline {
                 dir("dvdtheque-service") {
                     buildService(params.env_deploy)
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
-                    sh """
+                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
+                    /*sh """
                         scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-                    """
+                    """*/
                     sh """
                         scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
                     """
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
+                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
+                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
                 }
             }
@@ -141,17 +141,17 @@ pipeline {
                 buildCommons()
                 dir("dvdtheque-tmdb-service") {
                     buildService(params.env_deploy)
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
+                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
- 			 		sh """
+ 			 		/*sh """
  			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
- 			 		"""
+ 			 		"""*/
  			 		sh """
  			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
  			 		"""
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
+                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
+                   // sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-tmdb.service'
                 }
             }
