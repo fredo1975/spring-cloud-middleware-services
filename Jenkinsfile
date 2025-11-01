@@ -2,7 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'Maven 3.9.6'
-        jdk 'jdk17'
+        jdk 'jdk21'
     }
     environment {
     	def DEV_SERVER1_IP = '192.168.1.103'

@@ -20,6 +20,7 @@
 /api-gateway-service/mvnw.cmd
 /api-gateway-service/target/*
 /dvdtheque-commons/target/*
+/dvdtheque-commons/target/classes/*
 /dvdtheque-commons/mvnw
 /dvdtheque-commons/mvnw.cmd
 /dvdtheque-service/target/*
@@ -42,3 +43,4 @@
 /dvdtheque-batch-service/mvnw.cmd
 /dvdtheque-batch-service/.mvn/wrapper/maven-wrapper.properties
 /dvdtheque-batch-service/.dockerignore
+/dvdtheque-commons/target/
