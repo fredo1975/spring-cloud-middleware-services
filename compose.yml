@@ -7,6 +7,8 @@ services:
       - "8083:8083" # dvdtheque-service port
       - "5005:5005" # dvdtheque-service debug port
       - "8087:8087" # dvdtheque-allocine-service port
+      - "8088:8088" # dvdtheque-mcp-server port
+      - "5008:5008" # dvdtheque-mcp-server debug port
       - "5007:5007" # dvdtheque-allocine-service debug port
       - "8089:8089" # dvdtheque-batch-service port
       - "5009:5009" # dvdtheque-batch-service debug port
@@ -101,6 +103,14 @@ services:
     build:
       context: ./dvdtheque-batch-service
     container_name: dvdtheque-batch-service
+    network_mode: "service:localhost"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+  mcp-service:
+    build:
+      context: ./dvdtheque-mcp-server
+    container_name: dvdtheque-mcp-server
     network_mode: "service:localhost"
     depends_on:
       discovery-service:

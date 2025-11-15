@@ -29,6 +29,7 @@ import javax.annotation.security.RolesAllowed;
 import enums.DvdFormat;
 import enums.FilmOrigine;
 import exceptions.DvdthequeServerRestException;
+import fr.bluechipit.dvdtheque.model.FilmDto;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
@@ -823,5 +824,14 @@ public class FilmController {
 			logger.error("an error occured while exporting film search", e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
+	}
+	@RolesAllowed("user")
+	@GetMapping("/film/{titre}")
+	ResponseEntity<FilmDto> getFilmByTitre(@PathVariable String titre){
+		var dehydratedFilm = paginatedSarch("titre:eq:"+titre+":AND",1).getContent().get(0);
+		if(dehydratedFilm == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(FilmDto.toDto(dehydratedFilm));
 	}
 }

@@ -23,7 +23,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class WebSecurityConfig {
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests((authz) -> authz.requestMatchers("/dvdtheque-ws/**").permitAll().anyRequest().authenticated())
+		http.authorizeHttpRequests((authz) -> authz.requestMatchers("/dvdtheque-ws/**").permitAll()
+                        .anyRequest().authenticated())
 	       .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
                 .jwt(jwtConfigurer -> jwtConfigurer
                         .jwtAuthenticationConverter(jwtAuthenticationConverter())));

@@ -1,6 +1,8 @@
 package fr.bluechipit.dvdtheque.model;
 
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,10 +30,9 @@ public class FilmDto implements Serializable {
 	private boolean ripped;
 	private String posterPath;
 	private Long tmdbId;
-	/*
-	private Set<ActeurDto> acteurs = new HashSet<ActeurDto>(0); 
-	private Set<RealisateurDto> realisateurs= new HashSet<RealisateurDto>(0);
-	*/
+	private Date dateInsertion;
+	private boolean vu;
+	private LocalDate dateVue;
 	public FilmDto() {
 		super();
 		personnesFilm = new PersonnesFilm();
@@ -98,6 +99,25 @@ public class FilmDto implements Serializable {
 	public void setTmdbId(Long tmdbId) {
 		this.tmdbId = tmdbId;
 	}
+	public Date getDateInsertion() {
+		return dateInsertion;
+	}
+	public void setDateInsertion(Date dateInsertion) {
+		this.dateInsertion = dateInsertion;
+	}
+	public boolean isVu() {
+		return vu;
+	}
+	public void setVu(boolean vu) {
+		this.vu = vu;
+	}
+	public LocalDate getDateVue() {
+		return dateVue;
+	}
+	public void setDateVue(LocalDate dateVue) {
+		this.dateVue = dateVue;
+	}
+
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this).
@@ -149,6 +169,9 @@ public class FilmDto implements Serializable {
 		filmDto.setRipped(film.getDvd().isRipped());
 		filmDto.setPosterPath(film.getPosterPath());
 		filmDto.setTmdbId(film.getTmdbId());
+		filmDto.setDateInsertion(film.getDateInsertion());
+		filmDto.setVu(film.isVu());
+		filmDto.setDateVue(film.getDateVue());
 		return filmDto;
 	}
 	

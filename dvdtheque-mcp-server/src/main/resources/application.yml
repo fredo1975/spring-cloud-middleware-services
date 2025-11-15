@@ -1,0 +1,19 @@
+server:
+  port: 8088
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: dvdtheque-mcp-server
+  cloud:
+    config:
+      fail-fast: true
+      uri: http://localhost:8888
+logging:
+  level:
+    root: info
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
