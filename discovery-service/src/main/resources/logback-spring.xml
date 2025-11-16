@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+ 
+    <property name="LOGS" value="./logs" />
+ 
+    <appender name="Console"
+        class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %d %p [%t] %m%n
+            </Pattern>
+        </layout>
+    </appender>
+ 
+    <appender name="RollingFile"
+        class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOGS}/dvdtheque-discovery-service.log</file>
+        <encoder
+            class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d %p [%t] %m%n</Pattern>
+        </encoder>
+ 
+        <rollingPolicy
+            class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily and when the file reaches 10 MegaBytes -->
+            <fileNamePattern>${LOGS}/archived/dvdtheque-discovery-service-logger-%d{yyyy-MM-dd}.%i.log
+            </fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Profil par défaut : console + fichier (utile en dev/production non-containerisée) -->
+    <springProfile name="dev1,dev2,prod1,prod2">
+        <root level="INFO">
+            <appender-ref ref="Console" />
+            <appender-ref ref="RollingFile" />
+        </root>
+
+        <logger name="fr.bluechipit.dvdtheque" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+            <appender-ref ref="RollingFile" />
+        </logger>
+    </springProfile>
+
+    <!-- Profil docker : n'utiliser que la console (logs vers stdout/stderr) -->
+    <springProfile name="docker">
+        <root level="INFO">
+            <appender-ref ref="Console" />
+        </root>
+
+        <logger name="fr.bluechipit.dvdtheque" level="INFO" additivity="false">
+            <appender-ref ref="Console" />
+        </logger>
+    </springProfile>
+ 
+</configuration>
