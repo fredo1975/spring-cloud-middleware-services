@@ -6,17 +6,18 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.1</version>
+        <version>3.5.7</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>fr.bluechipit.dvdtheque.allocine</groupId>
     <artifactId>dvdtheque-allocine-service</artifactId>
     <version>1.0</version>
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <spring-cloud.dependency.version>2023.0.0</spring-cloud.dependency.version>
-        <activemq.version>5.15.10</activemq.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <java.version>21</java.version>
+        <spring-cloud.dependency.version>2025.0.0</spring-cloud.dependency.version>
+        <activemq.version>6.1.8</activemq.version>
         <spring-boot-admin.version>2.3.0</spring-boot-admin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
