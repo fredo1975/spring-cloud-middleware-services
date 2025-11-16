@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.7</version>
+        <version>3.4.1</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>fr.bluechipit.config</groupId>
@@ -18,7 +18,7 @@
         <maven.compiler.target>21</maven.compiler.target>
         <java.version>21</java.version>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <spring-cloud.dependency.version>2025.0.0</spring-cloud.dependency.version>
+        <spring-cloud.dependency.version>2024.0.0</spring-cloud.dependency.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
