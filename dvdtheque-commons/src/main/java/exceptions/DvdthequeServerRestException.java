@@ -10,7 +10,7 @@ public class DvdthequeServerRestException extends Exception {
 	private static final long serialVersionUID = 1L;
 
 	public DvdthequeServerRestException(Class<?> clazz, String... searchParamsMap) {
-        super(DvdthequeServerRestException.generateMessage(clazz.getSimpleName(), toMap(String.class, String.class, searchParamsMap)));
+        super(DvdthequeServerRestException.generateMessage(clazz.getSimpleName(), toMap(String.class, String.class, (Object) searchParamsMap)));
     }
 
     private static String generateMessage(String entity, Map<String, String> searchParams) {
