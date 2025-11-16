@@ -50,7 +50,6 @@ pipeline {
                 		    steps {
                                 echo "Building service-config on dev env"
                                 gitCheckout(params.env_deploy)
-                                buildCommons()
                                 dir("config-service") {
                                     buildService(params.env_deploy)
                                     sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-server-config.service'
@@ -69,7 +68,6 @@ pipeline {
                                         		    steps {
                                                         echo "Building service-config on prod env"
                                                         gitCheckout(params.env_deploy)
-                                                        buildCommons()
                                                         dir("config-service") {
                                                             buildService(params.env_deploy)
                                                             sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-server-config.service'
@@ -92,7 +90,6 @@ pipeline {
         		    steps {
                         echo "Building discovery-service on dev env"
                         gitCheckout(params.env_deploy)
-                        buildCommons()
                         dir("discovery-service") {
                             buildService(params.env_deploy)
                             sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
@@ -111,7 +108,6 @@ pipeline {
                         steps {
                            echo "Building discovery-service on prod env"
                            gitCheckout(params.env_deploy)
-                           buildCommons()
                            dir("discovery-service") {
                            buildService(params.env_deploy)
                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-discovery-server.service'
