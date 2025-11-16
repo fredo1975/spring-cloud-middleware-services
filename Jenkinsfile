@@ -134,12 +134,12 @@ pipeline {
                                 gitCheckout(params.env_deploy)
                                 dir("api-gateway-service") {
                                     buildService(params.env_deploy)
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-api-gateway-service.service'
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-api-gateway-server.service'
                                     sh """
                                         scp target/api-gateway-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/ dvdtheque_api_gateway_server_service/api-gateway-service.jar
                                     """
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start api-gateway-service.service'
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status api-gateway-service.service'
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start api-gateway-server.service'
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status api-gateway-server.service'
                                 }
                             }
                 		}
