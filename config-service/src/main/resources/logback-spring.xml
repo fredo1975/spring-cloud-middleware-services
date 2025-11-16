@@ -33,7 +33,7 @@
     </appender>
 
     <!-- Profil par défaut : console + fichier (utile en dev/production non-containerisée) -->
-    <springProfile name="dev1,dev2,prod1,prod2">
+    <springProfile name="dev,prod">
         <root level="INFO">
             <appender-ref ref="Console" />
             <appender-ref ref="RollingFile" />
