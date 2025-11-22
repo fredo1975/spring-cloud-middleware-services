@@ -4,7 +4,7 @@ import fr.bluechipit.dvdtheque.allocine.AllocineServiceApplication;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
-import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
+import fr.bluechipit.dvdtheque.allocine.config.test.HazelcastConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = {HazelcastConfiguration.class, AllocineServiceApplication.class})
+@SpringBootTest(classes = {fr.bluechipit.dvdtheque.allocine.config.test.HazelcastConfiguration.class, AllocineServiceApplication.class})
 @ActiveProfiles("test")
 public class AllocineServiceIntegrationTest {
 	@MockBean
