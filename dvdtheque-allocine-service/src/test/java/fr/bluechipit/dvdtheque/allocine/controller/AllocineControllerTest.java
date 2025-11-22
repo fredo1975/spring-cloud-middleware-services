@@ -2,7 +2,6 @@ package fr.bluechipit.dvdtheque.allocine.controller;
 
 
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
-import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;

@@ -1,7 +1,6 @@
 package fr.bluechipit.dvdtheque.allocine.controller;
 
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
-import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import jakarta.annotation.security.RolesAllowed;
@@ -11,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
