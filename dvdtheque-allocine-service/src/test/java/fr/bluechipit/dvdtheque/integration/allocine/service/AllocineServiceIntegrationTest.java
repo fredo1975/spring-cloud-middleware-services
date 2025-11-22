@@ -85,7 +85,7 @@ public class AllocineServiceIntegrationTest {
 		assertNotNull(it);
 		var f = it.next();
 		assertNotNull(f);
-		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.getTitle());
+		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.title());
 		var query = "title:eq:it:AND";
 		page = allocineService.paginatedSarch(query, 1, 1, "-title");
 		assertNotNull(page);
@@ -95,6 +95,6 @@ public class AllocineServiceIntegrationTest {
 		assertNotNull(it);
 		f = it.next();
 		assertNotNull(f);
-		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.getTitle());
+		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.title());
 	}
 }

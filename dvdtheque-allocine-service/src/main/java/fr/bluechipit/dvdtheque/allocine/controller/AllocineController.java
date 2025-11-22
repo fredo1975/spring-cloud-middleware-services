@@ -2,6 +2,7 @@ package fr.bluechipit.dvdtheque.allocine.controller;
 
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
+import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.collections.CollectionUtils;
@@ -25,10 +26,10 @@ public class AllocineController {
 
 	@RolesAllowed({"batch"})
 	@GetMapping("/byTitle")
-	public ResponseEntity<List<FicheFilmDto>> getAllocineFicheFilmByTitle(@RequestParam(name = "title", required = false) String title,
+	public ResponseEntity<List<FicheFilmRec>> getAllocineFicheFilmByTitle(@RequestParam(name = "title", required = false) String title,
 			@RequestParam(name = "titleO", required = false) String titleO) {
 		List<FicheFilm> l = allocineService.retrieveFicheFilmByTitle(title);
-		List<FicheFilmDto> ll = new ArrayList<>();
+		List<FicheFilmRec> ll = new ArrayList<>();
 		if(CollectionUtils.isNotEmpty(l)) {
 			for(FicheFilm ficheFilm : l) {
 				ll.add(convertToDto(ficheFilm));
@@ -46,13 +47,13 @@ public class AllocineController {
 
 	@RolesAllowed({"batch"})
 	@GetMapping("/byId")
-	public ResponseEntity<FicheFilmDto> getAllocineFicheFilmById(@RequestParam(name = "id", required = true) Integer id) {
+	public ResponseEntity<FicheFilmRec> getAllocineFicheFilmById(@RequestParam(name = "id", required = true) Integer id) {
 		Optional<FicheFilm> ficheFilm = allocineService.retrieveFicheFilm(id);
         return ficheFilm.map(film -> ResponseEntity.ok(convertToDto(film))).orElseGet(() -> ResponseEntity.notFound().build());
     }
-	private FicheFilmDto convertToDto(FicheFilm ficheFilm) {
+	private FicheFilmRec convertToDto(FicheFilm ficheFilm) {
 		if(ficheFilm != null) {
-            return modelMapper.map(ficheFilm, FicheFilmDto.class);
+            return modelMapper.map(ficheFilm, FicheFilmRec.class);
 		}
 		return null;
 	}
@@ -70,7 +71,7 @@ public class AllocineController {
 	
 	@RolesAllowed("user")
 	@GetMapping("/paginatedSarch")
-	public ResponseEntity<Page<FicheFilmDto>> paginatedSarch(@RequestParam(name = "query", required = false)String query,
+	public ResponseEntity<Page<FicheFilmRec>> paginatedSarch(@RequestParam(name = "query", required = false)String query,
 			@RequestParam(name = "offset", required = false)Integer offset,
 			@RequestParam(name = "limit", required = false)Integer limit,
 			@RequestParam(name = "sort", required = false)String sort){

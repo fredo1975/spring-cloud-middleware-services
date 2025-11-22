@@ -5,7 +5,7 @@ import com.hazelcast.map.IMap;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.domain.Page;
-import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
+import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.repository.FicheFilmRepository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import specifications.filter.PageRequestBuilder;
 import specifications.filter.SpecificationsBuilder;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -119,19 +120,19 @@ public class AllocineServiceImpl implements AllocineService {
 	
 	@Override
 	@Transactional(readOnly = true)
-	public org.springframework.data.domain.Page<FicheFilmDto> paginatedSarch(String query,
+	public org.springframework.data.domain.Page<FicheFilmRec> paginatedSarch(String query,
 																			 Integer offset,
 																			 Integer limit,
 																			 String sort){
 		var page = buildDefaultPageRequest(offset, limit, sort);
 		if(StringUtils.isEmpty(query)) {
 			var p = ficheFilmRepository.findAll(page);
-			var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmDto.class)).collect(Collectors.toList());
-			return new PageImpl<FicheFilmDto>(l,page,p.getTotalElements()); 
+			var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmRec.class)).collect(Collectors.toList());
+			return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
 		}
 		var p = ficheFilmRepository.findAll(builder.with(query).build(), page);
-		var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmDto.class)).collect(Collectors.toList());
-        return new PageImpl<FicheFilmDto>(l,page,p.getTotalElements()); 
+		var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmRec.class)).collect(Collectors.toList());
+        return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
 	}
 	
 	private synchronized Page inc(AtomicInteger pageNum) {
@@ -199,13 +200,12 @@ public class AllocineServiceImpl implements AllocineService {
 	}
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW,readOnly = false)
-	public List<FicheFilm> saveFicheFilmList(List<FicheFilm> ficheFilmList) {
+	public void saveFicheFilmList(List<FicheFilm> ficheFilmList) {
 		try{
-			return ficheFilmRepository.saveAll(ficheFilmList);
+			ficheFilmRepository.saveAll(ficheFilmList);
 		}catch(Exception e) {
 			logger.error("an error occured while saving ficheFilm {}",ficheFilmList.toString(),e);
 		}
-		return List.of();
 	}
 	/**
 	 * 

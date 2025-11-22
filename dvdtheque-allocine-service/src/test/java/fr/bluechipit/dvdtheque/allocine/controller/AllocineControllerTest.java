@@ -3,6 +3,7 @@ package fr.bluechipit.dvdtheque.allocine.controller;
 
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
+import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
 import org.junit.jupiter.api.Test;
@@ -79,11 +80,11 @@ public class AllocineControllerTest {
 	public void paginatedSarch() throws Exception {
 		var film = new FicheFilm("title",1,"url",1);
 		film.setId(1);
-		var dto = modelMapper.map(film, FicheFilmDto.class);
-		var l = new ArrayList<FicheFilmDto>();
+		var dto = modelMapper.map(film, FicheFilmRec.class);
+		var l = new ArrayList<FicheFilmRec>();
 		l.add(dto);
 		Mockito.when(allocineService.paginatedSarch(anyString(),anyInt(),anyInt(),anyString()))
-		.thenReturn(new PageImpl<FicheFilmDto>(l,PageRequest.of(0, 10),l.size()));
+		.thenReturn(new PageImpl<FicheFilmRec>(l,PageRequest.of(0, 10),l.size()));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/paginatedSarch")
 				.param("query", "")
 				.param("offset", String.valueOf(1))
