@@ -1,4 +1,4 @@
-package fr.bluechipit.dvdtheque.allocine.config;
+package fr.bluechipit.dvdtheque.allocine.config.test;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
