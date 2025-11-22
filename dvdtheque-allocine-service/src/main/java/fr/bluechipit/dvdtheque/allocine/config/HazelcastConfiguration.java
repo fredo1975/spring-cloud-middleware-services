@@ -1,4 +1,4 @@
-package fr.bluechipit.dvdtheque.allocine.config.test;
+package fr.bluechipit.dvdtheque.allocine.config;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.MapConfig;
