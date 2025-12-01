@@ -8,6 +8,7 @@ import com.hazelcast.core.HazelcastInstance;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +18,8 @@ import java.util.List;
 
 @Configuration
 @ComponentScan
-@Profile({ "prod1","prod2","dev1","dev2","local1","local2" ,"docker"})
+@ConditionalOnProperty(prefix = "hazelcast", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Profile({ "prod1","prod2","dev1","dev2","local1","local2" ,"docker","test"})
 public class HazelcastConfiguration {
 	@Value("${hazelcast.cluster-name}")
 	private String clusterName;
