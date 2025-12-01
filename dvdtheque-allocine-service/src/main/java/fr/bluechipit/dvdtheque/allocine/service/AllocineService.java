@@ -1,7 +1,7 @@
 package fr.bluechipit.dvdtheque.allocine.service;
 
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
-import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
+import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -14,10 +14,10 @@ public interface AllocineService {
 	List<FicheFilm> retrieveFicheFilmByTitle(String title);
 	Optional<FicheFilm> findByFicheFilmId(Integer ficheFilmId);
 	FicheFilm saveFicheFilm(FicheFilm ficheFilm);
-	void saveFicheFilmList(List<FicheFilm> ficheFilmList);
+	List<FicheFilm> saveFicheFilmList(List<FicheFilm> ficheFilmList);
 	Optional<FicheFilm> findInCacheByFicheFilmId(Integer ficheFilmId);
 	Optional<List<FicheFilm>> findInCacheByFicheFilmTitle(String title);
-	Page<FicheFilmRec> paginatedSarch(String query, Integer offset, Integer limit, String sort);
+	Page<FicheFilmDto> paginatedSarch(String query, Integer offset, Integer limit, String sort);
 	/**
 	 * 
 	 */
