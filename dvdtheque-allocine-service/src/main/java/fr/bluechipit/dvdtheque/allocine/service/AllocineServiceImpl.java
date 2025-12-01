@@ -5,7 +5,7 @@ import com.hazelcast.map.IMap;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.domain.Page;
-import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
+import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmDto;
 import fr.bluechipit.dvdtheque.allocine.repository.FicheFilmRepository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -14,9 +14,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.context.annotation.ComponentScan;
@@ -28,7 +30,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import specifications.filter.PageRequestBuilder;
 import specifications.filter.SpecificationsBuilder;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -42,7 +43,10 @@ import java.util.stream.Collectors;
 public class AllocineServiceImpl implements AllocineService {
 	protected Logger logger = LoggerFactory.getLogger(AllocineServiceImpl.class);
 	private final FicheFilmRepository ficheFilmRepository;
-	private final Environment environment;
+	@Autowired
+    private ModelMapper modelMapper;
+	@Autowired
+	Environment environment;
 	private final static String AHREF = "a[href]";
 	private final static String HREF = "href";
 	private final static String SPAN = "span";
@@ -67,23 +71,21 @@ public class AllocineServiceImpl implements AllocineService {
 	@Value("${fichefilm.parsing.page}")
 	private int nbParsedPage;
 	private final HazelcastInstance instance;
-	private final SpecificationsBuilder<FicheFilm> builder;
 	IMap<Integer, FicheFilm> mapFicheFilms;
 	IMap<String, List<FicheFilm>> mapFicheFilmsByTtile;
 	@Autowired
-	AllocineServiceImpl(FicheFilmRepository ficheFilmRepository,HazelcastInstance instance,
-						Environment environment,
-						SpecificationsBuilder<FicheFilm> builder,
-						ExecutorService fixedThreadPool) {
+	AllocineServiceImpl(FicheFilmRepository ficheFilmRepository,HazelcastInstance instance) {
 		this.ficheFilmRepository = ficheFilmRepository;
 		this.instance = instance;
-		this.environment = environment;
-		this.builder = builder;
-		this.fixedThreadPool = fixedThreadPool;
 		this.init();
 	}
-
-    private final ExecutorService fixedThreadPool;
+	
+	@Autowired
+	private SpecificationsBuilder<FicheFilm> builder;
+	
+	@Autowired
+    @Qualifier("fixedThreadPool")
+    private ExecutorService executorService;
 	private AtomicInteger pageNum;
 	
 	public void init() {
@@ -117,19 +119,19 @@ public class AllocineServiceImpl implements AllocineService {
 	
 	@Override
 	@Transactional(readOnly = true)
-	public org.springframework.data.domain.Page<FicheFilmRec> paginatedSarch(String query,
+	public org.springframework.data.domain.Page<FicheFilmDto> paginatedSarch(String query,
 																			 Integer offset,
 																			 Integer limit,
 																			 String sort){
 		var page = buildDefaultPageRequest(offset, limit, sort);
 		if(StringUtils.isEmpty(query)) {
 			var p = ficheFilmRepository.findAll(page);
-			var l = p.getContent().stream().map(f->FicheFilmRec.fromEntity(f)).collect(Collectors.toList());
-			return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
+			var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmDto.class)).collect(Collectors.toList());
+			return new PageImpl<FicheFilmDto>(l,page,p.getTotalElements()); 
 		}
 		var p = ficheFilmRepository.findAll(builder.with(query).build(), page);
-		var l = p.getContent().stream().map(f->FicheFilmRec.fromEntity(f)).collect(Collectors.toList());
-        return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
+		var l = p.getContent().stream().map(f->modelMapper.map(f, FicheFilmDto.class)).collect(Collectors.toList());
+        return new PageImpl<FicheFilmDto>(l,page,p.getTotalElements()); 
 	}
 	
 	private synchronized Page inc(AtomicInteger pageNum) {
@@ -181,7 +183,7 @@ public class AllocineServiceImpl implements AllocineService {
 				
 				return res;
 			};
-			fixedThreadPool.submit(callableTask);
+			executorService.submit(callableTask);
 		}
 		logger.info("***** end scrapping allociné critiques presse *****");
 	}
@@ -197,12 +199,13 @@ public class AllocineServiceImpl implements AllocineService {
 	}
 	@Override
 	@Transactional(propagation = Propagation.REQUIRES_NEW,readOnly = false)
-	public void saveFicheFilmList(List<FicheFilm> ficheFilmList) {
+	public List<FicheFilm> saveFicheFilmList(List<FicheFilm> ficheFilmList) {
 		try{
-			ficheFilmRepository.saveAll(ficheFilmList);
+			return ficheFilmRepository.saveAll(ficheFilmList);
 		}catch(Exception e) {
 			logger.error("an error occured while saving ficheFilm {}",ficheFilmList.toString(),e);
 		}
+		return List.of();
 	}
 	/**
 	 * 
