@@ -43,6 +43,46 @@ pipeline {
 				}
 			}
 		}
+		stage('Building config-service on dev env') {
+                		    when {
+                                expression { params.project == 'service-config' && params.env_deploy == 'dev'}
+                            }
+                		    steps {
+                                echo "Building service-config on dev env"
+                                gitCheckout(params.env_deploy)
+                                dir("config-service") {
+                                    buildService(params.env_deploy)
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-server-config.service'
+                                    sh """
+                                        scp target/config-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_server_config_service/config-service.jar
+                                    """
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-server-config.service'
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-server-config.service'
+                                }
+                            }
+                		}
+                		stage('Building config-service on prod env') {
+                                        		    when {
+                                                        expression { params.project == 'service-config' && params.env_deploy == 'prod'}
+                                                    }
+                                        		    steps {
+                                                        echo "Building service-config on prod env"
+                                                        gitCheckout(params.env_deploy)
+                                                        dir("config-service") {
+                                                            buildService(params.env_deploy)
+                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-server-config.service'
+                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-server-config.service'
+                                                            sh """
+                                                                scp target/config-service-${VERSION}.jar jenkins@${$PROD_SERVER1_IP}:/opt/dvdtheque_server_config_service/config-service.jar
+                                                                scp target/config-service-${VERSION}.jar jenkins@${$PROD_SERVER2_IP}:/opt/dvdtheque_server_config_service/config-service.jar
+                                                            """
+                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-server-config.service'
+                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-server-config.service'
+                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-server-config.service'
+                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-server-config.service'
+                                                        }
+                                                    }
+                                        		}
 		stage('Building discovery-service on dev env') {
         		    when {
                         expression { params.project == 'eureka' && params.env_deploy == 'dev'}
@@ -50,7 +90,6 @@ pipeline {
         		    steps {
                         echo "Building discovery-service on dev env"
                         gitCheckout(params.env_deploy)
-                        buildCommons()
                         dir("discovery-service") {
                             buildService(params.env_deploy)
                             sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
@@ -69,7 +108,6 @@ pipeline {
                         steps {
                            echo "Building discovery-service on prod env"
                            gitCheckout(params.env_deploy)
-                           buildCommons()
                            dir("discovery-service") {
                            buildService(params.env_deploy)
                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-discovery-server.service'
@@ -87,6 +125,24 @@ pipeline {
                         }
                      }
                  }
+        stage('Building api-gateway-service on dev env') {
+                		    when {
+                                expression { params.project == 'api-gateway' && params.env_deploy == 'dev'}
+                            }
+                		    steps {
+                                echo "Building api-gateway-service on dev env"
+                                gitCheckout(params.env_deploy)
+                                dir("api-gateway-service") {
+                                    buildService(params.env_deploy)
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-api-gateway-server.service'
+                                    sh """
+                                        scp target/api-gateway-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_api_gateway_server_service/api-gateway-service.jar
+                                    """
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-api-gateway-server.service'
+                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-api-gateway-server.service'
+                                }
+                            }
+                		}
 		stage('Building dvdtheque-service on dev env') {
 		    when {
                 expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}

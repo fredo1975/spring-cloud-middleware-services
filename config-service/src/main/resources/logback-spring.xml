@@ -26,14 +26,14 @@
             <fileNamePattern>${LOGS}/archived/dvdtheque-config-service-logger-%d{yyyy-MM-dd}.%i.log
             </fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy
-                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFileNamingAndTriggeringPolicy">
                 <maxFileSize>10MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
     </appender>
 
     <!-- Profil par défaut : console + fichier (utile en dev/production non-containerisée) -->
-    <springProfile name="dev1,dev2,prod1,prod2">
+    <springProfile name="dev,prod">
         <root level="INFO">
             <appender-ref ref="Console" />
             <appender-ref ref="RollingFile" />

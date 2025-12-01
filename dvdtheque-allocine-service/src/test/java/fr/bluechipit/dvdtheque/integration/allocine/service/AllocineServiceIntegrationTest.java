@@ -4,7 +4,7 @@ import fr.bluechipit.dvdtheque.allocine.AllocineServiceApplication;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
-import fr.bluechipit.dvdtheque.integration.allocine.config.HazelcastConfiguration;
+import fr.bluechipit.dvdtheque.allocine.config.test.HazelcastConfiguration;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -85,7 +85,7 @@ public class AllocineServiceIntegrationTest {
 		assertNotNull(it);
 		var f = it.next();
 		assertNotNull(f);
-		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.getTitle());
+		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.title());
 		var query = "title:eq:it:AND";
 		page = allocineService.paginatedSarch(query, 1, 1, "-title");
 		assertNotNull(page);
@@ -95,6 +95,6 @@ public class AllocineServiceIntegrationTest {
 		assertNotNull(it);
 		f = it.next();
 		assertNotNull(f);
-		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.getTitle());
+		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.title());
 	}
 }

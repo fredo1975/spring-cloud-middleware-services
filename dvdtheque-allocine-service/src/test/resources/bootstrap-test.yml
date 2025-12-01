@@ -1,4 +1,4 @@
-debug: false
+debug: true
 
 spring:
   datasource:
@@ -28,16 +28,4 @@ fichefilm:
     cron: 0 44 23 * * ?
     
 hazelcast:
-  cluster-name: hazelcast-allocine-local
-  networkconfig:
-    interface: 192.168.1.*
-    tcpipconfig:
-      members: 192.168.1.24
-  network:
-    port:
-      auto-increment: true
-      port-count: 100
-      port: 5702
-    join:
-      auto-detection:
-        enabled: false
+  enabled: false
