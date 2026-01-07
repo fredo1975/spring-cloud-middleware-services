@@ -186,6 +186,16 @@ public class FilmServiceIntegrationTests {
 		f = it.next();
 		assertNotNull(f);
 		assertThat(f.getGenre()).contains(genre1);
+
+		page = filmService.paginatedSarch("origine:eq:"+FilmOrigine.DVD+":AND", 1, 1, "");
+		assertNotNull(page);
+		assertThat(page.getContent()).isNotEmpty();
+		assertThat(page.getContent().size()==1).isTrue();
+		it = page.getContent().iterator();
+		assertNotNull(it);
+		f = it.next();
+		assertNotNull(f);
+		assertThat(f.getOrigine()).isEqualTo(FilmOrigine.DVD);
 	}
 	@Test
 	public void saveNewFilm() throws ParseException {
