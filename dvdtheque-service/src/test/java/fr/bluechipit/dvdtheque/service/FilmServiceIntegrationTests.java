@@ -32,7 +32,6 @@ import org.springframework.format.datetime.DateFormatter;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
@@ -201,7 +200,7 @@ public class FilmServiceIntegrationTests {
 				.setDateSortie(FilmBuilder.FILM_DATE_SORTIE).setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
 				.setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
 				.setDvdFormat(DvdFormat.DVD)
-				.setOrigine(FilmOrigine.DVD)
+				.setOrigine(FilmOrigine.NETFLIX)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)

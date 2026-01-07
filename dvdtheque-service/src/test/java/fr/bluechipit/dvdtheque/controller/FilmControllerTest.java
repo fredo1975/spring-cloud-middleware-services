@@ -42,7 +42,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MockMvc;
@@ -1162,6 +1161,74 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.jsonPath("$.titre", Is.is(FilmBuilder.TITRE_FILM_TMBD_ID_844)));
 		mockServer.verify();
 		
+		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
+		var page = filmService.paginatedSarch(query, 1, 10, "");
+		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+		Film filmRetrieved = page.getContent().iterator().next();
+		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(filmRetrieved.getTitre());
+	}
+
+	@Test
+	@Transactional
+	public void testSaveNewFilmNetflix() throws Exception {
+		Results res = new Results();
+		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
+		res.setId(FilmBuilder.tmdbId2);
+		List<Genres> l = new ArrayList<>();
+		Genres genres1 = new Genres();
+		genres1.setName("Comedy");
+		genres1.setId(35);
+		l.add(genres1);
+		res.setGenres(l);
+		Credits credits = new Credits();
+		Crew crew = new Crew();
+		crew.setCredit_id("52fe42ecc3a36847f802d26d");
+		crew.setName("William Hoy");
+		crew.setJob("Director");
+		credits.setCrew(Lists.newArrayList(crew));
+		List<Cast> casts = new ArrayList<>();
+		Cast cast1 = new Cast();
+		cast1.setName(FilmBuilder.ACT1_TMBD_ID_844);
+		Cast cast2 = new Cast();
+		cast2.setName(FilmBuilder.ACT2_TMBD_ID_844);
+		Cast cast3 = new Cast();
+		cast3.setName(FilmBuilder.ACT3_TMBD_ID_844);
+		casts.add(cast1);
+		casts.add(cast2);
+		casts.add(cast3);
+		credits.setCast(casts);
+		mockServer.expect(ExpectedCount.once(),
+						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId())))
+				.andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
+
+		mockServer.expect(ExpectedCount.once(),
+						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId())))
+				.andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(mapper.writeValueAsString(TMDB_RELEASE_DATE), MediaType.APPLICATION_JSON));
+
+		mockServer.expect(ExpectedCount.once(),
+						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId())))
+				.andExpect(method(HttpMethod.GET))
+				.andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
+		Film film = new Film();
+		film.setTitre(FilmBuilder.TITRE_FILM_TMBD_ID_844);
+		simulateAlloCineServiceCall(film, null);
+
+		mockmvc.perform(MockMvcRequestBuilders
+						.put(SAVE_FILM_URI + FilmBuilder.tmdbId2)
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(FilmOrigine.DVD.name())
+						.with(jwt().jwt(build -> build.subject("test")))
+						.with(csrf()))
+				.andDo(MockMvcResultHandlers.print())
+				.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.titre", Is.is(FilmBuilder.TITRE_FILM_TMBD_ID_844)));
+		mockServer.verify();
+
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "");
 		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
