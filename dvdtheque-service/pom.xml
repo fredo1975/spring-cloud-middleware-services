@@ -11,8 +11,7 @@
     </parent>
     <groupId>fr.bluechipit.dvdtheque</groupId>
     <artifactId>dvdtheque-service</artifactId>
-    <version>1.0</version>
-
+    <version>1.0-SNAPSHOT</version>
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
@@ -21,16 +20,18 @@
         <activemq.version>6.1.8</activemq.version>
         <spring-boot-admin.version>2.3.0</spring-boot-admin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hazelcast.version>5.5.0</hazelcast.version>
     </properties>
     <dependencies>
         <dependency>
             <artifactId>dvdtheque-commons</artifactId>
             <groupId>fr.bluechipit.dvdtheque.commons</groupId>
-            <version>1.0</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
+            <version>${hazelcast.version}</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
@@ -77,7 +78,7 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>4.1.5</version>
+            <version>${hazelcast.version}</version>
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>

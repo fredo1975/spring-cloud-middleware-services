@@ -1,20 +1,18 @@
 package fr.bluechipit.dvdtheque.dao.specifications.filter;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-
-import javax.annotation.PostConstruct;
-
+import fr.bluechipit.dvdtheque.dao.domain.Dvd;
+import fr.bluechipit.dvdtheque.dao.domain.Genre;
+import jakarta.persistence.criteria.Join;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import fr.bluechipit.dvdtheque.dao.domain.Dvd;
-import fr.bluechipit.dvdtheque.dao.domain.Genre;
-import fr.bluechipit.dvdtheque.dao.domain.Personne;
-import jakarta.persistence.criteria.Join;
 import specifications.filter.FilterOperation;
 import specifications.filter.SearchCriteria;
+
+import javax.annotation.PostConstruct;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 @Component
 public class SpecificationFactory<T> {
@@ -53,7 +51,7 @@ public class SpecificationFactory<T> {
             		return builder.equal(join.get("ripped"),Boolean.valueOf((String) criteria.getValue()));
             	}
             	return builder.equal(join.get("format"),(String) criteria.getValue());
-			}else if(root.get(criteria.getKey()).getJavaType() == Personne.class) {
+			}else if(criteria.getKey().equals("realisateur") || criteria.getKey().equals("acteur") || criteria.getKey().equals("genre")) {
 				Join join = null;
             	if(((String)criteria.getKey()).equalsIgnoreCase("realisateur") || ((String)criteria.getKey()).equalsIgnoreCase("acteur")) {
     				join = root.join(criteria.getKey());
@@ -65,7 +63,7 @@ public class SpecificationFactory<T> {
     			}
 			}else if(root.get(criteria.getKey()).getJavaType() == boolean.class || root.get(criteria.getKey()).getJavaType() == Boolean.class) {
 				return builder.equal(root.get(criteria.getKey()),Boolean.valueOf((String) criteria.getValue()));
-			} else {
+			}else {
             	return builder.like(root.get(criteria.getKey()), "%"+StringUtils.upperCase(criteria.getValue().toString()) +"%");
             }
 		};
