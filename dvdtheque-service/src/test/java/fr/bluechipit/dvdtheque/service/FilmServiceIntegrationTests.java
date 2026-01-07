@@ -19,6 +19,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -86,52 +87,52 @@ public class FilmServiceIntegrationTests {
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var l = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		var it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var f = it.next();
-		assertNotNull(f);
+		Assertions.assertNotNull(f);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(f.getTitre());
 		query = "realisateur:eq:"+FilmBuilder.REAL_NOM_TMBD_ID_844+":AND";
 		l = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var r = it.next();
-		assertNotNull(r);
+		Assertions.assertNotNull(r);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(r.getTitre());
 		query = "acteur:eq:"+FilmBuilder.ACT1_TMBD_ID_844+":AND";
 		l = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var a = it.next();
-		assertNotNull(a);
+		Assertions.assertNotNull(a);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(a.getTitre());
 		query = "annee:eq:"+FilmBuilder.ANNEE+":AND";
 		l = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var an = it.next();
-		assertNotNull(an);
+		Assertions.assertNotNull(an);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(an.getTitre());
 		query = "allocineFicheFilmId:eq:"+FilmBuilder.ALLOCINE_FICHE_FILM_ID_844+":AND";
 		l = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var allocine = it.next();
-		assertNotNull(allocine);
+		Assertions.assertNotNull(allocine);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(allocine.getTitre());
 		query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		l = filmService.search(query, null, null, "");
-		assertNotNull(l);
+		Assertions.assertNotNull(l);
 		it = l.iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(allocine.getTitre());
 	}
 	@Test
@@ -156,45 +157,45 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 1, "-titre");
-		assertNotNull(page);
+		Assertions.assertNotNull(page);
 		assertThat(page.getContent()).isNotEmpty();
 		assertThat(page.getContent().size()==1).isTrue();
 		var it = page.getContent().iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		var f = it.next();
-		assertNotNull(f);
+		Assertions.assertNotNull(f);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(f.getTitre());
 		page = filmService.paginatedSarch("", 1, 1, "-titre");
-		assertNotNull(page);
+		Assertions.assertNotNull(page);
 		assertThat(page.getContent()).isNotEmpty();
 		assertThat(page.getContent().size()==1).isTrue();
 		it = page.getContent().iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		f = it.next();
-		assertNotNull(f);
+		Assertions.assertNotNull(f);
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(f.getTitre());
 
 		page = filmService.paginatedSarch("genre:eq:"+genre1.getName()+":AND", 1, 1, "");
-		assertNotNull(page);
+		Assertions.assertNotNull(page);
 		assertThat(page.getContent()).isNotEmpty();
 		assertThat(page.getContent().size()==1).isTrue();
 		it = page.getContent().iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		f = it.next();
-		assertNotNull(f);
+		Assertions.assertNotNull(f);
 		assertThat(f.getGenre()).contains(genre1);
 
 		page = filmService.paginatedSarch("origine:eq:"+FilmOrigine.DVD+":AND", 1, 1, "");
-		assertNotNull(page);
+		Assertions.assertNotNull(page);
 		assertThat(page.getContent()).isNotEmpty();
 		assertThat(page.getContent().size()==1).isTrue();
 		it = page.getContent().iterator();
-		assertNotNull(it);
+		Assertions.assertNotNull(it);
 		f = it.next();
-		assertNotNull(f);
+		Assertions.assertNotNull(f);
 		assertThat(f.getOrigine()).isEqualTo(FilmOrigine.DVD);
 	}
 	@Test
@@ -218,7 +219,7 @@ public class FilmServiceIntegrationTests {
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, true);
 	}
 
@@ -245,7 +246,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		String titre = StringUtils.replace(film.getTitre(), ":", "");
 		titre = StringUtils.replace(titre, "  ", " ");
 		Film retrievedFilm = filmService.findFilmByTitreWithoutSpecialsCharacters(titre);
@@ -274,7 +275,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		Film retrievedFilm = filmService.findFilm(film.getId());
 		FilmBuilder.assertFilmIsNotNull(retrievedFilm,false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		logger.debug(methodName + "retrievedFilm ="+retrievedFilm.toString());
@@ -306,10 +307,10 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE).setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		film = filmService.findFilm(film.getId());
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(film.getDvd());
+		Assertions.assertNotNull(film.getDvd());
 	}
 
 	@Test
@@ -331,11 +332,11 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, true);
 		List<Genre> genres = filmService.findAllGenres();
-		assertTrue(CollectionUtils.isNotEmpty(genres));
-	}
+        CollectionUtils.isNotEmpty(genres);
+    }
 
 	@Test
 	public void findAllDvd() throws Exception {
@@ -356,7 +357,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -374,7 +375,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
 				.setAct1Nom(FilmBuilder.ACT1_TMBD_ID_844)
@@ -391,7 +392,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId3 = filmService.saveNewFilm(film3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, null, null, false);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		Film film4 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
 				.setAct1Nom(FilmBuilder.ACT1_TMBD_ID_844)
@@ -408,7 +409,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId4 = filmService.saveNewFilm(film4);
 		FilmBuilder.assertFilmIsNotNull(film4, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, null, null, false);
-		assertNotNull(filmId4);
+		Assertions.assertNotNull(filmId4);
 		Film film5 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
 				.setAct1Nom(FilmBuilder.ACT1_TMBD_ID_844)
@@ -425,27 +426,27 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId5 = filmService.saveNewFilm(film5);
 		FilmBuilder.assertFilmIsNotNull(film5, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.TV, null, null, false);
-		assertNotNull(filmId5);
+		Assertions.assertNotNull(filmId5);
 
 		Page<Film> dvdFilms = filmService.findAllFilmByOrigine(FilmOrigine.DVD);
-		assertNotNull(dvdFilms);
+		Assertions.assertNotNull(dvdFilms);
 
-		assertTrue(CollectionUtils.isNotEmpty(dvdFilms.getContent()));
-		assertTrue("dvdFilms.size() should be 2 but is "+dvdFilms.getContent().size(),dvdFilms.getContent().size()==2);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(dvdFilms.getContent()));
+        assertEquals(2, dvdFilms.getContent().size(), "dvdFilms.size() should be 2 but is " + dvdFilms.getContent().size());
 		for(Film dvd : dvdFilms) {
 			FilmBuilder.assertFilmIsNotNull(dvd, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		}
 		Page<Film> enSalleFilms = filmService.findAllFilmByOrigine(FilmOrigine.EN_SALLE);
-		assertNotNull(enSalleFilms);
-		assertTrue(CollectionUtils.isNotEmpty(enSalleFilms.getContent()));
-		assertTrue("enSalleFilms.size() should be 2 but is "+enSalleFilms.getContent().size(),enSalleFilms.getContent().size()==2);
+		Assertions.assertNotNull(enSalleFilms);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(enSalleFilms.getContent()));
+        assertEquals(2, enSalleFilms.getContent().size(), "enSalleFilms.size() should be 2 but is " + enSalleFilms.getContent().size());
 		for(Film enSalle : enSalleFilms) {
 			FilmBuilder.assertFilmIsNotNull(enSalle, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		}
 		Page<Film> tvFilms = filmService.findAllFilmByOrigine(FilmOrigine.TV);
-		assertNotNull(tvFilms);
-		assertTrue(CollectionUtils.isNotEmpty(tvFilms.getContent()));
-		assertTrue("tvFilms.size() should be 1 but is "+tvFilms.getContent().size(),tvFilms.getContent().size()==1);
+		Assertions.assertNotNull(tvFilms);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(tvFilms.getContent()));
+        assertEquals(1, tvFilms.getContent().size(), "tvFilms.size() should be 1 but is " + tvFilms.getContent().size());
 		for(Film tv : tvFilms) {
 			FilmBuilder.assertFilmIsNotNull(tv, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.TV, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		}
@@ -471,12 +472,12 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		Set<Long> tmdbIds = new HashSet<>();
 		tmdbIds.add(film.getTmdbId());
 		Set<Long> films = filmService.findAllTmdbFilms(tmdbIds);
-		assertNotNull(films);
-		assertTrue(CollectionUtils.isNotEmpty(films));
+		Assertions.assertNotNull(films);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(films));
 
 	}
 
@@ -500,12 +501,12 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		List<Film> films = filmService.getAllRippedFilms();
-		assertTrue(CollectionUtils.isNotEmpty(films));
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(films));
 		for(Film f : films){
-			assertNotNull(f);
+			Assertions.assertNotNull(f);
 		}
 	}
 
@@ -528,21 +529,21 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		film.setTitre(FilmBuilder.TITRE_FILM_TMBD_ID_4780);
 		Personne real = personneService.buildPersonne(FilmBuilder.REAL_NOM_TMBD_ID_4780, null);
-		assertNotNull(real);
+		Assertions.assertNotNull(real);
 		Long idreal = personneService.savePersonne(real);
-		assertNotNull(idreal);
+		Assertions.assertNotNull(idreal);
 		real.setId(idreal);
 		film.getRealisateur().clear();
 		film.getRealisateur().add(real);
 
 		Personne act = personneService.buildPersonne(FilmBuilder.ACT4_TMBD_ID_844, null);
-		assertNotNull(act);
+		Assertions.assertNotNull(act);
 		Long idAct = personneService.savePersonne(act);
-		assertNotNull(idAct);
+		Assertions.assertNotNull(idAct);
 		act.setId(idAct);
 		film.getActeur().clear();
 		film.getActeur().add(act);
@@ -552,7 +553,7 @@ public class FilmServiceIntegrationTests {
 		Film filmUpdated = filmService.updateFilm(film);
 		//Film filmUpdated = filmService.findFilm(film.getId());
 
-		assertNotNull(filmUpdated);
+		Assertions.assertNotNull(filmUpdated);
 		//FilmBuilder.assertFilmIsNotNull(filmUpdated, true,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD);
 		assertThat(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780)).isEqualTo(filmUpdated.getTitre());
 		assertThat(FilmBuilder.REAL_NOM_TMBD_ID_4780).isEqualTo(filmUpdated.getRealisateur().iterator().next().getNom());
@@ -577,12 +578,12 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.EN_SALLE)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		film.setOrigine(FilmOrigine.DVD);
 		Film filmUpdated = filmService.updateFilm(film);
@@ -590,7 +591,7 @@ public class FilmServiceIntegrationTests {
 		assertThat(FilmOrigine.DVD).isEqualTo(filmUpdated.getOrigine());
 
 		assertEquals(Integer.valueOf(2), filmUpdated.getDvd().getZone());
-		assertTrue(filmUpdated.getDvd().isRipped());
+		Assertions.assertTrue(filmUpdated.getDvd().isRipped());
 	}
 	@Test
 	public void cleanAllFilms() throws ParseException {
@@ -613,7 +614,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, true);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -630,7 +631,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -647,7 +648,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId3 = filmService.saveNewFilm(film3);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		filmService.cleanAllFilms();
 
@@ -676,7 +677,7 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long dvdFilmId = filmService.saveNewFilm(dvdFilm);
-		assertNotNull(dvdFilmId);
+		Assertions.assertNotNull(dvdFilmId);
 		FilmBuilder.assertFilmIsNotNull(dvdFilm, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Film enSalleFilm = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -693,15 +694,15 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long enSalleFilmId = filmService.saveNewFilm(enSalleFilm);
-		assertNotNull(enSalleFilmId);
+		Assertions.assertNotNull(enSalleFilmId);
 		FilmBuilder.assertFilmIsNotNull(enSalleFilm, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		List<Film> films = filmService.findFilmByOrigine(FilmOrigine.EN_SALLE);
-		assertNotNull(films);
+		Assertions.assertNotNull(films);
 		for(Film f : films){
 			logger.debug(f.toString());
 		}
 		assertEquals(1, films.size());
-		assertThat(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780)).isEqualTo(films.get(0).getTitre());
+		assertThat(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780)).isEqualTo(films.getFirst().getTitre());
 
 		logger.debug(methodName + "end");
 	}
@@ -724,21 +725,21 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Long selectedActeurId = film.getActeur().iterator().next().getId();
 		List<Film> films = filmDao.findFilmByActeur(film.getActeur().iterator().next());
-		assertNotNull(films);
+		Assertions.assertNotNull(films);
 		for(Film f2 : films){
 			logger.debug(f2.toString());
 		}
 		assertEquals(1, films.size());
-		Film f2 = films.get(0);
-		assertNotNull(f2);
-		assertNotNull(f2.getActeur());
+		Film f2 = films.getFirst();
+		Assertions.assertNotNull(f2);
+		Assertions.assertNotNull(f2.getActeur());
 		Optional<Personne> op = f2.getActeur().stream().filter(acteurDto -> acteurDto.getId().equals(selectedActeurId)).findAny();
 		Personne acteur = op.get();
-		assertNotNull(acteur);
+		Assertions.assertNotNull(acteur);
 		assertEquals(selectedActeurId, acteur.getId());
 	}
 	@Test
@@ -760,22 +761,22 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		List<Film> films = filmDao.findFilmByTitre(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		assertNotNull(films);
+		Assertions.assertNotNull(films);
 		for(Film f2 : films){
 			logger.debug(f2.toString());
 		}
 		assertEquals(1, films.size());
-		Film f2 = films.get(0);
+		Film f2 = films.getFirst();
 		assertThat(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844)).isEqualTo(f2.getTitre());
 
 		Set<Personne> realisateurSet = f2.getRealisateur();
-		assertNotNull(realisateurSet);
+		Assertions.assertNotNull(realisateurSet);
 		assertEquals(1,realisateurSet.size());
 		Personne realisateur = realisateurSet.iterator().next();
-		assertNotNull(realisateur);
+		Assertions.assertNotNull(realisateur);
 		Personne real = personneService.findByPersonneId(realisateur.getId());
 		assertThat(real.getNom()).isEqualTo(realisateur.getNom());
 		assertThat(real.getPrenom()).isEqualTo(realisateur.getPrenom());
@@ -798,12 +799,12 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.EN_SALLE)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -816,7 +817,7 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
 				.setDateSortie(FilmBuilder.FILM_DATE_SORTIE)
 				.setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
@@ -824,22 +825,22 @@ public class FilmServiceIntegrationTests {
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET2, FilmOrigine.DVD, null, null, false);
 		final String query = "origine:eq:"+FilmOrigine.DVD+":AND";
 		List<Film> films = filmService.search(query, 1, 1, "-titre");
-		assertNotNull(films);
+		Assertions.assertNotNull(films);
 		for(Film f2 : films){
 			logger.debug(f2.toString());
 		}
 		assertEquals(1, films.size());
-		Film f2 = films.get(0);
+		Film f2 = films.getFirst();
 		assertThat(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780)).isEqualTo(f2.getTitre());
 		Set<Personne> realisateurSet = f2.getRealisateur();
-		assertNotNull(realisateurSet);
+		Assertions.assertNotNull(realisateurSet);
 		assertEquals(1,realisateurSet.size());
 		Personne realisateur = realisateurSet.iterator().next();
-		assertNotNull(realisateur);
+		Assertions.assertNotNull(realisateur);
 		Personne real = personneService.findByPersonneId(realisateur.getId());
 		assertThat(real.getNom()).isEqualTo(realisateur.getNom());
 		assertThat(real.getPrenom()).isEqualTo(realisateur.getPrenom());
@@ -863,10 +864,10 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Personne real = film.getRealisateur().iterator().next();
-		assertNotNull(real);
+		Assertions.assertNotNull(real);
 		filmService.removeFilm(film);
 		Exception exception = assertThrows(FilmNotFoundException.class, () -> {
 			filmService.findFilm(filmId);
@@ -875,7 +876,7 @@ public class FilmServiceIntegrationTests {
 	    String expectedMessage = String.format("film with id %s not found", filmId);
 	    String actualMessage = exception.getMessage();
 
-	    assertTrue(actualMessage.contains(expectedMessage));
+	    Assertions.assertTrue(actualMessage.contains(expectedMessage));
 
 	}
 
@@ -898,10 +899,10 @@ public class FilmServiceIntegrationTests {
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, true);
 		Boolean exists = filmService.checkIfTmdbFilmExists(film.getTmdbId());
-		assertTrue(exists);
+		Assertions.assertTrue(exists);
 	}
 
 	@Test
@@ -919,12 +920,12 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -937,13 +938,13 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
 				.setAct1Nom(FilmBuilder.ACT1_TMBD_ID_844)
@@ -955,28 +956,28 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId3 = filmService.saveNewFilm(film3);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 
 		List<Film> list = filmDao.findAll();
-		assertNotNull(list);
-		assertTrue(CollectionUtils.isNotEmpty(list));
+		Assertions.assertNotNull(list);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(list));
 	    byte[] excelContent = this.excelFilmHandler.createByteContentFromFilmList(list);
-	    assertNotNull(excelContent);
+		Assertions.assertNotNull(excelContent);
 	    Workbook workBook = this.excelFilmHandler.createSheetFromByteArray(excelContent);
-	    assertNotNull(workBook);
+		Assertions.assertNotNull(workBook);
 		workBook.forEach(sheet -> {
 			assertThat(FilmBuilder.SHEET_NAME).isEqualTo(sheet.getSheetName());
         });
 		Sheet sheet = workBook.getSheetAt(0);
         assertThat(FilmBuilder.SHEET_NAME).isEqualTo(sheet.getSheetName());
         String csv = this.excelFilmHandler.createCsvFromExcel(workBook);
-        assertNotNull(csv);
+		Assertions.assertNotNull(csv);
 	}
 	@Test
 	public void testCreateSXSSFWorkbookFromFilmList() throws IOException, ParseException {
@@ -995,12 +996,12 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -1015,12 +1016,12 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
@@ -1035,23 +1036,23 @@ public class FilmServiceIntegrationTests {
 				.setOrigine(FilmOrigine.EN_SALLE)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_1271)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId3 = filmService.saveNewFilm(film3);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, null, null, false);
 
 		Page<Film> films = filmService.paginatedSarch(null, 1, 10, "+titre");
 		List<Film> list = films.getContent();
-		assertNotNull(list);
-		assertTrue(CollectionUtils.isNotEmpty(list));
+		Assertions.assertNotNull(list);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(list));
 		byte[] excelContent = this.excelFilmHandler.createByteContentFromFilmList(list);
-		assertNotNull(excelContent);
+		Assertions.assertNotNull(excelContent);
 		Workbook workBook = excelFilmHandler.createSheetFromByteArray(excelContent);
-		assertNotNull(workBook);
+		Assertions.assertNotNull(workBook);
 		workBook.forEach(sheet -> {
         	assertEquals(FilmBuilder.SHEET_NAME, sheet.getSheetName());
         });
@@ -1073,9 +1074,9 @@ public class FilmServiceIntegrationTests {
                     	assertEquals(FilmBuilder.ANNEE, Integer.valueOf(cellValue));
                     }
                     if(cell.getColumnIndex()==3) {
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_844));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_844));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_844));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_844));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_844));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_844));
                     }
                     if(cell.getColumnIndex()==4) {
                     	assertEquals(FilmOrigine.DVD.name(), cellValue);
@@ -1117,7 +1118,8 @@ public class FilmServiceIntegrationTests {
 						} catch (ParseException e) {
 							e.printStackTrace();
 						}
-                    	assertEquals(df.print(sortie, Locale.FRANCE), cellValue);
+                        Assertions.assertNotNull(sortie);
+                        assertEquals(df.print(sortie, Locale.FRANCE), cellValue);
                     }
                 });
         	}else if(row.getRowNum()==2) {
@@ -1134,9 +1136,9 @@ public class FilmServiceIntegrationTests {
                     	assertEquals(FilmBuilder.ANNEE, Integer.valueOf(cellValue));
                     }
                     if(cell.getColumnIndex()==3) {
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_1271));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_1271));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_1271));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_1271));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_1271));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_1271));
                     }
                     if(cell.getColumnIndex()==4) {
                     	assertEquals(FilmOrigine.EN_SALLE.name(), cellValue);
@@ -1178,7 +1180,8 @@ public class FilmServiceIntegrationTests {
 						} catch (ParseException e) {
 							e.printStackTrace();
 						}
-                    	assertEquals(df.print(sortie, Locale.FRANCE), cellValue);
+                        Assertions.assertNotNull(sortie);
+                        assertEquals(df.print(sortie, Locale.FRANCE), cellValue);
                     }
                 });
         	}else if(row.getRowNum()==3) {
@@ -1194,9 +1197,9 @@ public class FilmServiceIntegrationTests {
                     	assertEquals(FilmBuilder.ANNEE, Integer.valueOf(cellValue));
                     }
                     if(cell.getColumnIndex()==3) {
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_4780));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_4780));
-                    	assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_4780));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT3_TMBD_ID_4780));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT1_TMBD_ID_4780));
+                    	Assertions.assertTrue(cellValue.contains(FilmBuilder.ACT2_TMBD_ID_4780));
                     }
                     if(cell.getColumnIndex()==4) {
                     	assertEquals(FilmOrigine.DVD.name(), cellValue);
@@ -1261,7 +1264,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion1)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1270,7 +1273,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		final String dateInsertion2 = "2014/09/01";
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -1283,7 +1286,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion2)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1293,7 +1296,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId2 = filmService.saveNewFilm(film2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		final String dateInsertion3 = "2014/10/01";
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1305,7 +1308,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion3)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1315,7 +1318,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId3 = filmService.saveNewFilm(film3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		final String dateInsertion4 = "2014/11/01";
 		Film film4 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1327,7 +1330,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion4)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.EN_SALLE)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1337,7 +1340,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId4 = filmService.saveNewFilm(film4);
 		FilmBuilder.assertFilmIsNotNull(film4, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId4);
+		Assertions.assertNotNull(filmId4);
 		final String dateInsertion5 = "2014/12/01";
 		Film film5 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1349,7 +1352,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion5)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.TV)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1359,7 +1362,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId5 = filmService.saveNewFilm(film5);
 		FilmBuilder.assertFilmIsNotNull(film5, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.TV, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId5);
+		Assertions.assertNotNull(filmId5);
 		final String dateInsertion6 = "2023/07/30";
 		Film film6 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -1371,7 +1374,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion6)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.CANAL_PLUS)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
@@ -1381,11 +1384,11 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId6 = filmService.saveNewFilm(film6);
 		FilmBuilder.assertFilmIsNotNull(film6, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.CANAL_PLUS, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId6);
+		Assertions.assertNotNull(filmId6);
 		var query = "origine:eq:"+FilmOrigine.DVD+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "-dateInsertion");
-		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
-		assertTrue("list should be equals to "+rowNumber,page.getContent().size()==rowNumber);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+        assertEquals(rowNumber, page.getContent().size(), "list should be equals to " + rowNumber);
 		Film f1 = page.getContent().get(0);
 		assertEquals(film3, f1);
 		Film f2 = page.getContent().get(1);
@@ -1395,10 +1398,10 @@ public class FilmServiceIntegrationTests {
 
 		query = "origine:eq:"+FilmOrigine.CANAL_PLUS+":AND";
 		page = filmService.paginatedSarch(query, 1, 10, "-dateInsertion");
-		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
 		final int rowNumberCanal = 1;
-		assertTrue("list should be equals to "+rowNumberCanal,page.getContent().size()==rowNumberCanal);
-		Film f6 = page.getContent().get(0);
+        assertEquals(rowNumberCanal, page.getContent().size(), "list should be equals to " + rowNumberCanal);
+		Film f6 = page.getContent().getFirst();
 		assertEquals(film6, f6);
 	}
 
@@ -1418,7 +1421,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion1)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.FALSE.booleanValue())
+				.setVu(false)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1427,7 +1430,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844)
 				.build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		final String dateInsertion2 = "2014/09/01";
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
@@ -1440,7 +1443,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion2)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1450,7 +1453,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId2 = filmService.saveNewFilm(film2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		final String dateInsertion3 = "2014/10/01";
 		Film film3 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_1271)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1462,7 +1465,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion3)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1472,7 +1475,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId3 = filmService.saveNewFilm(film3);
 		FilmBuilder.assertFilmIsNotNull(film3, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId3);
+		Assertions.assertNotNull(filmId3);
 		final String dateInsertion4 = "2014/11/01";
 		Film film4 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1484,7 +1487,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion4)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.TRUE.booleanValue())
+				.setVu(true)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1494,7 +1497,7 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId4 = filmService.saveNewFilm(film4);
 		FilmBuilder.assertFilmIsNotNull(film4, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId4);
+		Assertions.assertNotNull(filmId4);
 		final String dateInsertion5 = "2014/12/01";
 		Film film5 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_REREREUPDATED)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1506,7 +1509,7 @@ public class FilmServiceIntegrationTests {
 				.setDateInsertion(dateInsertion5)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
-				.setVu(Boolean.FALSE.booleanValue())
+				.setVu(false)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
@@ -1516,11 +1519,11 @@ public class FilmServiceIntegrationTests {
 				.build();
 		Long filmId5 = filmService.saveNewFilm(film5);
 		FilmBuilder.assertFilmIsNotNull(film5, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		assertNotNull(filmId5);
+		Assertions.assertNotNull(filmId5);
 		var query = "origine:eq:"+FilmOrigine.DVD+":AND,vu:eq:false:AND,";
 		var page = filmService.paginatedSarch(query, 1, 10, "-dateInsertion");
-		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
-		assertTrue("list should be equals to "+rowNumber+" but was "+page.getContent().size(),page.getContent().size()==rowNumber);
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+        assertEquals(rowNumber, page.getContent().size(), "list should be equals to " + rowNumber + " but was " + page.getContent().size());
 		Film f1 = page.getContent().get(0);
 		assertEquals(film5, f1);
 		Film f2 = page.getContent().get(1);
