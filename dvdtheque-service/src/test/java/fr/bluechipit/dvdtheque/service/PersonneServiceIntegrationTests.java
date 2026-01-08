@@ -10,8 +10,8 @@ import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.dao.model.utils.FilmBuilder;
 import fr.bluechipit.dvdtheque.model.PersonneDto;
-import fr.bluechipit.dvdtheque.service.impl.IFilmService;
-import fr.bluechipit.dvdtheque.service.impl.IPersonneService;
+import fr.bluechipit.dvdtheque.service.impl.FilmService;
+import fr.bluechipit.dvdtheque.service.impl.PersonneService;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,11 +39,11 @@ import java.util.List;
 public class PersonneServiceIntegrationTests {
 	protected Logger logger = LoggerFactory.getLogger(PersonneServiceIntegrationTests.class);
 	@Autowired
-	protected IPersonneService personneService;
+	protected PersonneService personneService;
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 	@Autowired
-	protected IFilmService filmService;
+	protected FilmService filmService;
 	@MockitoBean
 	private JwtDecoder 			jwtDecoder;
 	@BeforeEach

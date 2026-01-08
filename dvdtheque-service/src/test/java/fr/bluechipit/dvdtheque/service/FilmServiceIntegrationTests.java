@@ -12,8 +12,8 @@ import fr.bluechipit.dvdtheque.dao.model.utils.FilmBuilder;
 import fr.bluechipit.dvdtheque.dao.repository.FilmDao;
 import fr.bluechipit.dvdtheque.exception.FilmNotFoundException;
 import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
-import fr.bluechipit.dvdtheque.service.impl.IFilmService;
-import fr.bluechipit.dvdtheque.service.impl.IPersonneService;
+import fr.bluechipit.dvdtheque.service.impl.FilmService;
+import fr.bluechipit.dvdtheque.service.impl.PersonneService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -55,9 +55,9 @@ public class FilmServiceIntegrationTests {
 	@Autowired
 	private FilmDao filmDao;
 	@Autowired
-	private IFilmService filmService;
+	private FilmService filmService;
 	@Autowired
-	private IPersonneService personneService;
+	private PersonneService personneService;
 	@Autowired
 	private ExcelFilmHandler excelFilmHandler;
 	@MockitoBean

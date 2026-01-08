@@ -47,8 +47,8 @@ import specifications.filter.PageRequestBuilder;
 
 @Service("filmService")
 @CacheConfig(cacheNames = "films")
-public class FilmServiceImpl implements IFilmService {
-	protected Logger logger = LoggerFactory.getLogger(FilmServiceImpl.class);
+public class FilmService {
+	protected Logger logger = LoggerFactory.getLogger(FilmService.class);
 	private static final String REALISATEUR_MESSAGE_WARNING = "Film should contains one producer";
 
 	public static final String CACHE_GENRE = "genreCache";
@@ -56,13 +56,13 @@ public class FilmServiceImpl implements IFilmService {
 	
 	private final FilmDao filmDao;
 	private final GenreDao genreDao;
-	private final IPersonneService personneService;
+	private final PersonneService personneService;
 	private final HazelcastInstance instance;
 	
 	@Autowired
 	private SpecificationsBuilder<Film> builder;
 	
-	public FilmServiceImpl(FilmDao filmDao,DvdDao dvdDao,GenreDao genreDao,IPersonneService personneService,HazelcastInstance instance) {
+	public FilmService(FilmDao filmDao, DvdDao dvdDao, GenreDao genreDao, PersonneService personneService, HazelcastInstance instance) {
 		this.filmDao = filmDao;
 		this.genreDao = genreDao;
 		this.personneService = personneService;
@@ -99,31 +99,31 @@ public class FilmServiceImpl implements IFilmService {
 		return filmDao.findFilmByTitreWithoutSpecialsCharacters(titre);
 	}
 
-	@Override
+
 	@Transactional(readOnly = true)
 	public Film findFilm(final Long id) {
 		return filmDao.findById(id).orElseThrow(()->new FilmNotFoundException(String.format("film with id %s not found", id)));
 	}
 	
-	@Override
+
 	@Transactional(readOnly = true)
 	public Page<Film> findAllFilmByOrigine(final FilmOrigine origine) {
 		var page = buildDefaultPageRequest(1, 10, "-dateSortie");
 		return filmDao.findAll(builder.with("origine:eq:"+origine+":AND,").build(), page);
 	}
-	@Override
+
 	@Transactional(readOnly = true)
 	public Page<Film> findAllFilmByDvdFormat(final DvdFormat format) {
 		var page = buildDefaultPageRequest(1, 10, "-dateSortie");
 		return filmDao.findAll(builder.with("dvd.format:eq:"+format+":AND,").build(), page);
 	}
-	@Override
+
 	@Transactional(readOnly = true)
 	public Genre findGenre(int tmdbId) {
 		return genreDao.findGenreByTmdbId(tmdbId);
 	}
 
-	@Override
+
 	@Transactional(readOnly = false)
 	public Film updateFilm(Film film) {
 		upperCaseTitre(film);
@@ -152,8 +152,7 @@ public class FilmServiceImpl implements IFilmService {
 			filmRetrieved.setDateVue(film.getDateVue());
 		}
 		filmRetrieved.setAllocineFicheFilmId(film.getAllocineFicheFilmId());
-		var mergedFilm = filmDao.save(filmRetrieved);
-		return mergedFilm;
+        return filmDao.save(filmRetrieved);
 	}
 
 	private void upperCaseTitre(final Film film) {
@@ -163,7 +162,7 @@ public class FilmServiceImpl implements IFilmService {
 		film.setTitreO(titreO);
 	}
 
-	@Override
+
 	@Transactional(readOnly = false)
 	public Long saveNewFilm(Film film) {
 		Assert.notEmpty(film.getRealisateur(), REALISATEUR_MESSAGE_WARNING);
@@ -172,7 +171,7 @@ public class FilmServiceImpl implements IFilmService {
 		return savedFilm.getId();
 	}
 	
-	@Override
+
 	@Transactional(readOnly = false)
 	public Genre saveGenre(final Genre genre) {
 		Genre persistedGenre = genreDao.save(genre);
@@ -180,14 +179,14 @@ public class FilmServiceImpl implements IFilmService {
 		return persistedGenre;
 	}
 	
-	@Override
+
 	@Transactional(readOnly = true)
 	public List<Genre> findAllGenres() {
 		Collection<Genre> genres = mapGenres.values();
 		logger.debug("genres cache size: " + genres.size());
-		if (genres.size() > 0) {
-			List<Genre> l = genres.stream().collect(Collectors.toList());
-			Collections.sort(l, (f1,f2)->f1.getName().compareTo(f2.getName()));
+		if (!genres.isEmpty()) {
+			List<Genre> l = new ArrayList<>(genres);
+			l.sort((f1, f2) -> f1.getName().compareTo(f2.getName()));
 			return l;
 		}
 		logger.debug("no genres find");
@@ -201,7 +200,7 @@ public class FilmServiceImpl implements IFilmService {
 		return e;
 	}
 
-	@Override
+
 	@Transactional(readOnly = false)
 	public void cleanAllFilms() {
 		filmDao.deleteAll();
@@ -210,25 +209,25 @@ public class FilmServiceImpl implements IFilmService {
 		personneService.cleanAllPersonnes();
 	}
 
-	@Override
+
 	@Transactional(readOnly = true)
 	public List<Film> getAllRippedFilms() {
 		return filmDao.getAllRippedFilms();
 	}
 	
-	@Override
+
 	@Transactional(readOnly = true)
 	public List<Film> search(String query,Integer offset,Integer limit,String sort){
-		Integer limitToSet;
-		Integer offsetToSet;
+		int limitToSet;
+		int offsetToSet;
 		String sortToSet;
 		if(limit == null) {
-			limitToSet = Integer.valueOf(50);
+			limitToSet = 50;
 		}else {
 			limitToSet = limit;
 		}
 		if(offset == null) {
-			offsetToSet = Integer.valueOf(1);
+			offsetToSet = 1;
 		}else {
 			offsetToSet = offset;
 		}
@@ -263,7 +262,7 @@ public class FilmServiceImpl implements IFilmService {
 		}
 		return PageRequestBuilder.getPageRequest(limitToSet,offsetToSet, sortToSet);
 	}
-	@Override
+
 	@Transactional(readOnly = true)
 	public Page<Film> paginatedSarch(String query,
 			Integer offset,
@@ -275,12 +274,12 @@ public class FilmServiceImpl implements IFilmService {
 		}
         return filmDao.findAll(builder.with(query).build(), page);
 	}
-	@Override
+
 	public List<Film> findFilmByOrigine(final FilmOrigine origine){
 		return filmDao.findFilmByOrigine(origine);
 	}
 	
-	@Override
+
 	@Transactional(readOnly = false)
 	public void removeFilm(Film film) {
 		//film = mapFilms.get(film.getId());
@@ -304,13 +303,13 @@ public class FilmServiceImpl implements IFilmService {
 		os.close();
 	}
 
-	@Override
+
 	@Transactional(readOnly = true)
 	public Set<Long> findAllTmdbFilms(final Set<Long> tmdbIds) {
 		return filmDao.findAllTmdbFilms(tmdbIds);
 	}
 
-	@Override
+
 	public Date clearDate(final Date dateToClear) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(dateToClear);
@@ -321,7 +320,7 @@ public class FilmServiceImpl implements IFilmService {
 		return cal.getTime();
 	}
 
-	@Override
+
 	@Transactional(readOnly = true)
 	public Dvd buildDvd(final Integer annee, final Integer zone, final String edition, final Date ripDate,
 			final DvdFormat dvdFormat) throws ParseException {
@@ -347,11 +346,11 @@ public class FilmServiceImpl implements IFilmService {
 		}
 		return dvd;
 	}
-	@Override
+
 	public void cleanAllCaches() {
 		mapGenres.clear();
 	}
-	@Override
+
 	public Boolean checkIfTmdbFilmExists(final Long tmdbId) {
 		return filmDao.checkIfTmdbFilmExists(tmdbId).equals(Integer.valueOf(1))?Boolean.TRUE:Boolean.FALSE;
 	}

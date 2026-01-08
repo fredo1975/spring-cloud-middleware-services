@@ -29,6 +29,8 @@ import javax.annotation.security.RolesAllowed;
 import enums.DvdFormat;
 import enums.FilmOrigine;
 import exceptions.DvdthequeServerRestException;
+import fr.bluechipit.dvdtheque.service.impl.FilmService;
+import fr.bluechipit.dvdtheque.service.impl.PersonneService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
@@ -65,8 +67,6 @@ import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.file.util.MultipartFileUtil;
 import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
-import fr.bluechipit.dvdtheque.service.impl.IFilmService;
-import fr.bluechipit.dvdtheque.service.impl.IPersonneService;
 import fr.bluechipit.dvdtheque.model.CritiquePresse;
 import tmdb.model.*;
 import utils.DateUtils;
@@ -91,9 +91,9 @@ public class FilmController {
 	@Autowired
 	Environment environment;
 	@Autowired
-	private IFilmService filmService;
+	private FilmService filmService;
 	@Autowired
-	protected IPersonneService personneService;
+	protected PersonneService personneService;
 	@Autowired
 	private ExcelFilmHandler excelFilmHandler;
 	@Autowired
@@ -218,7 +218,7 @@ public class FilmController {
 			ResponseEntity<SearchResults> searchResultsResponse = restTemplate.getForEntity(environment.getRequiredProperty(TMDB_SERVICE_URL)
 							+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE_BY_PAGE) + "?title=" + titre+ "&page="+page, 
 							SearchResults.class);
-			if (searchResultsResponse != null && searchResultsResponse.getBody()!= null) {
+			if (searchResultsResponse.getBody() != null) {
 				var searchResults = searchResultsResponse.getBody();
 				films = new ArrayList<>(searchResults.getResults().size());
 				Set<Long> tmdbIds = searchResults.getResults().stream().map(r -> r.getId()).collect(Collectors.toSet());
@@ -259,12 +259,12 @@ public class FilmController {
 				cp.setNewsSource(cto.getNewsSource());
 				film.addCritiquePresse(cp);
 			}
-			Collections.sort(film.getCritiquePresse(),new Comparator<CritiquePresse>(){
-				@Override
-				public int compare(CritiquePresse o1, CritiquePresse o2) {
-					return o1.getRating().compareTo(o2.getRating());
-				}
-			});
+			film.getCritiquePresse().sort(new Comparator<CritiquePresse>() {
+                @Override
+                public int compare(CritiquePresse o1, CritiquePresse o2) {
+                    return o1.getRating().compareTo(o2.getRating());
+                }
+            });
 		}
 	}
 	private Film processRetrieveCritiquePresse(Long id,BiConsumer<Film,Set<CritiquePresseDto>> consumer, Film updatedFilm) {
@@ -359,14 +359,8 @@ public class FilmController {
 
 	/**
 	 * create a dvdtheque Film based on a TMBD film
-	 * 
-	 * @param film
-	 * @param results
-	 * @param tmdbFilmAlreadyInDvdthequeSet
-	 * @param persistPersonne
-	 * @return
-	 * @throws ParseException
-	 */
+	 *
+     */
 	public Film transformTmdbFilmToDvdThequeFilm(Film film, final Results results,
 			final Set<Long> tmdbFilmAlreadyInDvdthequeSet, final boolean persistPersonne) throws ParseException {
 		Film transformedfilm = new Film();

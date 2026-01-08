@@ -4,26 +4,24 @@ import fr.bluechipit.dvdtheque.DvdthequeRestApplication;
 import fr.bluechipit.dvdtheque.config.HazelcastConfigurationTest;
 import fr.bluechipit.dvdtheque.config.TestWebSocketConfig;
 import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
-import fr.bluechipit.dvdtheque.service.impl.IFilmService;
+import fr.bluechipit.dvdtheque.service.impl.FilmService;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -47,7 +45,7 @@ public class FilmControllerForImportFilmListTest {
 	protected Logger logger = LoggerFactory.getLogger(FilmControllerForImportFilmListTest.class);
 	private static final String 					GET_ALL_FILMS_URI = "/dvdtheque-service/films/";
 	@Autowired
-	protected IFilmService filmService;
+	protected FilmService filmService;
 	@Autowired
 	ExcelFilmHandler excelFilmHandler;
 
@@ -59,7 +57,7 @@ public class FilmControllerForImportFilmListTest {
 	private static final String 					contentType = "text/plain";
 	@Autowired
 	private MockMvc 								mockmvc;
-	@MockBean
+	@MockitoBean
 	private JwtDecoder 								jwtDecoder;
 
 	@Test

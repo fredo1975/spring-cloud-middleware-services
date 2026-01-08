@@ -15,8 +15,8 @@ import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.dao.model.utils.FilmBuilder;
 import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
-import fr.bluechipit.dvdtheque.service.impl.IFilmService;
-import fr.bluechipit.dvdtheque.service.impl.IPersonneService;
+import fr.bluechipit.dvdtheque.service.impl.FilmService;
+import fr.bluechipit.dvdtheque.service.impl.PersonneService;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -82,9 +82,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class FilmControllerTest {
 	protected Logger 								logger = LoggerFactory.getLogger(FilmControllerTest.class);
 	@Autowired
-	protected IFilmService filmService;
+	protected FilmService filmService;
 	@Autowired
-	protected IPersonneService personneService;
+	protected PersonneService personneService;
 	@Autowired
 	private ObjectMapper 							mapper;
 	@Autowired
@@ -1232,7 +1232,7 @@ public class FilmControllerTest {
 
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "");
-		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
 		Film filmRetrieved = page.getContent().iterator().next();
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(filmRetrieved.getTitre());
 	}
@@ -1300,7 +1300,7 @@ public class FilmControllerTest {
 		mockServer.verify();
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "");
-		assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
+		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
 		Film filmRetrieved = page.getContent().iterator().next();
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(filmRetrieved.getTitre());
 	}
@@ -1396,7 +1396,7 @@ public class FilmControllerTest {
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		Film film2 = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setTitreO(FilmBuilder.TITRE_FILM_TMBD_ID_4780)
 				.setAct1Nom(FilmBuilder.ACT1_TMBD_ID_4780)
@@ -1405,11 +1405,11 @@ public class FilmControllerTest {
 				.setVu(true).setAnnee(FilmBuilder.ANNEE)
 				.setDateSortie(FilmBuilder.FILM_DATE_SORTIE).setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
 				.setDvdFormat(DvdFormat.BLUERAY).setOrigine(FilmOrigine.DVD).setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2)).setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
+				.setZone(2).setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET2))
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmService.saveNewFilm(film2);
-		assertNotNull(filmId2);
+		Assertions.assertNotNull(filmId2);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_4780+":AND,";
@@ -1419,14 +1419,14 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andReturn().getResponse().getContentAsByteArray();
 		
-		assertNotNull(b);
+		Assertions.assertNotNull(b);
 		
 		Workbook workbook = excelFilmHandler.createSheetFromByteArray(b);
 		workbook.forEach(sheet -> {
-			assertEquals(SHEET_NAME, sheet.getSheetName());
+			Assertions.assertEquals(SHEET_NAME, sheet.getSheetName());
 		});
 		Sheet sheet = workbook.getSheetAt(0);
-		assertEquals(SHEET_NAME, sheet.getSheetName());
+		Assertions.assertEquals(SHEET_NAME, sheet.getSheetName());
 		
 		DataFormatter dataFormatter = new DataFormatter();
 		
@@ -1436,30 +1436,29 @@ public class FilmControllerTest {
 				row.forEach(cell -> {
 					String cellValue = dataFormatter.formatCellValue(cell);
 					if (cell.getColumnIndex() == 0) {
-						assertEquals(FilmBuilder.REAL_NOM_TMBD_ID_4780, cellValue);
+						Assertions.assertEquals(FilmBuilder.REAL_NOM_TMBD_ID_4780, cellValue);
 					}
 					if (cell.getColumnIndex() == 1) {
-						assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780),
-								StringUtils.upperCase(cellValue));
+						Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780), StringUtils.upperCase(cellValue));
 					}
 					if (cell.getColumnIndex() == 2) {
-						assertEquals(FilmBuilder.ANNEE.toString(), cellValue);
+						Assertions.assertEquals(FilmBuilder.ANNEE.toString(), cellValue);
 					}
 					if (cell.getColumnIndex() == 3) {
-						assertEquals(FilmBuilder.ACT3_TMBD_ID_4780 + "," + FilmBuilder.ACT1_TMBD_ID_4780 + ","
+						Assertions.assertEquals(FilmBuilder.ACT3_TMBD_ID_4780 + "," + FilmBuilder.ACT1_TMBD_ID_4780 + ","
 								+ FilmBuilder.ACT2_TMBD_ID_4780, cellValue);
 					}
 					if (cell.getColumnIndex() == 4) {
-						assertEquals(FilmOrigine.DVD.name(), cellValue);
+						Assertions.assertEquals(FilmOrigine.DVD.name(), cellValue);
 					}
 					if (cell.getColumnIndex() == 5) {
-						assertEquals(FilmBuilder.TMDBID_844.toString(), cellValue);
+						Assertions.assertEquals(FilmBuilder.TMDBID_844.toString(), cellValue);
 					}
 					if (cell.getColumnIndex() == 6) {
-						assertEquals("oui", cellValue);
+						Assertions.assertEquals("oui", cellValue);
 					}
 					if(cell.getColumnIndex()==7) {
-						assertEquals("", cellValue);
+						Assertions.assertEquals("", cellValue);
                     }
 					if(cell.getColumnIndex()==8) {
 						final SimpleDateFormat sdfInsert = new SimpleDateFormat("yyyy/MM/dd");
@@ -1469,24 +1468,23 @@ public class FilmControllerTest {
 						} catch (ParseException e) {
 							e.printStackTrace();
 						}
-                    	assertEquals(dateInsertion, cellValue);
+                    	Assertions.assertEquals(dateInsertion, cellValue);
                     }
 					if (cell.getColumnIndex() == 9) {
-						assertEquals(FilmBuilder.ZONE_DVD, cellValue);
+						Assertions.assertEquals(FilmBuilder.ZONE_DVD, cellValue);
 					}
 					if (cell.getColumnIndex() == 10) {
-						assertEquals("oui", cellValue);
+						Assertions.assertEquals("oui", cellValue);
 					}
 					if (cell.getColumnIndex() == 11) {
 						final DateFormatter df = new DateFormatter("dd/MM/yyyy");
-						assertEquals(df.print(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET2), Locale.FRANCE),
-								cellValue);
+						Assertions.assertEquals(df.print(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET2), Locale.FRANCE), cellValue);
 					}
 					if (cell.getColumnIndex() == 12) {
-						assertEquals(DvdFormat.BLUERAY.name(), cellValue);
+						Assertions.assertEquals(DvdFormat.BLUERAY.name(), cellValue);
 					}
 					if (cell.getColumnIndex() == 13) {
-						assertEquals(StringUtils.EMPTY, cellValue);
+						Assertions.assertEquals(StringUtils.EMPTY, cellValue);
 					}
 				});
 			}
@@ -1726,12 +1724,12 @@ public class FilmControllerTest {
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		assertNotNull(filmService.saveNewFilm(film));
+		Assertions.assertNotNull(filmService.saveNewFilm(film));
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		final var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		mockmvc.perform(MockMvcRequestBuilders.get(PAGINATED_SEARCH_FILMS_BY_QUERY_PARAM)
