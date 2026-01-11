@@ -7,9 +7,7 @@
 /config-service/mvnw.cmd
 /config-service/target/*
 /discovery-service/.mvn/wrapper/maven-wrapper.properties
-/discovery-service/target/classes/fr/bluechipit/discovery/service/DiscoveryServerApplication.class
-/discovery-service/target/classes/application.yml
-/discovery-service/target/classes/bootstrap.yml
+/discovery-service/target/*
 /discovery-service/.dockerignore
 /discovery-service/mvnw
 /discovery-service/mvnw.cmd
