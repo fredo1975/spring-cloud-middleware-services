@@ -1,56 +1,67 @@
 package fr.bluechipit.dvdtheque.service.impl;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+import enums.DvdFormat;
+import enums.FilmOrigine;
+import fr.bluechipit.dvdtheque.allocine.model.CritiquePresseDto;
+import fr.bluechipit.dvdtheque.allocine.model.FicheFilmDto;
+import fr.bluechipit.dvdtheque.controller.FilmController;
+import fr.bluechipit.dvdtheque.dao.domain.Dvd;
+import fr.bluechipit.dvdtheque.dao.domain.Film;
+import fr.bluechipit.dvdtheque.dao.domain.Genre;
+import fr.bluechipit.dvdtheque.dao.domain.Personne;
+import fr.bluechipit.dvdtheque.dao.repository.DvdDao;
+import fr.bluechipit.dvdtheque.dao.repository.FilmDao;
+import fr.bluechipit.dvdtheque.dao.repository.GenreDao;
+import fr.bluechipit.dvdtheque.dao.specifications.filter.SpecificationsBuilder;
+import fr.bluechipit.dvdtheque.exception.FilmNotFoundException;
+import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
+import fr.bluechipit.dvdtheque.model.FilmDto;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.env.Environment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
+import specifications.filter.PageRequestBuilder;
+import tmdb.model.*;
+import utils.DateUtils;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import enums.DvdFormat;
-import enums.FilmOrigine;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import fr.bluechipit.dvdtheque.dao.domain.Dvd;
-import fr.bluechipit.dvdtheque.dao.domain.Film;
-import fr.bluechipit.dvdtheque.dao.domain.Genre;
-import fr.bluechipit.dvdtheque.dao.repository.DvdDao;
-import fr.bluechipit.dvdtheque.dao.repository.FilmDao;
-import fr.bluechipit.dvdtheque.dao.repository.GenreDao;
-import fr.bluechipit.dvdtheque.dao.specifications.filter.SpecificationsBuilder;
-import fr.bluechipit.dvdtheque.exception.FilmNotFoundException;
-import fr.bluechipit.dvdtheque.model.FilmDto;
-import specifications.filter.PageRequestBuilder;
+import static fr.bluechipit.dvdtheque.controller.FilmController.*;
 
 @Service("filmService")
 @CacheConfig(cacheNames = "films")
 public class FilmService {
 	protected Logger logger = LoggerFactory.getLogger(FilmService.class);
-	private static final String REALISATEUR_MESSAGE_WARNING = "Film should contains one producer";
 
+	private static String NB_ACTEURS = "batch.save.nb.acteurs";
 	public static final String CACHE_GENRE = "genreCache";
 	IMap<Long, Genre> mapGenres;
 	
@@ -58,18 +69,28 @@ public class FilmService {
 	private final GenreDao genreDao;
 	private final PersonneService personneService;
 	private final HazelcastInstance instance;
-	
+	private final ExcelFilmHandler excelFilmHandler;
+	private final RestTemplate restTemplate;
+	private final Environment environment;
+	private final FilmSaveService filmSaveService;
 	@Autowired
 	private SpecificationsBuilder<Film> builder;
-	
-	public FilmService(FilmDao filmDao, DvdDao dvdDao, GenreDao genreDao, PersonneService personneService, HazelcastInstance instance) {
+
+	public FilmService(FilmDao filmDao, DvdDao dvdDao, GenreDao genreDao, PersonneService personneService, HazelcastInstance instance,ExcelFilmHandler excelFilmHandler,
+					   RestTemplate restTemplate,
+					   Environment environment,
+					   FilmSaveService filmSaveService) {
 		this.filmDao = filmDao;
 		this.genreDao = genreDao;
 		this.personneService = personneService;
 		this.instance = instance;
+		this.excelFilmHandler = excelFilmHandler;
+		this.restTemplate = restTemplate;
+		this.environment = environment;
+		this.filmSaveService = filmSaveService;
 		this.init();
 	}
-	
+
 	public void init() {
 		mapGenres = instance.getMap(CACHE_GENRE);
 	}
@@ -126,7 +147,7 @@ public class FilmService {
 
 	@Transactional(readOnly = false)
 	public Film updateFilm(Film film) {
-		upperCaseTitre(film);
+		filmSaveService.upperCaseTitre(film);
 		film.setDateMaj(LocalDateTime.now());
 		var filmRetrieved = findFilm(film.getId());
 		if(filmRetrieved.getOrigine() == FilmOrigine.DVD && film.getOrigine() != FilmOrigine.DVD) {
@@ -155,22 +176,171 @@ public class FilmService {
         return filmDao.save(filmRetrieved);
 	}
 
-	private void upperCaseTitre(final Film film) {
-		final String titre = StringUtils.upperCase(film.getTitre());
-		film.setTitre(titre);
-		final String titreO = StringUtils.upperCase(film.getTitreO());
-		film.setTitreO(titreO);
+
+	private static int retrieveYearFromReleaseDate(final Date relDate) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(relDate);
+		return cal.get(Calendar.YEAR);
 	}
 
+	/**
+	 * create a dvdtheque Film based on a TMBD film
+	 *
+	 */
+	public Film transformTmdbFilmToDvdThequeFilm(Film film, final Results results,
+												 final Set<Long> tmdbFilmAlreadyInDvdthequeSet, final boolean persistPersonne) throws ParseException {
+		Film transformedfilm = new Film();
+		if (film != null && film.getId() != null) {
+			transformedfilm.setId(film.getId());
+			transformedfilm.setDateInsertion(film.getDateInsertion());
+			transformedfilm.setAllocineFicheFilmId(film.getAllocineFicheFilmId());
+			transformedfilm.setDateSortieDvd(film.getDateSortieDvd());
+		}
+		if (film == null) {
+			transformedfilm.setId(results.getId());
+		}
+		if (CollectionUtils.isNotEmpty(tmdbFilmAlreadyInDvdthequeSet)
+				&& tmdbFilmAlreadyInDvdthequeSet.contains(results.getId())) {
+			transformedfilm.setAlreadyInDvdtheque(true);
+		}
+		transformedfilm.setTitre(StringUtils.upperCase(results.getTitle()));
+		transformedfilm.setTitreO(StringUtils.upperCase(results.getOriginal_title()));
+		if (film != null && film.getDvd() != null) {
+			transformedfilm.setDvd(film.getDvd());
+		}
+		Date releaseDate = null;
+		try {
+			// releaseDate = retrieveTmdbFrReleaseDate(results.getId());
+			releaseDate = restTemplate.getForObject(
+					environment.getRequiredProperty(TMDB_SERVICE_URL)
+							+ environment.getRequiredProperty(TMDB_SERVICE_RELEASE_DATE) + "?tmdbId=" + results.getId(),
+					Date.class);
+		} catch (RestClientException e) {
+			logger.error(e.getMessage() + " for id=" + results.getId());
+			SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
+			if (StringUtils.isNotEmpty(results.getRelease_date())) {
+				releaseDate = sdf.parse(results.getRelease_date());
+			} else {
+				releaseDate = sdf.parse("2000-01-01");
+			}
+		}
+		transformedfilm.setAnnee(retrieveYearFromReleaseDate(releaseDate));
+		transformedfilm.setDateSortie(DateUtils.clearDate(releaseDate));
+		transformedfilm.setPosterPath(
+				environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.getPoster_path());
+		transformedfilm.setTmdbId(results.getId());
+		transformedfilm.setOverview(results.getOverview());
+		try {
+			retrieveAndSetCredits(persistPersonne, results, transformedfilm);
+		} catch (Exception e) {
+			logger.error(e.getMessage() + " for id=" + results.getId() + " won't be displayed");
+			return null;
+		}
 
-	@Transactional(readOnly = false)
-	public Long saveNewFilm(Film film) {
-		Assert.notEmpty(film.getRealisateur(), REALISATEUR_MESSAGE_WARNING);
-		upperCaseTitre(film);
-		Film savedFilm = filmDao.save(film);
-		return savedFilm.getId();
+		transformedfilm.setRuntime(results.getRuntime());
+		List<Genres> genres = results.getGenres();
+		if (CollectionUtils.isNotEmpty(genres)) {
+			for (Genres g : genres) {
+				Genre _g = this.mapGenres.get(g.id());
+                logger.error("genre " + g.name() + " not found in loaded genres");
+            }
+		}
+		if (StringUtils.isNotEmpty(results.getHomepage())) {
+			transformedfilm.setHomepage(results.getHomepage());
+		}
+		if(film != null && film.getDateVue() != null) {
+			transformedfilm.setDateVue(film.getDateVue());
+		}
+		return transformedfilm;
 	}
-	
+
+	public List<Crew> retrieveTmdbDirectors(final Credits credits) {
+		return credits.getCrew().stream().filter(cred -> cred.getJob().equalsIgnoreCase("Director"))
+				.collect(Collectors.toList());
+	}
+
+	private void retrieveAndSetCredits(final boolean persistPersonne, final Results results,
+									   final Film transformedfilm) {
+		Credits credits = restTemplate.getForObject(
+				environment.getRequiredProperty(TMDB_SERVICE_URL)
+						+ environment.getRequiredProperty(TMDB_SERVICE_CREDITS) + "?tmdbId=" + results.getId(),
+				Credits.class);
+        assert credits != null;
+        if (CollectionUtils.isNotEmpty(credits.getCast())) {
+			int i = 1;
+			for (Cast cast : credits.getCast()) {
+				Personne personne = null;
+				if (!persistPersonne) {
+					personne = personneService.buildPersonne(StringUtils.upperCase(cast.getName()),
+							environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL)
+									+ cast.getProfile_path());
+					personne.setId(Long.valueOf(cast.getCast_id()));
+				} else {
+					personne = personneService.createOrRetrievePersonne(StringUtils.upperCase(cast.getName()),
+							environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL)
+									+ cast.getProfile_path());
+				}
+				transformedfilm.getActeur().add(personne);
+				if (i++ == Integer.parseInt(environment.getRequiredProperty(NB_ACTEURS))) {
+					break;
+				}
+			}
+		}
+		if (CollectionUtils.isNotEmpty(credits.getCrew())) {
+			List<Crew> crew = retrieveTmdbDirectors(credits);
+			for (Crew c : crew) {
+				Personne realisateur = null;
+				if (!persistPersonne) {
+					realisateur = personneService.buildPersonne(StringUtils.upperCase(c.getName()), null);
+					realisateur.setId(RandomUtils.nextLong());
+				} else {
+					realisateur = personneService.createOrRetrievePersonne(StringUtils.upperCase(c.getName()), null);
+				}
+				transformedfilm.getRealisateur().add(realisateur);
+			}
+		}
+	}
+	public Optional<Film> saveFilm(Long tmdbId, String origine) throws ParseException {
+		Film filmToSave = null;
+        FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
+        if (checkIfTmdbFilmExists(tmdbId)) {
+            return Optional.empty();
+        }
+        Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
+                        + environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId=" + tmdbId,
+                Results.class);
+        if (results != null) {
+            filmToSave = transformTmdbFilmToDvdThequeFilm(null, results, new HashSet<Long>(), true);
+            if (filmToSave != null) {
+                ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
+                        environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
+                                + environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + filmToSave.getTitre()+"&titleO="+ filmToSave.getTitreO(),
+                        HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
+                if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
+                    filmToSave.setAllocineFicheFilmId(Integer.valueOf(ficheFilmDtoResponse.getBody().get(0).getId()));
+                }
+                filmToSave.setId(null);
+                filmToSave.setOrigine(filmOrigine);
+                if (FilmOrigine.DVD.equals(filmOrigine)) {
+                    Dvd dvd = buildDvd(filmToSave.getAnnee(),
+                            Integer.valueOf(2),
+                            null,
+                            null,
+                            DvdFormat.DVD);
+                    //dvd.setRipped(true);
+                    //dvd.setDateRip(new Date());
+                    filmToSave.setDvd(dvd);
+                }
+                filmToSave.setDateInsertion(DateUtils.clearDate(new Date()));
+				filmSaveService.saveNewFilm(filmToSave);
+            }
+        }
+        if (filmToSave == null) {
+            return Optional.empty();
+        }
+        return Optional.of(filmToSave);
+    }
+
 
 	@Transactional(readOnly = false)
 	public Genre saveGenre(final Genre genre) {
@@ -214,8 +384,43 @@ public class FilmService {
 	public List<Film> getAllRippedFilms() {
 		return filmDao.getAllRippedFilms();
 	}
-	
 
+
+	public byte[] exportFilmList(String origine) throws IOException {
+		List<Film> list = new ArrayList<>();
+		FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
+		//Page<Film> films;
+		if(filmOrigine == FilmOrigine.TOUS) {
+			Page<Film> films = paginatedSarch("",1, null, "");
+			list.addAll(films.getContent());
+			while(films.hasNext()) {
+				Pageable p = films.nextPageable();
+				films = paginatedSarch("",p.getPageNumber()+1, null, "");
+				list.addAll(films.getContent());
+			}
+		}else {
+			Page<Film> films = paginatedSarch("origine:eq:"+filmOrigine+":AND",1, null, "");
+			list.addAll(films.getContent());
+			while(films.hasNext()) {
+				Pageable p = films.nextPageable();
+				films = paginatedSarch("origine:eq:"+filmOrigine+":AND",p.getPageNumber()+1, null, "");
+				list.addAll(films.getContent());
+			}
+		}
+		return this.excelFilmHandler.createByteContentFromFilmList(list);
+	}
+	public byte[] exportFilmSearch(String query) throws IOException {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentLanguage(Locale.FRANCE);
+		headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+		LocalDateTime localDate = LocalDateTime.now();
+		String fileName = "ListeDVDSearch" + "-" + localDate.getSecond() + ".xlsx";
+        List<Film> list = search(query, 1, 100, "");
+        if (list == null) {
+            return null;
+        }
+        return this.excelFilmHandler.createByteContentFromFilmList(list);
+    }
 	@Transactional(readOnly = true)
 	public List<Film> search(String query,Integer offset,Integer limit,String sort){
 		int limitToSet;
@@ -320,10 +525,9 @@ public class FilmService {
 		return cal.getTime();
 	}
 
-
 	@Transactional(readOnly = true)
 	public Dvd buildDvd(final Integer annee, final Integer zone, final String edition, final Date ripDate,
-			final DvdFormat dvdFormat) throws ParseException {
+			final DvdFormat dvdFormat) {
 		Dvd dvd = new Dvd();
 		if (annee != null) {
 			dvd.setAnnee(annee);
@@ -353,5 +557,27 @@ public class FilmService {
 
 	public Boolean checkIfTmdbFilmExists(final Long tmdbId) {
 		return filmDao.checkIfTmdbFilmExists(tmdbId).equals(Integer.valueOf(1))?Boolean.TRUE:Boolean.FALSE;
+	}
+
+	public Set<CritiquePresseDto> findAllCritiquePresseByAllocineFilmById(Integer id){
+		ResponseEntity<FicheFilmDto> ficheFilmDtoResponse = restTemplate.exchange(
+				environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
+						+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_ID) + "?id=" + id,
+				HttpMethod.GET, null, new ParameterizedTypeReference<FicheFilmDto>() {});
+		if(ficheFilmDtoResponse.getBody() != null) {
+			return ficheFilmDtoResponse.getBody().getCritiquePresse();
+		}
+		return Collections.emptySet();
+	}
+
+	public List<FicheFilmDto> findAllCritiquePresseByAllocineFilmByTitle(String title){
+		ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
+				environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
+						+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + title+"&titleO="+title,
+				HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
+		if(ficheFilmDtoResponse.getBody() != null) {
+			return ficheFilmDtoResponse.getBody();
+		}
+		return Collections.emptyList();
 	}
 }

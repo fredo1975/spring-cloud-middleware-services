@@ -10,6 +10,7 @@ import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.dao.model.utils.FilmBuilder;
 import fr.bluechipit.dvdtheque.model.PersonneDto;
+import fr.bluechipit.dvdtheque.service.impl.FilmSaveService;
 import fr.bluechipit.dvdtheque.service.impl.FilmService;
 import fr.bluechipit.dvdtheque.service.impl.PersonneService;
 import org.apache.commons.collections.CollectionUtils;
@@ -44,6 +45,8 @@ public class PersonneServiceIntegrationTests {
 	private JdbcTemplate jdbcTemplate;
 	@Autowired
 	protected FilmService filmService;
+	@Autowired
+	protected FilmSaveService filmSaveService;
 	@MockitoBean
 	private JwtDecoder 			jwtDecoder;
 	@BeforeEach
@@ -71,7 +74,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId = filmService.saveNewFilm(film);
+		Long filmId = filmSaveService.saveNewFilm(film);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Assertions.assertNotNull(filmId);
 		Personne personneByLoad = personneService.loadPersonne(film.getRealisateur().iterator().next().getId());
@@ -98,7 +101,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId = filmService.saveNewFilm(film);
+		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Personne personne = personneService.findByPersonneId(film.getRealisateur().iterator().next().getId());
@@ -125,7 +128,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId = filmService.saveNewFilm(film);
+		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		film = filmService.findFilm(film.getId());
@@ -154,7 +157,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId = filmService.saveNewFilm(film);
+		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		List<Personne> personneList = personneService.findAllPersonne();
@@ -181,7 +184,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId2 = filmService.saveNewFilm(film2);
+		Long filmId2 = filmSaveService.saveNewFilm(film2);
 		Assertions.assertNotNull(filmId2);
 		FilmBuilder.assertFilmIsNotNull(film2, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		List<Personne> personne2List = personneService.findAllPersonne();
@@ -213,7 +216,7 @@ public class PersonneServiceIntegrationTests {
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET)).setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
-		Long filmId = filmService.saveNewFilm(film);
+		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Personne personne = personneService.findPersonneByName(FilmBuilder.ACT1_TMBD_ID_844);

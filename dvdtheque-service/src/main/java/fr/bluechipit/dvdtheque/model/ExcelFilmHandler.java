@@ -194,13 +194,11 @@ public class ExcelFilmHandler {
 	    	workBook.write(baos);
 	    	excelContent = baos.toByteArray();
 	    }finally {
-            if (null != workBook) {
-                try {
-                	workBook.close();
-                } catch (IOException eio) {
-                    logger.error("Error Occurred while exporting to XLS ", eio);
-                    throw eio;
-                }
+            try {
+                workBook.close();
+            } catch (IOException eio) {
+                logger.error("Error Occurred while exporting to XLS ", eio);
+                throw eio;
             }
         }
 	    return excelContent;
