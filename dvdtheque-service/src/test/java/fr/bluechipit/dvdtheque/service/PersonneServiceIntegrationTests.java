@@ -131,7 +131,7 @@ public class PersonneServiceIntegrationTests {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
-		film = filmService.findFilm(film.getId());
+		film = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(film);
 		Assertions.assertNotNull(film.getTitre());
 		Personne real = personneService.findByPersonneId(film.getRealisateur().iterator().next().getId());

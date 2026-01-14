@@ -279,7 +279,7 @@ public class FilmServiceIntegrationTests {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
-		Film retrievedFilm = filmService.findFilm(film.getId());
+		Film retrievedFilm = filmSaveService.findFilm(film.getId());
 		FilmBuilder.assertFilmIsNotNull(retrievedFilm,false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		logger.debug(methodName + "retrievedFilm ="+retrievedFilm.toString());
 		for(Personne acteur : retrievedFilm.getActeur()){
@@ -311,7 +311,7 @@ public class FilmServiceIntegrationTests {
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE).setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
-		film = filmService.findFilm(film.getId());
+		film = filmSaveService.findFilm(film.getId());
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Assertions.assertNotNull(film.getDvd());
 	}
@@ -553,7 +553,7 @@ public class FilmServiceIntegrationTests {
 
 		final String posterPath = "posterPath";
 		film.setPosterPath(posterPath);
-		Film filmUpdated = filmService.updateFilm(film);
+		Film filmUpdated = filmSaveService.updateFilm(film);
 		//Film filmUpdated = filmService.findFilm(film.getId());
 
 		Assertions.assertNotNull(filmUpdated);
@@ -589,7 +589,7 @@ public class FilmServiceIntegrationTests {
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.EN_SALLE, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		film.setOrigine(FilmOrigine.DVD);
-		Film filmUpdated = filmService.updateFilm(film);
+		Film filmUpdated = filmSaveService.updateFilm(film);
 		FilmBuilder.assertFilmIsNotNull(filmUpdated, true,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		assertThat(FilmOrigine.DVD).isEqualTo(filmUpdated.getOrigine());
 
@@ -873,7 +873,7 @@ public class FilmServiceIntegrationTests {
 		Assertions.assertNotNull(real);
 		filmService.removeFilm(film);
 		Exception exception = assertThrows(FilmNotFoundException.class, () -> {
-			filmService.findFilm(filmId);
+			filmSaveService.findFilm(filmId);
 	    });
 
 	    String expectedMessage = String.format("film with id %s not found", filmId);

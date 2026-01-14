@@ -142,117 +142,20 @@ public class FilmController {
 	
 	@RolesAllowed("user")
 	@GetMapping("/films/tmdb/byTitre/{titre}")
-	ResponseEntity<List<Film>> findTmdbFilmByTitre(@PathVariable String titre){
-		List<Film> films = null;
-		try {
-			ResponseEntity<List<Results>> resultsResponse = restTemplate.exchange(
-					environment.getRequiredProperty(TMDB_SERVICE_URL)
-							+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE) + "?title=" + titre,
-					HttpMethod.GET, null, new ParameterizedTypeReference<List<Results>>() {});
-			if (CollectionUtils.isNotEmpty(resultsResponse.getBody())) {
-				List<Results> results = resultsResponse.getBody();
-				films = new ArrayList<>(results.size());
-				Set<Long> tmdbIds = results.stream().map(r -> r.getId()).collect(Collectors.toSet());
-				Set<Long> tmdbFilmAlreadyInDvdthequeSet = filmService.findAllTmdbFilms(tmdbIds);
-				for (Results res : results) {
-					Film transformedFilm = filmService.transformTmdbFilmToDvdThequeFilm(null, res, tmdbFilmAlreadyInDvdthequeSet,
-							false);
-					if (transformedFilm != null) {
-						films.add(transformedFilm);
-					}
-				}
-			}
-			return ResponseEntity.ok(films);
-		} catch (Exception e) {
-			logger.error(format("an error occured while findTmdbFilmByTitre titre='%s' ", titre), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<List<Film>> findTmdbFilmByTitre(@PathVariable String titre) throws ParseException {
+		return ResponseEntity.ok(filmService.findTmdbFilmByTitre(titre,null));
 	}
 	
 	@RolesAllowed("user")
 	@GetMapping("/films/tmdb/byTitre/{titre}/{page}")
-	ResponseEntity<List<Film>> findTmdbFilmByTitreByPage(@PathVariable String titre,@PathVariable Integer page){
-		List<Film> films = null;
-		try {
-			ResponseEntity<SearchResults> searchResultsResponse = restTemplate.getForEntity(environment.getRequiredProperty(TMDB_SERVICE_URL)
-							+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE_BY_PAGE) + "?title=" + titre+ "&page="+page, 
-							SearchResults.class);
-			if (searchResultsResponse.getBody() != null) {
-				var searchResults = searchResultsResponse.getBody();
-				films = new ArrayList<>(searchResults.getResults().size());
-				Set<Long> tmdbIds = searchResults.getResults().stream().map(r -> r.getId()).collect(Collectors.toSet());
-				Set<Long> tmdbFilmAlreadyInDvdthequeSet = filmService.findAllTmdbFilms(tmdbIds);
-				for (Results res : searchResults.getResults()) {
-					Film transformedFilm = filmService.transformTmdbFilmToDvdThequeFilm(null, res, tmdbFilmAlreadyInDvdthequeSet,
-							false);
-					if (transformedFilm != null) {
-						films.add(transformedFilm);
-					}
-				}
-			}
-			return ResponseEntity.ok(films);
-		} catch (Exception e) {
-			logger.error(format("an error occured while findTmdbFilmByTitreByPage titre='%s' page='%s'", titre, page), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<List<Film>> findTmdbFilmByTitreByPage(@PathVariable String titre,@PathVariable Integer page) throws ParseException {
+		return ResponseEntity.ok(filmService.findTmdbFilmByTitre(titre,page));
 	}
 
 	@RolesAllowed("user")
 	@GetMapping("/films/byId/{id}")
 	ResponseEntity<Film> findFilmById(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(processRetrieveCritiquePresse(id, (film,set) -> addCritiquePresseToFilm(set, film), null));
-		} catch (Exception e) {
-			logger.error(format("an error occured while findFilmById id='%s' ", id), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
-	}
-	
-	private void addCritiquePresseToFilm(Set<CritiquePresseDto> cpDtoSet,Film film) {
-		if(CollectionUtils.isNotEmpty(cpDtoSet)) {
-			for(CritiquePresseDto cto : cpDtoSet) {
-				CritiquePresse cp = new CritiquePresse();
-				cp.setAuthor(cto.getAuthor());
-				cp.setBody(cto.getBody());
-				cp.setRating(cto.getRating());
-				cp.setNewsSource(cto.getNewsSource());
-				film.addCritiquePresse(cp);
-			}
-			film.getCritiquePresse().sort(new Comparator<CritiquePresse>() {
-                @Override
-                public int compare(CritiquePresse o1, CritiquePresse o2) {
-                    return o1.getRating().compareTo(o2.getRating());
-                }
-            });
-		}
-	}
-	private Film processRetrieveCritiquePresse(Long id,BiConsumer<Film,Set<CritiquePresseDto>> consumer, Film updatedFilm) {
-		Film film = filmService.findFilm(id);
-		if(film != null) {
-			if(film.getAllocineFicheFilmId() != null) {
-				ResponseEntity<FicheFilmDto> ficheFilmDtoResponse = restTemplate.exchange(
-						environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
-								+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_ID) + "?id=" + film.getAllocineFicheFilmId(),
-						HttpMethod.GET, null, new ParameterizedTypeReference<FicheFilmDto>() {});
-				if(ficheFilmDtoResponse.getBody() != null) {
-					Set<CritiquePresseDto> cpDtoSet = ficheFilmDtoResponse.getBody().getCritiquePresse();
-					consumer.accept(film,cpDtoSet);
-				}
-			}else {
-				ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
-						environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
-								+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + film.getTitre()+"&titleO="+ film.getTitreO(),
-						HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
-				if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
-					Set<CritiquePresseDto> cpDtoSet = ficheFilmDtoResponse.getBody().get(0).getCritiquePresse();
-					consumer.accept(film,cpDtoSet);
-				}
-			}
-		}
-		if(updatedFilm == null) {
-			return film;
-		}
-		return updatedFilm;
+		return ResponseEntity.ok(filmService.processRetrieveCritiquePresse(id, (film,set) -> filmService.addCritiquePresseToFilm(set, film), null));
 	}
 
 	@RolesAllowed("user")
@@ -279,27 +182,8 @@ public class FilmController {
 
 	@RolesAllowed("user")
 	@PutMapping("/films/tmdb/{tmdbId}")
-	ResponseEntity<Film> replaceFilm(@RequestBody Film film, @PathVariable Long tmdbId){
-		try {
-			Film filmOptional = filmService.findFilm(film.getId());
-			if (filmOptional == null) {
-				return ResponseEntity.notFound().build();
-			}
-			Results results = restTemplate.getForObject(
-					environment.getRequiredProperty(TMDB_SERVICE_URL)
-							+ environment.getRequiredProperty(TMDB_SERVICE_RESULTS) + "?tmdbId=" + tmdbId,
-					Results.class);
-			Film toUpdateFilm = filmService.transformTmdbFilmToDvdThequeFilm(film, results, new HashSet<Long>(), true);
-			if (toUpdateFilm != null) {
-				toUpdateFilm.setOrigine(film.getOrigine());
-				filmService.updateFilm(toUpdateFilm);
-				return ResponseEntity.ok(toUpdateFilm);
-			}
-			return ResponseEntity.ok(toUpdateFilm);
-		} catch (Exception e) {
-			logger.error("an error occured while replacing film tmdbId=" + tmdbId, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<Film> replaceFilm(@RequestBody Film film, @PathVariable Long tmdbId) throws ParseException {
+		return ResponseEntity.ok(filmService.replaceFilm(film,tmdbId));
 	}
 
 	@RolesAllowed({ "user", "batch" })
@@ -333,23 +217,14 @@ public class FilmController {
 	@RolesAllowed("user")
 	@PutMapping("/films/update/{id}")
 	ResponseEntity<Film> updateFilm(@RequestBody Film film, @PathVariable Long id) {
-		try {
-			Film mergedFilm = filmService.updateFilm(film);
-			Film filmUpdatedWithCritiquePresse = processRetrieveCritiquePresse(id, (f, set) -> {
-				addCritiquePresseToFilm(set, mergedFilm);
-			},mergedFilm);
-			return ResponseEntity.ok(filmUpdatedWithCritiquePresse);
-		} catch (Exception e) {
-			logger.error("an error occured while updating film id=" + id, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		return ResponseEntity.ok(filmService.updateFilm(film, id));
 	}
 	
 	@RolesAllowed("user")
 	@PutMapping("/films/remove/{id}")
 	ResponseEntity<Film> removeFilm(@PathVariable Long id) {
 		try {
-			Film filmOptional = filmService.findFilm(id);
+			Film filmOptional = filmSaveService.findFilm(id);
 			if (filmOptional == null) {
 				return ResponseEntity.notFound().build();
 			}
@@ -377,7 +252,7 @@ public class FilmController {
 	@PutMapping("/films/retrieveImage/{id}")
 	ResponseEntity<Film> retrieveFilmImage(@PathVariable Long id) {
 		try {
-			Film film = filmService.findFilm(id);
+			Film film = filmSaveService.findFilm(id);
 			if (film == null) {
 				return ResponseEntity.notFound().build();
 			}
@@ -385,7 +260,7 @@ public class FilmController {
 					environment.getRequiredProperty(TMDB_SERVICE_URL) + environment.getRequiredProperty(TMDB_SERVICE_RESULTS) + "?tmdbId=" + film.getTmdbId(), Results.class);
 			film.setPosterPath(
 					environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.getPoster_path());
-			return ResponseEntity.ok(filmService.updateFilm(film));
+			return ResponseEntity.ok(filmSaveService.updateFilm(film));
 		} catch (Exception e) {
 			logger.error("an error occured while retrieving image for film id=" + id, e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -397,7 +272,6 @@ public class FilmController {
 	ResponseEntity<Void> retrieveAllFilmImages() {
 		Results results = null;
 		try {
-			
 			Page<Film> films = filmService.paginatedSarch("", null, null, "");
 			for(int i = 0 ; i<films.getContent().size();i++) {
 				Film film = films.getContent().get(i);
@@ -411,9 +285,8 @@ public class FilmController {
 					film.setPosterPath(environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL)
 							+ results.getPoster_path());
 				}
-				filmService.updateFilm(film);
+				filmSaveService.updateFilm(film);
 			}
-			
 			return ResponseEntity.noContent().build();
 		} catch (Exception e) {
 			logger.error("an error occured while retrieving all images", e);

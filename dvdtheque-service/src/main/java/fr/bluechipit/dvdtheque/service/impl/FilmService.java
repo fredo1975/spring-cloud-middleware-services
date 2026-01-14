@@ -16,6 +16,7 @@ import fr.bluechipit.dvdtheque.dao.repository.FilmDao;
 import fr.bluechipit.dvdtheque.dao.repository.GenreDao;
 import fr.bluechipit.dvdtheque.dao.specifications.filter.SpecificationsBuilder;
 import fr.bluechipit.dvdtheque.exception.FilmNotFoundException;
+import fr.bluechipit.dvdtheque.model.CritiquePresse;
 import fr.bluechipit.dvdtheque.model.ExcelFilmHandler;
 import fr.bluechipit.dvdtheque.model.FilmDto;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -52,6 +54,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static fr.bluechipit.dvdtheque.controller.FilmController.*;
@@ -119,14 +122,6 @@ public class FilmService {
 	public Film findFilmByTitreWithoutSpecialsCharacters(final String titre) {
 		return filmDao.findFilmByTitreWithoutSpecialsCharacters(titre);
 	}
-
-
-	@Transactional(readOnly = true)
-	public Film findFilm(final Long id) {
-		return filmDao.findById(id).orElseThrow(()->new FilmNotFoundException(String.format("film with id %s not found", id)));
-	}
-	
-
 	@Transactional(readOnly = true)
 	public Page<Film> findAllFilmByOrigine(final FilmOrigine origine) {
 		var page = buildDefaultPageRequest(1, 10, "-dateSortie");
@@ -143,39 +138,6 @@ public class FilmService {
 	public Genre findGenre(int tmdbId) {
 		return genreDao.findGenreByTmdbId(tmdbId);
 	}
-
-
-	@Transactional(readOnly = false)
-	public Film updateFilm(Film film) {
-		filmSaveService.upperCaseTitre(film);
-		film.setDateMaj(LocalDateTime.now());
-		var filmRetrieved = findFilm(film.getId());
-		if(filmRetrieved.getOrigine() == FilmOrigine.DVD && film.getOrigine() != FilmOrigine.DVD) {
-			filmRetrieved.setDvd(null);
-		}
-		if (film.getDvd() != null && film.getOrigine() == FilmOrigine.DVD) {
-			filmRetrieved.setDvd(film.getDvd());
-			if (!film.getDvd().isRipped()) {
-				filmRetrieved.getDvd().setDateRip(null);
-			}
-		}
-		if(film.getDvd() != null && filmRetrieved.getOrigine() == FilmOrigine.EN_SALLE) {
-			filmRetrieved.setDvd(film.getDvd());
-			filmRetrieved.getDvd().setDateRip(null);
-		}
-		filmRetrieved.setOrigine(film.getOrigine());
-		filmRetrieved.setDateInsertion(film.getDateInsertion());
-		filmRetrieved.setDateSortieDvd(film.getDateSortieDvd());
-		filmRetrieved.setVu(film.isVu());
-		if(!filmRetrieved.isVu()) {
-			filmRetrieved.setDateVue(null);
-		}else {
-			filmRetrieved.setDateVue(film.getDateVue());
-		}
-		filmRetrieved.setAllocineFicheFilmId(film.getAllocineFicheFilmId());
-        return filmDao.save(filmRetrieved);
-	}
-
 
 	private static int retrieveYearFromReleaseDate(final Date relDate) {
 		Calendar cal = Calendar.getInstance();
@@ -579,5 +541,97 @@ public class FilmService {
 			return ficheFilmDtoResponse.getBody();
 		}
 		return Collections.emptyList();
+	}
+
+	public List<Film> findTmdbFilmByTitre(String titre,Integer page) throws ParseException {
+		List<Film> films = null;
+		String url = page == null ? environment.getRequiredProperty(TMDB_SERVICE_URL)
+				+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE) + "?title=" + titre : environment.getRequiredProperty(TMDB_SERVICE_URL)
+				+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE_BY_PAGE) + "?title=" + titre+ "&page="+page;
+		ResponseEntity<List<Results>> resultsResponse = restTemplate.exchange(url,
+				HttpMethod.GET, null, new ParameterizedTypeReference<List<Results>>() {});
+		if (CollectionUtils.isNotEmpty(resultsResponse.getBody())) {
+			List<Results> results = resultsResponse.getBody();
+			films = new ArrayList<>(results.size());
+			Set<Long> tmdbIds = results.stream().map(r -> r.getId()).collect(Collectors.toSet());
+			Set<Long> tmdbFilmAlreadyInDvdthequeSet = findAllTmdbFilms(tmdbIds);
+			for (Results res : results) {
+				Film transformedFilm = transformTmdbFilmToDvdThequeFilm(null, res, tmdbFilmAlreadyInDvdthequeSet,
+						false);
+				if (transformedFilm != null) {
+					films.add(transformedFilm);
+				}
+			}
+		}
+		return films;
+	}
+	public Film processRetrieveCritiquePresse(Long id, BiConsumer<Film,Set<CritiquePresseDto>> consumer, Film updatedFilm) {
+		Film film = filmSaveService.findFilm(id);
+		if(film != null) {
+			if(film.getAllocineFicheFilmId() != null) {
+				ResponseEntity<FicheFilmDto> ficheFilmDtoResponse = restTemplate.exchange(
+						environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
+								+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_ID) + "?id=" + film.getAllocineFicheFilmId(),
+						HttpMethod.GET, null, new ParameterizedTypeReference<FicheFilmDto>() {});
+				if(ficheFilmDtoResponse.getBody() != null) {
+					Set<CritiquePresseDto> cpDtoSet = ficheFilmDtoResponse.getBody().getCritiquePresse();
+					consumer.accept(film,cpDtoSet);
+				}
+			}else {
+				ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
+						environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
+								+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + film.getTitre()+"&titleO="+ film.getTitreO(),
+						HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
+				if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
+					Set<CritiquePresseDto> cpDtoSet = ficheFilmDtoResponse.getBody().get(0).getCritiquePresse();
+					consumer.accept(film,cpDtoSet);
+				}
+			}
+		}
+		if(updatedFilm == null) {
+			return film;
+		}
+		return updatedFilm;
+	}
+
+	public Film replaceFilm(Film film,Long tmdbId) throws ParseException {
+		Film filmOptional = filmSaveService.findFilm(film.getId());
+		Results results = restTemplate.getForObject(
+				environment.getRequiredProperty(TMDB_SERVICE_URL)
+						+ environment.getRequiredProperty(TMDB_SERVICE_RESULTS) + "?tmdbId=" + tmdbId,
+				Results.class);
+		Film toUpdateFilm = transformTmdbFilmToDvdThequeFilm(film, results, new HashSet<Long>(), true);
+		if (toUpdateFilm != null) {
+			toUpdateFilm.setOrigine(film.getOrigine());
+			filmSaveService.updateFilm(toUpdateFilm);
+			return toUpdateFilm;
+		}
+		return toUpdateFilm;
+	}
+
+	public Film updateFilm(Film film,Long id){
+		Film mergedFilm = filmSaveService.updateFilm(film);
+        return processRetrieveCritiquePresse(id, (f, set) -> {
+            addCritiquePresseToFilm(set, mergedFilm);
+        },mergedFilm);
+	}
+
+	public void addCritiquePresseToFilm(Set<CritiquePresseDto> cpDtoSet,Film film) {
+		if(CollectionUtils.isNotEmpty(cpDtoSet)) {
+			for(CritiquePresseDto cto : cpDtoSet) {
+				CritiquePresse cp = new CritiquePresse();
+				cp.setAuthor(cto.getAuthor());
+				cp.setBody(cto.getBody());
+				cp.setRating(cto.getRating());
+				cp.setNewsSource(cto.getNewsSource());
+				film.addCritiquePresse(cp);
+			}
+			film.getCritiquePresse().sort(new Comparator<CritiquePresse>() {
+				@Override
+				public int compare(CritiquePresse o1, CritiquePresse o2) {
+					return o1.getRating().compareTo(o2.getRating());
+				}
+			});
+		}
 	}
 }

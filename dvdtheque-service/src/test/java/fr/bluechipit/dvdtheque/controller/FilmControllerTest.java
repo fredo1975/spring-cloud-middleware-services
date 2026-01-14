@@ -658,7 +658,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		Film filmToUpdate = filmService.findFilm(film.getId());
+		Film filmToUpdate = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToUpdate);
 		logger.debug("filmToUpdate=" + filmToUpdate);
 		//filmToUpdate.setTitre(FilmBuilder.TITRE_FILM_TMBD_ID_4780);
@@ -673,7 +673,7 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andExpect(MockMvcResultMatchers.jsonPath("$.dvd.ripped", Is.is(false)));
 		mockServer.verify();
-		Film filmUpdated = filmService.findFilm(filmToUpdate.getId());
+		Film filmUpdated = filmSaveService.findFilm(filmToUpdate.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844), filmUpdated.getTitre());
 		Assertions.assertFalse(filmUpdated.getDvd().isRipped());
 	}
@@ -702,7 +702,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, true);
-		Film filmToUpdate = filmService.findFilm(film.getId());
+		Film filmToUpdate = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToUpdate);
 		logger.debug("filmToUpdate=" + filmToUpdate);
 		//filmToUpdate.setTitre(FilmBuilder.TITRE_FILM_TMBD_ID_4780);
@@ -717,7 +717,7 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andExpect(MockMvcResultMatchers.jsonPath("$.dvd.ripped", Is.is(false)));
 		mockServer.verify();
-		Film filmUpdated = filmService.findFilm(filmToUpdate.getId());
+		Film filmUpdated = filmSaveService.findFilm(filmToUpdate.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844), filmUpdated.getTitre());
 		Assertions.assertFalse(filmUpdated.getDvd().isRipped());
 	}
@@ -745,7 +745,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		Film filmToUpdate = filmService.findFilm(film.getId());
+		Film filmToUpdate = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToUpdate);
 		logger.debug("filmToUpdate=" + filmToUpdate);
 		
@@ -760,7 +760,7 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andExpect(MockMvcResultMatchers.jsonPath("$.allocineFicheFilmId", Is.is(film.getAllocineFicheFilmId())));
 		mockServer.verify();
-		Film filmUpdated = filmService.findFilm(filmToUpdate.getId());
+		Film filmUpdated = filmSaveService.findFilm(filmToUpdate.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844), filmUpdated.getTitre());
 		Assertions.assertEquals(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844, filmUpdated.getAllocineFicheFilmId());
 	}
@@ -787,7 +787,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		//FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null);
-		Film filmToUpdate = filmService.findFilm(film.getId());
+		Film filmToUpdate = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToUpdate);
 		logger.debug("filmToUpdate=" + filmToUpdate);
 		filmToUpdate.setOrigine(FilmOrigine.GOOGLE_PLAY);
@@ -800,7 +800,7 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andExpect(MockMvcResultMatchers.jsonPath("$.origine", Is.is(FilmOrigine.GOOGLE_PLAY.name())));
 		mockServer.verify();
-		Film filmUpdated = filmService.findFilm(filmToUpdate.getId());
+		Film filmUpdated = filmSaveService.findFilm(filmToUpdate.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844), filmUpdated.getTitre());
 		Assertions.assertFalse(filmUpdated.getDvd().isRipped());
 	}
@@ -827,7 +827,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		Film filmToRemove = filmService.findFilm(film.getId());
+		Film filmToRemove = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToRemove);
 		logger.debug("filmToRemove=" + filmToRemove);
 
@@ -908,7 +908,7 @@ public class FilmControllerTest {
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
-		Film filmToRetrieveImage = filmService.findFilm(film.getId());
+		Film filmToRetrieveImage = filmSaveService.findFilm(film.getId());
 		Assertions.assertNotNull(filmToRetrieveImage);
 		logger.debug("filmToRetrieveImage=" + filmToRetrieveImage);
 
@@ -929,7 +929,7 @@ public class FilmControllerTest {
 		
 		mockServer.verify();
 		
-		Film filmRetrievedImage = filmService.findFilm(filmToRetrieveImage.getId());
+		Film filmRetrievedImage = filmSaveService.findFilm(filmToRetrieveImage.getId());
 		Assertions.assertNotNull(filmRetrievedImage);
 		Assertions.assertNotNull(filmRetrievedImage.getPosterPath());
 	}
@@ -985,7 +985,7 @@ public class FilmControllerTest {
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful())
 		.andExpect(MockMvcResultMatchers.jsonPath("$.titre", Is.is(FilmBuilder.TITRE_FILM_TMBD_ID_844)));
 		mockServer.verify();
-		Film filmUpdated = filmService.findFilm(film.getId());
+		Film filmUpdated = filmSaveService.findFilm(film.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_844), filmUpdated.getTitre());
 		Assertions.assertEquals(FilmOrigine.DVD, filmUpdated.getOrigine());
 		Assertions.assertEquals(DvdFormat.DVD, filmUpdated.getDvd().getFormat());
@@ -1018,7 +1018,7 @@ public class FilmControllerTest {
 		.andDo(MockMvcResultHandlers.print())
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful());
 		
-		Film filmUpdated = filmService.findFilm(filmToUpdate.getId());
+		Film filmUpdated = filmSaveService.findFilm(filmToUpdate.getId());
 		Assertions.assertEquals(StringUtils.upperCase(FilmBuilder.TITRE_FILM_TMBD_ID_4780), filmUpdated.getTitre());
 		Assertions.assertTrue(filmUpdated.getDvd().isRipped());
 	}
