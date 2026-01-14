@@ -15,7 +15,6 @@ import fr.bluechipit.dvdtheque.dao.domain.Film;
 import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.file.util.MultipartFileUtil;
-import fr.bluechipit.dvdtheque.model.CritiquePresse;
 import fr.bluechipit.dvdtheque.service.impl.FilmSaveService;
 import fr.bluechipit.dvdtheque.service.impl.FilmService;
 import fr.bluechipit.dvdtheque.service.impl.PersonneService;
@@ -45,7 +44,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static java.lang.String.format;

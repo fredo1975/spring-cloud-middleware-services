@@ -18,7 +18,7 @@ public class FilmSaveService {
     public FilmSaveService(FilmDao filmDao) {
         this.filmDao = filmDao;
     }
-    @Transactional(readOnly = false)
+    @Transactional
     public Long saveNewFilm(Film film) {
         Assert.notEmpty(film.getRealisateur(), REALISATEUR_MESSAGE_WARNING);
         upperCaseTitre(film);
@@ -32,7 +32,7 @@ public class FilmSaveService {
         final String titreO = StringUtils.upperCase(film.getTitreO());
         film.setTitreO(titreO);
     }
-    @Transactional(readOnly = false)
+    @Transactional
     public Film updateFilm(Film film) {
         upperCaseTitre(film);
         film.setDateMaj(LocalDateTime.now());

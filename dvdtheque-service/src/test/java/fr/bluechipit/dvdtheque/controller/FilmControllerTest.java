@@ -1230,7 +1230,7 @@ public class FilmControllerTest {
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "");
 		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
-		Film filmRetrieved = page.getContent().iterator().next();
+		Film filmRetrieved = page.getContent().getFirst();
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(filmRetrieved.getTitre());
 	}
 
@@ -1296,7 +1296,7 @@ public class FilmControllerTest {
 		var query = "titre:eq:"+FilmBuilder.TITRE_FILM_TMBD_ID_844+":AND";
 		var page = filmService.paginatedSarch(query, 1, 10, "");
 		Assertions.assertTrue(CollectionUtils.isNotEmpty(page.getContent()));
-		Film filmRetrieved = page.getContent().iterator().next();
+		Film filmRetrieved = page.getContent().getFirst();
 		assertThat(FilmBuilder.TITRE_FILM_TMBD_ID_844).isEqualTo(filmRetrieved.getTitre());
 	}
 
@@ -1316,13 +1316,13 @@ public class FilmControllerTest {
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmSaveService.saveNewFilm(film);
-		assertNotNull(filmId);
+		Assertions.assertNotNull(filmId);
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, null, null, false);
 		Personne personne = personneService.findPersonneByName(FilmBuilder.REAL_NOM_TMBD_ID_844);
 		
@@ -1348,7 +1348,7 @@ public class FilmControllerTest {
 				.setDateSortie(FilmBuilder.FILM_DATE_SORTIE).setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD).setGenre1(genre1)
-				.setGenre2(genre2).setZone(Integer.valueOf(2))
+				.setGenre2(genre2).setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
@@ -1385,7 +1385,7 @@ public class FilmControllerTest {
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
@@ -1502,7 +1502,7 @@ public class FilmControllerTest {
 				.setDvdFormat(DvdFormat.DVD)
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
@@ -1517,7 +1517,7 @@ public class FilmControllerTest {
 				.setVu(true).setAnnee(FilmBuilder.ANNEE)
 				.setDateSortie(FilmBuilder.FILM_DATE_SORTIE).setDateInsertion(FilmBuilder.FILM_DATE_INSERTION)
 				.setDvdFormat(DvdFormat.BLUERAY).setOrigine(FilmOrigine.DVD).setGenre1(genre1).setGenre2(genre2)
-				.setZone(Integer.valueOf(2)).setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
+				.setZone(2).setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_4780)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET2))
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId2 = filmSaveService.saveNewFilm(film2);
