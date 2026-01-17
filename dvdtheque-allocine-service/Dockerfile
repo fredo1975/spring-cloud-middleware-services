@@ -10,19 +10,21 @@
 
 # Create a stage for resolving and downloading dependencies.
 FROM eclipse-temurin:21-jdk as deps
-
 WORKDIR /build
 
-# Copy the mvnw wrapper with executable permissions.
-COPY --chmod=0755 mvnw mvnw
-COPY .mvn/ .mvn/
+# 1. Préparation des Commons (Installation dans le repo local)
+COPY dvdtheque-commons/ dvdtheque-commons/
+COPY dvdtheque-allocine-service/mvnw dvdtheque-allocine-service/mvnw
+COPY dvdtheque-allocine-service/.mvn/ dvdtheque-allocine-service/.mvn/
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.m2 so that subsequent builds don't have to
-# re-download packages.
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -DskipTests
+RUN chmod +x dvdtheque-allocine-service/mvnw && \
+    cd dvdtheque-commons && \
+    ../dvdtheque-allocine-service/mvnw install -DskipTests
 
+# 2. Préparation du Service (Download des dépendances)
+COPY dvdtheque-allocine-service/pom.xml dvdtheque-allocine-service/pom.xml
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-allocine-service && ./mvnw dependency:go-offline -DskipTests
 ################################################################################
 
 # Create a stage for building the application based on the stage with downloaded dependencies.
@@ -32,14 +34,18 @@ RUN --mount=type=bind,source=pom.xml,target=pom.xml \
 # stage with the correct filename of your package and update the base image of the "final" stage
 # use the relevant app server, e.g., using tomcat (https://hub.docker.com/_/tomcat/) as a base image.
 FROM deps as package
-
 WORKDIR /build
 
-COPY ./src src/
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 \
+# On copie les sources du service
+COPY dvdtheque-allocine-service/src dvdtheque-allocine-service/src
+
+# COMPILATION ET RENOMMAGE SÉCURISÉ
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-allocine-service && \
     ./mvnw package -DskipTests && \
-    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
+    # On cherche le JAR le plus lourd (le Fat JAR de Spring Boot)
+    # ou on exclut explicitement le JAR "original"
+    cp target/$(ls target/ | grep .jar | grep -v original | head -n 1) target/app.jar
 
 ################################################################################
 
@@ -49,10 +55,10 @@ RUN --mount=type=bind,source=pom.xml,target=pom.xml \
 # See Spring's docs for reference:
 # https://docs.spring.io/spring-boot/docs/current/reference/html/container-images.html
 FROM package as extract
-
 WORKDIR /build
 
-RUN java -Djarmode=layertools -jar target/app.jar extract --destination target/extracted
+# On pointe précisément sur le jar dans le sous-dossier
+RUN java -Djarmode=layertools -jar dvdtheque-allocine-service/target/app.jar extract --destination target/extracted
 
 ################################################################################
 

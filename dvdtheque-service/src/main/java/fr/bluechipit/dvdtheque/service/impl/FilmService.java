@@ -31,13 +31,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 import specifications.filter.PageRequestBuilder;
 import tmdb.model.*;
 import utils.DateUtils;
@@ -678,5 +677,18 @@ public class FilmService {
 			}
 		}
 		throw new FilmNotFoundException("Film with tmdbId "+film.getTmdbId()+" not found");
+	}
+
+	public void importFilmList(MultipartFile file) throws IOException {
+		byte[] csvBytes = file.getBytes();
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		headers.setContentDisposition(ContentDisposition.builder("attachment").filename(file.getOriginalFilename()).build());
+		HttpEntity<?> request = new HttpEntity<>(csvBytes, headers);
+		ResponseEntity<String> resultsResponse = restTemplate.exchange(
+				environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_URL)
+						+ environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_IMPORT),
+				HttpMethod.POST, request, String.class);
+		logger.info(resultsResponse.getBody());
 	}
 }

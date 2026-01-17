@@ -260,24 +260,7 @@ public class FilmController {
 	@RolesAllowed("user")
 	@PostMapping("/films/import")
 	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) throws IOException {
-		/*File resFile = null;
-		try {
-			resFile = this.multipartFileUtil.createFileToImport(file);
-		} catch (Exception e) {
-			logger.error(e.getMessage());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}*/
-		byte[] csvBytes = file.getBytes();
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		headers.setContentDisposition(ContentDisposition.builder("attachment").filename(file.getOriginalFilename()).build());
-
-		HttpEntity<?> request = new HttpEntity<>(csvBytes, headers);
-		ResponseEntity<String> resultsResponse = restTemplate.exchange(
-				environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_URL)
-						+ environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_IMPORT),
-				HttpMethod.POST, request, String.class);
-		logger.info(resultsResponse.getBody());
+		filmService.importFilmList(file);
 		return ResponseEntity.noContent().build();
 	}
 
