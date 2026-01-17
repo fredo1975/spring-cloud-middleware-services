@@ -871,20 +871,20 @@ public class FilmControllerTest {
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844).build();
 		Long filmId = filmSaveService.saveNewFilm(film);
 		Assertions.assertNotNull(filmId);
-		
-        mockServer.expect(ExpectedCount.once(), 
+
+        mockServer.expect(ExpectedCount.once(),
           requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)+"?posterPath="+film.getPosterPath()))
           .andExpect(method(HttpMethod.GET))
           .andRespond(withSuccess("true", MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(Boolean.TRUE)));
-        
+
         mockmvc.perform(MockMvcRequestBuilders.put(RETRIEVE_ALL_FILM_IMAGE_URI).with(jwt().jwt(builder -> builder.subject("test")))
 				.with(csrf()))
 		.andDo(MockMvcResultHandlers.print())
 		.andExpect(MockMvcResultMatchers.status().is2xxSuccessful());
 		
 		mockServer.verify();
-		
     }
+
 	@Test
 	@Transactional
 	public void testRetrieveFilmImage() throws Exception {

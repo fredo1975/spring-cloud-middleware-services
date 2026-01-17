@@ -1,11 +1,6 @@
 package fr.bluechipit.dvdtheque.controller;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import enums.DvdFormat;
-import enums.FilmOrigine;
 import exceptions.DvdthequeServerRestException;
 import fr.bluechipit.dvdtheque.allocine.model.CritiquePresseDto;
 import fr.bluechipit.dvdtheque.allocine.model.DvdBuilder;
@@ -24,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,15 +26,12 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-import tmdb.model.*;
-import utils.DateUtils;
+import tmdb.model.Credits;
+import tmdb.model.Crew;
+import tmdb.model.Results;
 
 import javax.annotation.security.RolesAllowed;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -81,24 +72,6 @@ public class FilmController {
 	private int limitFilmSize;
 	@Autowired
 	private RestTemplate restTemplate;
-	private Map<Long, Genres> genresById;
-
-	public Map<Long, Genres> getGenresById() {
-		return genresById;
-	}
-
-	public void loadGenres() throws JsonParseException, JsonMappingException, IOException {
-		ObjectMapper objectMapper = new ObjectMapper();
-		InputStream in = this.getClass().getClassLoader().getResourceAsStream("genres.json");
-		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, StandardCharsets.ISO_8859_1));
-		List<Genres> l = objectMapper.readValue(bufferedReader, new TypeReference<List<Genres>>() {
-		});
-		genresById = l.stream().collect(Collectors.toMap(Genres::id, g -> g));
-	}
-
-	public FilmController() throws JsonParseException, JsonMappingException, IOException {
-		loadGenres();
-	}
 
 	@RolesAllowed("user")
 	@GetMapping("/films/byPersonne")
@@ -220,161 +193,42 @@ public class FilmController {
 	
 	@RolesAllowed("user")
 	@PutMapping("/films/remove/{id}")
-	ResponseEntity<Film> removeFilm(@PathVariable Long id) {
-		try {
-			Film filmOptional = filmSaveService.findFilm(id);
-			if (filmOptional == null) {
-				return ResponseEntity.notFound().build();
-			}
-			filmService.removeFilm(filmOptional);
-			return ResponseEntity.noContent().build();
-		} catch (Exception e) {
-			logger.error("an error occured while removing film id=" + id, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<Void> removeFilm(@PathVariable Long id) {
+		filmService.removeFilm(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@RolesAllowed("user")
 	@PutMapping("/films/cleanCaches")
 	ResponseEntity<Void> cleanCaches() {
-		try {
-			filmService.cleanAllCaches();
-			return ResponseEntity.noContent().build();
-		} catch (Exception e) {
-			logger.error("an error occured while cleaning all caches", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		filmService.cleanAllCaches();
+		return ResponseEntity.noContent().build();
 	}
 
 	@RolesAllowed("user")
 	@PutMapping("/films/retrieveImage/{id}")
 	ResponseEntity<Film> retrieveFilmImage(@PathVariable Long id) {
-		try {
-			Film film = filmSaveService.findFilm(id);
-			if (film == null) {
-				return ResponseEntity.notFound().build();
-			}
-			Results results = restTemplate.getForObject(
-					environment.getRequiredProperty(TMDB_SERVICE_URL) + environment.getRequiredProperty(TMDB_SERVICE_RESULTS) + "?tmdbId=" + film.getTmdbId(), Results.class);
-			film.setPosterPath(
-					environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.getPoster_path());
-			return ResponseEntity.ok(filmSaveService.updateFilm(film));
-		} catch (Exception e) {
-			logger.error("an error occured while retrieving image for film id=" + id, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		return ResponseEntity.ok(filmService.retrieveFilmImage(id));
 	}
 
 	@RolesAllowed("user")
 	@PutMapping("/films/retrieveAllImages")
 	ResponseEntity<Void> retrieveAllFilmImages() {
-		Results results = null;
-		try {
-			Page<Film> films = filmService.paginatedSarch("", null, null, "");
-			for(int i = 0 ; i<films.getContent().size();i++) {
-				Film film = films.getContent().get(i);
-				Boolean posterExists = restTemplate.getForObject(
-						environment.getRequiredProperty(TMDB_SERVICE_URL) + "?posterPath=" + film.getPosterPath(),
-						Boolean.class);
-				if (!posterExists) {
-					results = restTemplate.getForObject(
-							environment.getRequiredProperty(TMDB_SERVICE_URL) + "?tmdbId=" + film.getTmdbId(),
-							Results.class);
-					film.setPosterPath(environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL)
-							+ results.getPoster_path());
-				}
-				filmSaveService.updateFilm(film);
-			}
-			return ResponseEntity.noContent().build();
-		} catch (Exception e) {
-			logger.error("an error occured while retrieving all images", e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+		filmService.retrieveAllFilmImages();
+		return ResponseEntity.noContent().build();
 	}
 
 	@RolesAllowed({ "batch" })
 	@PostMapping("/films/saveProcessedFilm")
-	ResponseEntity<Film> saveProcessedFilm(@RequestBody Film film) {
-		Film filmToSave = null;
-		try {
-			Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
-					+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId="
-					+ film.getTmdbId(), Results.class);
-			if (results != null) {
-				filmToSave = filmService.transformTmdbFilmToDvdThequeFilm(film,
-						results, 
-						new HashSet<Long>(), 
-						true);
-				if (filmToSave != null) {
-					filmToSave.setId(null);
-					filmToSave.setOrigine(film.getOrigine());
-					if(film.getDateInsertion() != null) {
-						filmToSave.setDateInsertion(film.getDateInsertion());
-					}else {
-						filmToSave.setDateInsertion(DateUtils.clearDate(new Date()));
-					}
-					filmToSave.setVu(film.isVu());
-					filmToSave.setDateVue(film.getDateVue());
-					filmToSave.setDateSortieDvd(film.getDateSortieDvd());
-					Long id = filmSaveService.saveNewFilm(filmToSave);
-					logger.info(filmToSave.toString());
-					filmToSave.setId(id);
-					return ResponseEntity.ok(filmToSave);
-				}
-			}
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			logger.error("an error occured while saving film tmdbId=" + film.getTmdbId(), e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<Film> saveProcessedFilm(@RequestBody Film film) throws ParseException {
+		return ResponseEntity.ok(filmService.saveProcessedFilm(film));
 	}
 
 	@RolesAllowed({ "user", "batch" })
 	@PutMapping("/films/save/{tmdbId}")
-	ResponseEntity<Film> saveFilm(@PathVariable Long tmdbId, @RequestBody String origine){
-		Film filmToSave = null;
-		try {
-			FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
-			if (this.filmService.checkIfTmdbFilmExists(tmdbId)) {
-				return ResponseEntity.noContent().build();
-			}
-			Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
-					+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId=" + tmdbId,
-					Results.class);
-			if (results != null) {
-				filmToSave = filmService.transformTmdbFilmToDvdThequeFilm(null, results, new HashSet<Long>(), true);
-				if (filmToSave != null) {
-					ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
-							environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
-									+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + filmToSave.getTitre()+"&titleO="+ filmToSave.getTitreO(),
-							HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
-					if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
-						filmToSave.setAllocineFicheFilmId(Integer.valueOf(ficheFilmDtoResponse.getBody().get(0).getId()));
-					}
-					filmToSave.setId(null);
-					filmToSave.setOrigine(filmOrigine);
-					if (FilmOrigine.DVD.equals(filmOrigine)) {
-						Dvd dvd = filmService.buildDvd(filmToSave.getAnnee(), 
-								Integer.valueOf(2), 
-								null, 
-								null,
-								DvdFormat.DVD);
-						//dvd.setRipped(true);
-						//dvd.setDateRip(new Date());
-						filmToSave.setDvd(dvd);
-					}
-					filmToSave.setDateInsertion(DateUtils.clearDate(new Date()));
-					filmSaveService.saveNewFilm(filmToSave);
-				}
-			}
-			if (filmToSave == null) {
-				return ResponseEntity.notFound().build();
-			}
-			return ResponseEntity.ok(filmToSave);
-		} catch (Exception e) {
-			logger.error("an error occured while saving film tmdbId=" + tmdbId, e);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-		}
+	ResponseEntity<Film> saveFilm(@PathVariable Long tmdbId, @RequestBody String origine) throws ParseException {
+		Optional<Film> filmToSave = filmService.saveFilm(tmdbId,origine);
+        return filmToSave.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@RolesAllowed({ "user", "batch" })

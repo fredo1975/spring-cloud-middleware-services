@@ -871,7 +871,7 @@ public class FilmServiceIntegrationTests {
 		FilmBuilder.assertFilmIsNotNull(film, false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		Personne real = film.getRealisateur().iterator().next();
 		Assertions.assertNotNull(real);
-		filmService.removeFilm(film);
+		filmService.removeFilm(film.getId());
 		Exception exception = assertThrows(FilmNotFoundException.class, () -> {
 			filmSaveService.findFilm(filmId);
 	    });
