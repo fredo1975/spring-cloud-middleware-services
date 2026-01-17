@@ -69,13 +69,10 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
-  dvdtheque-commons:
-    build:
-      context: ./dvdtheque-commons
-    container_name: dvdtheque-commons
   dvdtheque-service:
     build:
       context: ./dvdtheque-service
+      dockerfile: Dockerfile
     container_name: dvdtheque-service
     network_mode: "service:localhost"
     depends_on:
@@ -84,6 +81,7 @@ services:
   tmdb-service:
     build:
         context: ./dvdtheque-tmdb-service
+        dockerfile: Dockerfile
     container_name: dvdtheque-tmdb-service
     network_mode: "service:localhost"
     depends_on:
@@ -92,6 +90,7 @@ services:
   allocine-service:
     build:
         context: ./dvdtheque-allocine-service
+        dockerfile: Dockerfile
     container_name: dvdtheque-allocine-service
     network_mode: "service:localhost"
     depends_on:
@@ -100,6 +99,7 @@ services:
   batch-service:
     build:
       context: ./dvdtheque-batch-service
+      dockerfile: Dockerfile
     container_name: dvdtheque-batch-service
     network_mode: "service:localhost"
     depends_on:
