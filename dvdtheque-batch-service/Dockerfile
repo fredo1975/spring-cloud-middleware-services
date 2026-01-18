@@ -13,6 +13,12 @@ RUN chmod +x dvdtheque-batch-service/mvnw && \
 
 # 2. Préparation du Service (Download des dépendances)
 COPY dvdtheque-batch-service/pom.xml dvdtheque-batch-service/pom.xml
+
+# 3. ÉTAPE CRUCIALE : On compile et on installe les commons
+# dans le repository local du conteneur (/root/.m2)
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-commons && \
+    ../dvdtheque-batch-service/mvnw install -DskipTests
 RUN --mount=type=cache,target=/root/.m2 \
     cd dvdtheque-batch-service && ./mvnw dependency:go-offline -DskipTests
 
