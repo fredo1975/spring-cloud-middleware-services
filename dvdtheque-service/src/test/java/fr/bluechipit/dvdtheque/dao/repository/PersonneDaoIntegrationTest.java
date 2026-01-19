@@ -14,8 +14,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
-
 @ExtendWith(SpringExtension.class)
 //@Import(PersonneDaoImpl.class)
 @DataJpaTest
