@@ -5,6 +5,7 @@ import enums.FilmOrigine;
 import fr.bluechipit.dvdtheque.dao.domain.Film;
 import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.dao.model.utils.FilmBuilder;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -18,7 +19,6 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -43,7 +43,7 @@ public class FilmDaoIntegrationTest {
 	@Test
 	public void saveGenre() {
 		Genre genreRetrieved = saveGenre(GENRE_TMDB_ID_1, GENRE_NAME_1);
-		assertNotNull(genreRetrieved);
+		Assertions.assertNotNull(genreRetrieved);
 	}
 	
 	@Test
@@ -63,18 +63,18 @@ public class FilmDaoIntegrationTest {
 				.setOrigine(FilmOrigine.DVD)
 				.setGenre1(genre1)
 				.setGenre2(genre2)
-				.setZone(Integer.valueOf(2))
+				.setZone(2)
 				.setRealNom(FilmBuilder.REAL_NOM_TMBD_ID_844)
 				.setRipDate(FilmBuilder.createRipDate(FilmBuilder.RIP_DATE_OFFSET))
 				.setDateSortieDvd(FilmBuilder.DVD_DATE_SORTIE)
 				.setAllocineFicheFilmId(FilmBuilder.ALLOCINE_FICHE_FILM_ID_844)
 				.build();
 		Film savedFilm = filmDao.save(film);
-		assertNotNull(savedFilm);
+		Assertions.assertNotNull(savedFilm);
 		List<Film> films = filmDao.findAll();
-		assertNotNull(films);
+		Assertions.assertNotNull(films);
 		assertEquals(1, films.size());
-		FilmBuilder.assertFilmIsNotNull(films.get(0), false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
+		FilmBuilder.assertFilmIsNotNull(films.getFirst(), false,FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		logger.info("films.size()="+films.size());
 	}
 	
@@ -82,17 +82,17 @@ public class FilmDaoIntegrationTest {
 	public void findGenre() {
 		Genre genre1 = saveGenre(GENRE_TMDB_ID_1, GENRE_NAME_1);
 		Genre genre2 = saveGenre(GENRE_TMDB_ID_2, GENRE_NAME_2);
-		assertNotNull(genre1);
-		assertNotNull(genre2);
+		Assertions.assertNotNull(genre1);
+		Assertions.assertNotNull(genre2);
 		final List<Genre> genreList = genreDao.findAll();
-		assertNotNull(genreList);
+		Assertions.assertNotNull(genreList);
 		assertEquals(2, genreList.size());
-		Optional<Genre> genreRetrieved1 = genreDao.findById(genreList.get(0).getId());
-		assertNotNull(genreRetrieved1.get());
+		Optional<Genre> genreRetrieved1 = genreDao.findById(genreList.getFirst().getId());
+		Assertions.assertNotNull(genreRetrieved1.get());
 		assertEquals(GENRE_TMDB_ID_1, genreRetrieved1.get().getTmdbId());
 		assertEquals(GENRE_NAME_1, genreRetrieved1.get().getName());
 		Optional<Genre> genreRetrieved2 = genreDao.findById(genreList.get(1).getId());
-		assertNotNull(genreRetrieved2.get());
+		Assertions.assertNotNull(genreRetrieved2.get());
 		assertEquals(GENRE_TMDB_ID_2, genreRetrieved2.get().getTmdbId());
 		assertEquals(GENRE_NAME_2, genreRetrieved2.get().getName());
 	}

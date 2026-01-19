@@ -11,7 +11,7 @@
     </parent>
     <groupId>fr.bluechipit.dvdtheque.allocine</groupId>
     <artifactId>dvdtheque-allocine-service</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
@@ -26,7 +26,7 @@
         <dependency>
             <artifactId>dvdtheque-commons</artifactId>
             <groupId>fr.bluechipit.dvdtheque.commons</groupId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>

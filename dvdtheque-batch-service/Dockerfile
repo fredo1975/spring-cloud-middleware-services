@@ -1,58 +1,50 @@
 # syntax=docker/dockerfile:1
-
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
-################################################################################
-
-# Create a stage for resolving and downloading dependencies.
 FROM eclipse-temurin:21-jdk as deps
-
 WORKDIR /build
 
-# Copy the mvnw wrapper with executable permissions.
-COPY --chmod=0755 mvnw mvnw
-COPY .mvn/ .mvn/
+# 1. Préparation des Commons (Installation dans le repo local)
+COPY dvdtheque-commons/ dvdtheque-commons/
+COPY dvdtheque-batch-service/mvnw dvdtheque-batch-service/mvnw
+COPY dvdtheque-batch-service/.mvn/ dvdtheque-batch-service/.mvn/
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.m2 so that subsequent builds don't have to
-# re-download packages.
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline -DskipTests
+RUN chmod +x dvdtheque-batch-service/mvnw && \
+    cd dvdtheque-commons && \
+    ../dvdtheque-batch-service/mvnw install -DskipTests
+
+# 2. Préparation du Service (Download des dépendances)
+COPY dvdtheque-batch-service/pom.xml dvdtheque-batch-service/pom.xml
+
+# 3. ÉTAPE CRUCIALE : On compile et on installe les commons
+# dans le repository local du conteneur (/root/.m2)
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-commons && \
+    ../dvdtheque-batch-service/mvnw install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-batch-service && ./mvnw dependency:go-offline -DskipTests
+
 
 ################################################################################
 
-# Create a stage for building the application based on the stage with downloaded dependencies.
-# This Dockerfile is optimized for Java applications that output an uber jar, which includes
-# all the dependencies needed to run your app inside a JVM. If your app doesn't output an uber
-# jar and instead relies on an application server like Apache Tomcat, you'll need to update this
-# stage with the correct filename of your package and update the base image of the "final" stage
-# use the relevant app server, e.g., using tomcat (https://hub.docker.com/_/tomcat/) as a base image.
 FROM deps as package
-
 WORKDIR /build
 
-COPY ./src src/
-RUN --mount=type=bind,source=pom.xml,target=pom.xml \
-    --mount=type=cache,target=/root/.m2 \
+# On copie les sources du service
+COPY dvdtheque-batch-service/src dvdtheque-batch-service/src
+
+# COMPILATION ET RENOMMAGE SÉCURISÉ
+RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-batch-service && \
     ./mvnw package -DskipTests && \
-    mv target/$(./mvnw help:evaluate -Dexpression=project.artifactId -q -DforceStdout)-$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout).jar target/app.jar
+    # Utilisation de find pour trouver le bon JAR (l'exécutable) et le renommer proprement
+    find target/ -name "*.jar" -not -name "*original*" -exec cp {} target/app.jar \;
 
 ################################################################################
 
-# Create a stage for extracting the application into separate layers.
-# Take advantage of Spring Boot's layer tools and Docker's caching by extracting
-# the packaged application into separate layers that can be copied into the final stage.
-# See Spring's docs for reference:
-# https://docs.spring.io/spring-boot/docs/current/reference/html/container-images.html
 FROM package as extract
-
 WORKDIR /build
 
-RUN java -Djarmode=layertools -jar target/app.jar extract --destination target/extracted
+# On pointe précisément sur le jar dans le sous-dossier
+RUN java -Djarmode=layertools -jar dvdtheque-batch-service/target/app.jar extract --destination target/extracted
 
 ################################################################################
 

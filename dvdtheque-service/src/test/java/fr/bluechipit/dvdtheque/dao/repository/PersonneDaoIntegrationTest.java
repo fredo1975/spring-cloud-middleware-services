@@ -2,6 +2,7 @@ package fr.bluechipit.dvdtheque.dao.repository;
 
 
 import fr.bluechipit.dvdtheque.dao.domain.Personne;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -26,19 +27,19 @@ public class PersonneDaoIntegrationTest {
 	@Test
 	public void findAllRealisateur(){
 		List<Personne> realisateurs = personneDao.findAll();
-		assertNotNull(realisateurs);
+		Assertions.assertNotNull(realisateurs);
 		logger.info("realisateurs.size()="+realisateurs.size());
 	}
 	@Test
 	public void findAllActeur(){
 		List<Personne> acteurs = personneDao.findAll();
-		assertNotNull(acteurs);
+		Assertions.assertNotNull(acteurs);
 		logger.info("acteurs.size()="+acteurs.size());
 	}
 	@Test
 	public void findAllPersonne(){
 		List<Personne> personnes = personneDao.findAll();
-		assertNotNull(personnes);
+		Assertions.assertNotNull(personnes);
 		logger.info("personnes.size()="+personnes.size());
 	}
 }

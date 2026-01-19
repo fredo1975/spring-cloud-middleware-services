@@ -24,14 +24,14 @@ import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.dao.repository.PersonneDao;
 
 @Service("personneService")
-public class PersonneServiceImpl implements IPersonneService {
-	protected Logger logger = LoggerFactory.getLogger(PersonneServiceImpl.class);
+public class PersonneService {
+	protected Logger logger = LoggerFactory.getLogger(PersonneService.class);
 	public static final String CACHE_PERSONNE = "personneCache";
 	private final PersonneDao personneDao;
 	IMap<Long, Personne> mapPersonnes;
 	private final HazelcastInstance instance;
 
-	public PersonneServiceImpl(PersonneDao personneDao, HazelcastInstance instance) {
+	public PersonneService(PersonneDao personneDao, HazelcastInstance instance) {
 		this.personneDao = personneDao;
 		this.instance = instance;
 		this.init();
@@ -43,7 +43,6 @@ public class PersonneServiceImpl implements IPersonneService {
 		mapPersonnes.addIndex("nom", false);*/
 	}
 
-	@Override
 	public void cleanAllCaches() {
 		mapPersonnes.clear();
 	}
@@ -92,9 +91,9 @@ public class PersonneServiceImpl implements IPersonneService {
 
 
 	private List<Personne> sortPersonneList(Collection<Personne> personnes) {
-		if (personnes.size() > 0) {
-			List<Personne> l = personnes.stream().collect(Collectors.toList());
-			Collections.sort(l, (f1,f2)->f1.getNom().compareTo(f2.getNom()));
+		if (!personnes.isEmpty()) {
+			List<Personne> l = new ArrayList<>(personnes);
+			l.sort((f1, f2) -> f1.getNom().compareTo(f2.getNom()));
 			return l;
 		}
 		return new ArrayList<>();
@@ -104,14 +103,14 @@ public class PersonneServiceImpl implements IPersonneService {
 	public List<Personne> findAllPersonne() {
 		Collection<Personne> personnes = mapPersonnes.values();
 		logger.info("personnes cache size: " + personnes.size());
-		if (personnes.size() > 0) {
+		if (!personnes.isEmpty()) {
 			List<Personne> l = sortPersonneList(personnes);
 			return l;
 		}
 		logger.info("personnes find");
 		List<Personne> personnesList = this.personneDao.findAll();
 		List<Personne> l = new ArrayList<>();
-		if (personnesList.size() > 0) {
+		if (!personnesList.isEmpty()) {
 			l.addAll(sortPersonneList(personnesList));
 		}
 		logger.info("personnesList size: " + l.size());
@@ -161,19 +160,19 @@ public class PersonneServiceImpl implements IPersonneService {
 		return personne;
 	}
 
-	@Override
+
 	@Transactional(readOnly = false)
 	public void cleanAllPersonnes() {
 		mapPersonnes.clear();
 		personneDao.deleteAll();
 	}
 
-	@Override
+
 	public void deletePersonne(Personne p) {
 		// TODO Auto-generated method stub
 	}
 
-	@Override
+
 	public Personne buildPersonne(String nom, String profilePath) {
 		Personne personne = new Personne();
 		personne.setNom(nom);
@@ -183,7 +182,7 @@ public class PersonneServiceImpl implements IPersonneService {
 		return personne;
 	}
 
-	@Override
+
 	@Transactional(readOnly = false)
 	// @Cacheable(value= CACHE_PERSONNE)
 	public Personne createOrRetrievePersonne(String nom, String profilePath) {
@@ -196,7 +195,7 @@ public class PersonneServiceImpl implements IPersonneService {
 		return p;
 	}
 
-	@Override
+
 	public String printPersonnes(final Set<Personne> personnes, final String separator) {
 		if (CollectionUtils.isNotEmpty(personnes)) {
 			StringBuilder sb = new StringBuilder();
