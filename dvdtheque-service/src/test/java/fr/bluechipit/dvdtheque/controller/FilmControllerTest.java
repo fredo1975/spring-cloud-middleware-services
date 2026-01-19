@@ -419,13 +419,13 @@ public class FilmControllerTest {
 		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
 		res.setId(film.getTmdbId());
 		results.add(res);
-		
+		TmdbResponse tmdbResponse = new TmdbResponse(1, Lists.newArrayList(results), results.size(), 1);
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
 		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_BY_TITLE)+"?title="+FilmBuilder.TITRE_FILM_TMBD_ID_844))
 		          .andExpect(method(HttpMethod.GET))
-		          .andRespond(withSuccess(mapper.writeValueAsString(results), MediaType.APPLICATION_JSON));
+		          .andRespond(withSuccess(mapper.writeValueAsString(tmdbResponse), MediaType.APPLICATION_JSON));
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
 		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId()))
