@@ -4,10 +4,10 @@ import enums.FilmOrigine;
 import fr.bluechipit.dvdtheque.dao.domain.Film;
 import fr.bluechipit.dvdtheque.dao.repository.FilmDao;
 import fr.bluechipit.dvdtheque.exception.FilmNotFoundException;
+import jakarta.validation.Valid;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
 
@@ -19,8 +19,7 @@ public class FilmSaveService {
         this.filmDao = filmDao;
     }
     @Transactional
-    public Film saveNewFilm(Film film) {
-        Assert.notEmpty(film.getRealisateur(), REALISATEUR_MESSAGE_WARNING);
+    public Film saveNewFilm(@Valid Film film) {
         // Ensure we aren't accidentally updating an existing record
         film.setId(null);
         upperCaseTitre(film);
