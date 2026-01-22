@@ -146,7 +146,7 @@ public class FilmService {
 	 *
 	 */
 	public Film transformTmdbFilmToDvdThequeFilm(Film film, final Results results,
-												 final Set<Long> tmdbFilmAlreadyInDvdthequeSet, final boolean persistPersonne) throws ParseException {
+												 final Set<Long> tmdbFilmAlreadyInDvdthequeSet, final boolean persistPersonne) {
 		Film transformedfilm = new Film();
 		if (film != null && film.getId() != null) {
 			transformedfilm.setId(film.getId());
@@ -177,10 +177,18 @@ public class FilmService {
 			logger.error(e.getMessage() + " for id=" + results.getId());
 			SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
 			if (StringUtils.isNotEmpty(results.getRelease_date())) {
-				releaseDate = sdf.parse(results.getRelease_date());
-			} else {
-				releaseDate = sdf.parse("2000-01-01");
-			}
+                try {
+                    releaseDate = sdf.parse(results.getRelease_date());
+                } catch (ParseException ex) {
+                    throw new RuntimeException(ex);
+                }
+            } else {
+                try {
+                    releaseDate = sdf.parse("2000-01-01");
+                } catch (ParseException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
 		}
 		transformedfilm.setAnnee(retrieveYearFromReleaseDate(releaseDate));
 		transformedfilm.setDateSortie(DateUtils.clearDate(releaseDate));
@@ -259,47 +267,51 @@ public class FilmService {
 		}
 	}
 	public Optional<Film> saveFilm(Long tmdbId, String origine) throws ParseException {
-		Film filmToSave = null;
-        FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
         if (checkIfTmdbFilmExists(tmdbId)) {
             return Optional.empty();
         }
-        Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
-                        + environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId=" + tmdbId,
-                Results.class);
-        if (results != null) {
-            filmToSave = transformTmdbFilmToDvdThequeFilm(null, results, new HashSet<Long>(), true);
-            if (filmToSave != null) {
-                ResponseEntity<List<FicheFilmDto>> ficheFilmDtoResponse = restTemplate.exchange(
-                        environment.getRequiredProperty(ALLOCINE_SERVICE_URL)
-                                + environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + filmToSave.getTitre()+"&titleO="+ filmToSave.getTitreO(),
-                        HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
-                if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
-                    filmToSave.setAllocineFicheFilmId(Integer.valueOf(ficheFilmDtoResponse.getBody().get(0).getId()));
-                }
-                filmToSave.setId(null);
-                filmToSave.setOrigine(filmOrigine);
-                if (FilmOrigine.DVD.equals(filmOrigine)) {
-                    Dvd dvd = buildDvd(filmToSave.getAnnee(),
-                            Integer.valueOf(2),
-                            null,
-                            null,
-                            DvdFormat.DVD);
-                    //dvd.setRipped(true);
-                    //dvd.setDateRip(new Date());
-                    filmToSave.setDvd(dvd);
-                }
-                filmToSave.setDateInsertion(DateUtils.clearDate(new Date()));
-				filmSaveService.saveNewFilm(filmToSave);
-            }
-        }
-        if (filmToSave == null) {
-            return Optional.empty();
-        }
-        return Optional.of(filmToSave);
+		FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
+		String tmdbUrl = String.format("%s%s?tmdbId=%s",
+				environment.getRequiredProperty(TMDB_SERVICE_URL),
+				environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS),
+				tmdbId);
+		return Optional.ofNullable(restTemplate.getForObject(tmdbUrl, Results.class))
+				.map(results -> transformTmdbFilmToDvdThequeFilm(null, results, new HashSet<>(), true))
+				.map(filmToSave -> {
+					// 3. Enrich with Allocine Data
+					enrichWithAllocineId(filmToSave);
+
+					// 4. Apply Business Rules
+					prepareFilmForPersistence(filmToSave, filmOrigine);
+
+					// 5. Save
+					return filmSaveService.saveNewFilm(filmToSave);
+				});
     }
 
+	private void enrichWithAllocineId(Film film) {
+		String allocineUrl = String.format("%s%s?title=%s&titleO=%s",
+				environment.getRequiredProperty(ALLOCINE_SERVICE_URL),
+				environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE),
+				film.getTitre(), film.getTitreO());
 
+		ResponseEntity<List<FicheFilmDto>> response = restTemplate.exchange(
+				allocineUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
+
+		if (response.getBody() != null && !response.getBody().isEmpty()) {
+			film.setAllocineFicheFilmId(response.getBody().getFirst().getId());
+		}
+	}
+
+	private void prepareFilmForPersistence(Film film, FilmOrigine origin) {
+		film.setId(null);
+		film.setOrigine(origin);
+		film.setDateInsertion(DateUtils.clearDate(new Date()));
+
+		if (FilmOrigine.DVD.equals(origin)) {
+			film.setDvd(buildDvd(film.getAnnee(), 2, null, null, DvdFormat.DVD));
+		}
+	}
 	@Transactional(readOnly = false)
 	public Genre saveGenre(final Genre genre) {
 		Genre persistedGenre = genreDao.save(genre);
@@ -321,7 +333,7 @@ public class FilmService {
 		List<Genre> e = this.genreDao.findAll();
 		logger.debug("genres size: " + e.size());
 		if(CollectionUtils.isNotEmpty(e)) {
-			e.parallelStream().forEach(it -> {
+			e.forEach(it -> {
 				mapGenres.putIfAbsent(it.getId(), it);
 			});
 		}
@@ -670,9 +682,9 @@ public class FilmService {
 				filmToSave.setVu(film.isVu());
 				filmToSave.setDateVue(film.getDateVue());
 				filmToSave.setDateSortieDvd(film.getDateSortieDvd());
-				Long id = filmSaveService.saveNewFilm(filmToSave);
+				Film savedFilm = filmSaveService.saveNewFilm(filmToSave);
 				logger.info(filmToSave.toString());
-				filmToSave.setId(id);
+				filmToSave.setId(savedFilm.getId());
 				return filmToSave;
 			}
 		}

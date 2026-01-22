@@ -19,11 +19,13 @@ public class FilmSaveService {
         this.filmDao = filmDao;
     }
     @Transactional
-    public Long saveNewFilm(Film film) {
+    public Film saveNewFilm(Film film) {
         Assert.notEmpty(film.getRealisateur(), REALISATEUR_MESSAGE_WARNING);
+        // Ensure we aren't accidentally updating an existing record
+        film.setId(null);
         upperCaseTitre(film);
-        Film savedFilm = filmDao.save(film);
-        return savedFilm.getId();
+        // Spring Data JPA returns the persisted entity with the generated ID
+        return filmDao.save(film);
     }
 
     public void upperCaseTitre(final Film film) {
