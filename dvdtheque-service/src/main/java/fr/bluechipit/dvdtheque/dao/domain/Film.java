@@ -43,9 +43,17 @@ public class Film implements Serializable, Comparable<Film> {
 	private Dvd dvd;
 	@Column(name = "origine")
 	private FilmOrigine origine;
-	@OneToMany(cascade=CascadeType.PERSIST,fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name = "film_realisateur",
+			joinColumns = @JoinColumn(name = "film_id"),
+			inverseJoinColumns = @JoinColumn(name = "realisateur_id"))
 	private Set<Personne> realisateur = new HashSet<>();
-	@OneToMany(cascade=CascadeType.PERSIST,fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name = "film_acteur",
+			joinColumns = @JoinColumn(name = "film_id"),
+			inverseJoinColumns = @JoinColumn(name = "acteur_id"))
 	private Set<Personne> acteur = new HashSet<>();
 	@Column(name = "vu")
 	private boolean vu;
