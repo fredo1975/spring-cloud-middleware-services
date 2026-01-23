@@ -78,4 +78,4 @@ COPY --from=extract build/target/extracted/application/ ./
 
 EXPOSE 8086
 
-ENTRYPOINT [ "java", "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop", "org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "java", "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-agentlib:jdwp=transport=dt_socket,address=*:5006,server=y,suspend=n", "org.springframework.boot.loader.launch.JarLauncher" ]

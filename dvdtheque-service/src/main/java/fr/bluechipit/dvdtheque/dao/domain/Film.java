@@ -57,7 +57,11 @@ public class Film implements Serializable, Comparable<Film> {
 	private String overview;
 	@Column(name = "runtime")
 	private Integer runtime;
-	@OneToMany(cascade=CascadeType.PERSIST,fetch = FetchType.EAGER)
+	@ManyToMany(fetch = FetchType.EAGER)
+	@JoinTable(
+			name = "film_genre",
+			joinColumns = @JoinColumn(name = "film_id"),
+			inverseJoinColumns = @JoinColumn(name = "genre_id"))
 	private Set<Genre> genre = new HashSet<>();
 	@Column(name = "homepage")
 	private String homepage;
