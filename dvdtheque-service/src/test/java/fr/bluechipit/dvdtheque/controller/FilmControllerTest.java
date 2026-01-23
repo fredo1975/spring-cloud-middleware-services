@@ -1022,9 +1022,10 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveProcessedFilm() throws Exception {
-		List<Long> l = new ArrayList<>();
-		l.add(35L);
-		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
+		List<Genres> l = new ArrayList<>();
+		Genres genres1 = new Genres(35L, "Comedy");
+		l.add(genres1);
+		var res = new ResultsByTmdbId(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1097,9 +1098,10 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmDvd() throws Exception {
-		List<Long> l = new ArrayList<>();
-		l.add(35L);
-		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
+		List<Genres> l = new ArrayList<>();
+		Genres genres1 = new Genres(35L, "Comedy");
+		l.add(genres1);
+		var res = new ResultsByTmdbId(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1159,9 +1161,10 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmNetflix() throws Exception {
-		List<Long> l = new ArrayList<>();
-		l.add(35L);
-		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
+		List<Genres> l = new ArrayList<>();
+		Genres genres1 = new Genres(35L, "Comedy");
+		l.add(genres1);
+		var res = new ResultsByTmdbId(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 
 		Credits credits = new Credits();
 		Crew crew = new Crew();
@@ -1222,9 +1225,10 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmEnSalle() throws Exception {
-		List<Long> l = new ArrayList<>();
-		l.add(35L);
-		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
+		List<Genres> l = new ArrayList<>();
+		Genres genres1 = new Genres(35L, "Comedy");
+		l.add(genres1);
+		var res = new ResultsByTmdbId(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
