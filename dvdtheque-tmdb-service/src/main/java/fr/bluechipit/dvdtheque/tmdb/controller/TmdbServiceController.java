@@ -45,13 +45,13 @@ public class TmdbServiceController {
 	
 	@RolesAllowed({"user","batch"})
 	@GetMapping("/retrieveTmdbFilm/byTmdbId")
-	ResponseEntity<Results> retrieveTmdbFilm(@RequestParam(name="tmdbId",required = true) Long tmdbId) {
+	ResponseEntity<ResultsByTmdbId> retrieveTmdbFilm(@RequestParam(name="tmdbId",required = true) Long tmdbId) {
 		try {
-			Optional<Results> optionalResults = retrieveTmdbSearchResultsById(tmdbId);
+			Optional<ResultsByTmdbId> optionalResults = retrieveTmdbSearchResultsById(tmdbId);
 			if(optionalResults.isEmpty()) {
 				final String msg = "Film with tmbdbId={} already exists";
 				logger.error(msg,tmdbId);
-				return new ResponseEntity<Results>(HttpStatus.NO_CONTENT);
+				return new ResponseEntity<ResultsByTmdbId>(HttpStatus.NO_CONTENT);
 			}
 			return ResponseEntity.ok(optionalResults.get());
 		}catch(Exception e) {
@@ -67,11 +67,10 @@ public class TmdbServiceController {
 	 * @throws JsonMappingException 
 	 * @throws JsonParseException 
 	 */
-	public Optional<Results> retrieveTmdbSearchResultsById(final Long tmdbId) {
+	public Optional<ResultsByTmdbId> retrieveTmdbSearchResultsById(final Long tmdbId) {
 		try {
-			Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_MOVIE_QUERY)+tmdbId+"?"+"api_key="+environment.getRequiredProperty(TMDB_API_KEY)+"&language=fr", Results.class);
+			ResultsByTmdbId results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_MOVIE_QUERY)+tmdbId+"?"+"api_key="+environment.getRequiredProperty(TMDB_API_KEY)+"&language=fr", ResultsByTmdbId.class);
 			return Optional.of(results);
-			//return restTemplate.getForObject(environment.getRequiredProperty(TMDB_MOVIE_QUERY)+tmdbId+"?"+"api_key="+environment.getRequiredProperty(TMDB_API_KEY)+"&language=fr", Results.class);
 		}catch(HttpClientErrorException e) {
 			logger.error("film "+tmdbId+" not found");
 		}
@@ -130,10 +129,10 @@ public class TmdbServiceController {
 				searchResults = retrieveTmdbSearchResults(title, firstPage);
 				addResultsToSet(results, searchResults);
 			}
-			List<Results> resultsSorted = results.stream().filter(film->film != null && StringUtils.isNotEmpty(film.getRelease_date())).sorted(new Comparator<>() {
+			List<Results> resultsSorted = results.stream().filter(film->film != null && StringUtils.isNotEmpty(film.release_date())).sorted(new Comparator<>() {
 				@Override
 				public int compare(Results o1, Results o2) {
-					return o2.getRelease_date().compareTo(o1.getRelease_date());
+					return o2.release_date().compareTo(o1.release_date());
 				}
 			}).collect(Collectors.toList());
 			return ResponseEntity.ok(resultsSorted);

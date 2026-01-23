@@ -34,7 +34,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import specifications.filter.PageRequestBuilder;
@@ -92,26 +91,24 @@ public class FilmService {
 
 	public void init() {
 		mapGenres = instance.getMap(CACHE_GENRE);
+		List<Genre> allGenres = genreDao.findAll();
+		for(Genre genre : allGenres) {
+			mapGenres.putIfAbsent((long) genre.getTmdbId(), genre);
+		}
+		logger.info("Loaded {} genres into cache", mapGenres.size());
 	}
 
 	@Transactional(readOnly = true)
 	public List<FilmDto> getAllFilmDtos() {
-		List<Film> filmList = null;
-		List<FilmDto> filmDtoList = new ArrayList<>();
 		try {
-			filmList = filmDao.findAll();
-			if (!CollectionUtils.isEmpty(filmList)) {
-				logger.debug("####################   filmList.size()=" + filmList.size());
-				for (Film film : filmList) {
-					FilmDto filmDto = FilmDto.toDto(film);
-					filmDtoList.add(filmDto);
-				}
-			}
+			return filmDao.findAll().stream()
+					.map(FilmDto::toDto)
+					.sorted(Comparator.comparing(FilmDto::getTitre))
+					.toList(); // Java 16+ syntax
 		} catch (Exception e) {
-			logger.error(e.getCause().getMessage());
+			logger.error("Error retrieving films: {}", e.getMessage(), e);
+			return Collections.emptyList();
 		}
-		filmDtoList.sort(Comparator.comparing(FilmDto::getTitre));
-		return filmDtoList;
 	}
 
 	@Transactional(readOnly = true, noRollbackFor = { org.springframework.dao.EmptyResultDataAccessException.class })
@@ -141,83 +138,112 @@ public class FilmService {
 		return cal.get(Calendar.YEAR);
 	}
 
+	private void mapIdentity(Film existingFilm, Results results, Film transformed, Set<Long> tmdbAlreadyInSet){
+		if (existingFilm != null && existingFilm.getId() != null) {
+			transformed.setId(existingFilm.getId());
+			transformed.setDateInsertion(existingFilm.getDateInsertion());
+			transformed.setAllocineFicheFilmId(existingFilm.getAllocineFicheFilmId());
+			transformed.setDateSortieDvd(existingFilm.getDateSortieDvd());
+		}
+		if (existingFilm == null) {
+			transformed.setId(results.id());
+		}
+		if (CollectionUtils.isNotEmpty(tmdbAlreadyInSet)
+				&& tmdbAlreadyInSet.contains(results.id())) {
+			transformed.setAlreadyInDvdtheque(true);
+		}
+	}
 	/**
 	 * create a dvdtheque Film based on a TMBD film
 	 *
 	 */
 	public Film transformTmdbFilmToDvdThequeFilm(Film film, final Results results,
 												 final Set<Long> tmdbFilmAlreadyInDvdthequeSet, final boolean persistPersonne) {
+		logger.debug("transformTmdbFilmToDvdThequeFilm: {}", film);
 		Film transformedfilm = new Film();
-		if (film != null && film.getId() != null) {
-			transformedfilm.setId(film.getId());
-			transformedfilm.setDateInsertion(film.getDateInsertion());
-			transformedfilm.setAllocineFicheFilmId(film.getAllocineFicheFilmId());
-			transformedfilm.setDateSortieDvd(film.getDateSortieDvd());
-		}
-		if (film == null) {
-			transformedfilm.setId(results.getId());
-		}
-		if (CollectionUtils.isNotEmpty(tmdbFilmAlreadyInDvdthequeSet)
-				&& tmdbFilmAlreadyInDvdthequeSet.contains(results.getId())) {
-			transformedfilm.setAlreadyInDvdtheque(true);
-		}
-		transformedfilm.setTitre(StringUtils.upperCase(results.getTitle()));
-		transformedfilm.setTitreO(StringUtils.upperCase(results.getOriginal_title()));
+		// 1. Map basic identity and existing film data
+		mapIdentity(film, results, transformedfilm, tmdbFilmAlreadyInDvdthequeSet);
+
+		// 2. Map Title and Metadata
+		transformedfilm.setTitre(StringUtils.upperCase(results.title()));
+		transformedfilm.setTitreO(StringUtils.upperCase(results.original_title()));
+		transformedfilm.setPosterPath(
+				environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.poster_path());
+		transformedfilm.setTmdbId(results.id());
+		transformedfilm.setOverview(results.overview());
+		transformedfilm.setRuntime(results.runtime());
+		transformedfilm.setHomepage(results.homepage());
+
 		if (film != null && film.getDvd() != null) {
 			transformedfilm.setDvd(film.getDvd());
 		}
-		Date releaseDate = null;
-		try {
-			// releaseDate = retrieveTmdbFrReleaseDate(results.getId());
-			releaseDate = restTemplate.getForObject(
-					environment.getRequiredProperty(TMDB_SERVICE_URL)
-							+ environment.getRequiredProperty(TMDB_SERVICE_RELEASE_DATE) + "?tmdbId=" + results.getId(),
-					Date.class);
-		} catch (RestClientException e) {
-			logger.error(e.getMessage() + " for id=" + results.getId());
-			SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
-			if (StringUtils.isNotEmpty(results.getRelease_date())) {
-                try {
-                    releaseDate = sdf.parse(results.getRelease_date());
-                } catch (ParseException ex) {
-                    throw new RuntimeException(ex);
-                }
-            } else {
-                try {
-                    releaseDate = sdf.parse("2000-01-01");
-                } catch (ParseException ex) {
-                    throw new RuntimeException(ex);
-                }
-            }
-		}
+		Date releaseDate = fetchBestAvailableDate(results);
+
+		// 3. Handle Dates (Refactored to separate method)
 		transformedfilm.setAnnee(retrieveYearFromReleaseDate(releaseDate));
 		transformedfilm.setDateSortie(DateUtils.clearDate(releaseDate));
-		transformedfilm.setPosterPath(
-				environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.getPoster_path());
-		transformedfilm.setTmdbId(results.getId());
-		transformedfilm.setOverview(results.getOverview());
+		// 4. Map Relationships (Genres and Credits)
+		mapGenresToFilm(results, transformedfilm);
 		try {
 			retrieveAndSetCredits(persistPersonne, results, transformedfilm);
 		} catch (Exception e) {
-			logger.error(e.getMessage() + " for id=" + results.getId() + " won't be displayed");
+			logger.error(e.getMessage() + " for id=" + results.id() + " won't be displayed");
 			return null;
 		}
 
-		transformedfilm.setRuntime(results.getRuntime());
-		List<Genres> genres = results.getGenres();
-		if (CollectionUtils.isNotEmpty(genres)) {
-			for (Genres g : genres) {
-				Genre _g = this.mapGenres.get(g.id());
-                logger.error("genre " + g.name() + " not found in loaded genres");
-            }
-		}
-		if (StringUtils.isNotEmpty(results.getHomepage())) {
-			transformedfilm.setHomepage(results.getHomepage());
-		}
 		if(film != null && film.getDateVue() != null) {
 			transformedfilm.setDateVue(film.getDateVue());
 		}
 		return transformedfilm;
+	}
+	private void mapGenresToFilm(Results results, Film transformed) {
+		if (CollectionUtils.isNotEmpty(results.genres())) {
+			for (Long id : results.genres()) {
+				Genre localGenre = this.mapGenres.get(id);
+				if (localGenre != null) {
+					transformed.getGenre().add(localGenre);
+				} else {
+					logger.warn("Genre TMDB ID {} absent de la map locale", id);
+				}
+			}
+		}
+	}
+
+	private Date fetchBestAvailableDate(Results results) {
+		Date releaseDate = null;
+		try {
+			// Attempt 1: Specific TMDB Release Date service (FR release usually)
+			String url = environment.getRequiredProperty(TMDB_SERVICE_URL)
+					+ environment.getRequiredProperty(TMDB_SERVICE_RELEASE_DATE)
+					+ "?tmdbId=" + results.id();
+
+			releaseDate = restTemplate.getForObject(url, Date.class);
+		} catch (Exception e) {
+			logger.warn("Could not fetch specific release date for tmdbId={}, falling back to results object.", results.id());
+		}
+
+		// Attempt 2: Use the date string already present in the Results object
+		if (releaseDate == null && StringUtils.isNotEmpty(results.release_date())) {
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
+				releaseDate = sdf.parse(results.release_date());
+			} catch (ParseException ex) {
+				logger.error("Failed to parse release_date string: {}", results.release_date());
+			}
+		}
+
+		// Attempt 3: Absolute fallback to avoid NullPointerExceptions in your app logic
+		if (releaseDate == null) {
+			try {
+				SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
+				releaseDate = sdf.parse("2000-01-01");
+			} catch (ParseException e) {
+				// This should never happen with a hardcoded valid string
+				releaseDate = new Date();
+			}
+		}
+
+		return releaseDate;
 	}
 
 	public List<Crew> retrieveTmdbDirectors(final Credits credits) {
@@ -229,7 +255,7 @@ public class FilmService {
 									   final Film transformedfilm) {
 		Credits credits = restTemplate.getForObject(
 				environment.getRequiredProperty(TMDB_SERVICE_URL)
-						+ environment.getRequiredProperty(TMDB_SERVICE_CREDITS) + "?tmdbId=" + results.getId(),
+						+ environment.getRequiredProperty(TMDB_SERVICE_CREDITS) + "?tmdbId=" + results.id(),
 				Credits.class);
         assert credits != null;
         if (CollectionUtils.isNotEmpty(credits.getCast())) {
@@ -266,6 +292,21 @@ public class FilmService {
 			}
 		}
 	}
+
+	public static Results transformTmdbFilmToResults(final ResultsByTmdbId resultsByTmdbId) {
+		if (resultsByTmdbId == null) {
+			return null;
+		}
+		return new Results(resultsByTmdbId.id(),
+				resultsByTmdbId.title(),
+				resultsByTmdbId.original_title(),
+				resultsByTmdbId.poster_path(),
+				resultsByTmdbId.release_date(),
+				resultsByTmdbId.overview(),
+				resultsByTmdbId.runtime(),
+				resultsByTmdbId.genres().stream().map(Genres::id).collect(Collectors.toList()),
+				resultsByTmdbId.homepage());
+	}
 	public Optional<Film> saveFilm(Long tmdbId, String origine) throws ParseException {
         if (checkIfTmdbFilmExists(tmdbId)) {
             return Optional.empty();
@@ -275,8 +316,11 @@ public class FilmService {
 				environment.getRequiredProperty(TMDB_SERVICE_URL),
 				environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS),
 				tmdbId);
-		return Optional.ofNullable(restTemplate.getForObject(tmdbUrl, Results.class))
-				.map(results -> transformTmdbFilmToDvdThequeFilm(null, results, new HashSet<>(), true))
+		return Optional.ofNullable(restTemplate.getForObject(tmdbUrl, ResultsByTmdbId.class))
+				.map(results -> {
+					Results res = transformTmdbFilmToResults(results);
+					return transformTmdbFilmToDvdThequeFilm(null, res, new HashSet<>(), true);
+				})
 				.map(filmToSave -> {
 					// 3. Enrich with Allocine Data
 					enrichWithAllocineId(filmToSave);
@@ -344,8 +388,6 @@ public class FilmService {
 	@Transactional(readOnly = false)
 	public void cleanAllFilms() {
 		filmDao.deleteAll();
-		genreDao.deleteAll();
-		mapGenres.clear();
 		personneService.cleanAllPersonnes();
 	}
 
@@ -544,25 +586,36 @@ public class FilmService {
 	}
 
 	public List<Film> findTmdbFilmByTitre(String titre,Integer page) throws ParseException {
-		List<Film> films = null;
-		String url = page == null ? environment.getRequiredProperty(TMDB_SERVICE_URL)
-				+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE) + "?title=" + titre : environment.getRequiredProperty(TMDB_SERVICE_URL)
-				+ environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE_BY_PAGE) + "?title=" + titre+ "&page="+page;
-		ResponseEntity<TmdbResponse> resultsResponse = restTemplate.exchange(url,
-				HttpMethod.GET, null, new ParameterizedTypeReference<TmdbResponse>() {});
-		if (resultsResponse.getBody() != null && CollectionUtils.isNotEmpty(resultsResponse.getBody().results())) {
-			films = new ArrayList<>(resultsResponse.getBody().results().size());
-			Set<Long> tmdbIds = resultsResponse.getBody().results().stream().map(Results::getId).collect(Collectors.toSet());
-			Set<Long> tmdbFilmAlreadyInDvdthequeSet = findAllTmdbFilms(tmdbIds);
-			for (Results res : resultsResponse.getBody().results()) {
-				Film transformedFilm = transformTmdbFilmToDvdThequeFilm(null, res, tmdbFilmAlreadyInDvdthequeSet,
-						false);
-				if (transformedFilm != null) {
-					films.add(transformedFilm);
-				}
-			}
+		// 1. Build the URL dynamically
+		String baseUrl = environment.getRequiredProperty(TMDB_SERVICE_URL);
+		String endpoint = (page == null)
+				? environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE) + "?title=" + titre
+				: environment.getRequiredProperty(TMDB_SERVICE_BY_TITLE_BY_PAGE) + "?title=" + titre + "&page=" + page;
+
+		// 2. Execute the request
+		ResponseEntity<TmdbResponse> response = restTemplate.exchange(
+				baseUrl + endpoint,
+				HttpMethod.GET,
+				null, // This is where the Token Interceptor would help!
+				new ParameterizedTypeReference<TmdbResponse>() {}
+		);
+
+		TmdbResponse body = response.getBody();
+		if (body == null || CollectionUtils.isEmpty(body.results())) {
+			return Collections.emptyList();
 		}
-		return films;
+
+		// 3. Batch check existing films to minimize DB hits
+		Set<Long> tmdbIds = body.results().stream()
+				.map(Results::id)
+				.collect(Collectors.toSet());
+		Set<Long> alreadyInDvdtheque = findAllTmdbFilms(tmdbIds);
+
+		// 4. Transform and filter
+		return body.results().stream()
+				.map(res -> transformTmdbFilmToDvdThequeFilm(null, res, alreadyInDvdtheque, false))
+				.filter(Objects::nonNull)
+				.toList();
 	}
 	public Film processRetrieveCritiquePresse(Long id, BiConsumer<Film,Set<CritiquePresseDto>> consumer, Film updatedFilm) {
 		Film film = filmSaveService.findFilm(id);
@@ -640,7 +693,7 @@ public class FilmService {
 		Results results = restTemplate.getForObject(
 				environment.getRequiredProperty(TMDB_SERVICE_URL) + environment.getRequiredProperty(TMDB_SERVICE_RESULTS) + "?tmdbId=" + film.getTmdbId(), Results.class);
 		film.setPosterPath(
-				environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.getPoster_path());
+				environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL) + results.poster_path());
 		return filmSaveService.updateFilm(film);
 	}
 
@@ -656,19 +709,20 @@ public class FilmService {
 						environment.getRequiredProperty(TMDB_SERVICE_URL) + "?tmdbId=" + film.getTmdbId(),
 						Results.class);
 				film.setPosterPath(environment.getRequiredProperty(TmdbServiceCommon.TMDB_POSTER_PATH_URL)
-						+ results.getPoster_path());
+						+ results.poster_path());
 			}
 			filmSaveService.updateFilm(film);
 		}
 	}
 
 	public Film saveProcessedFilm(Film film) throws ParseException {
-		Results results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
+		ResultsByTmdbId results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
 				+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId="
-				+ film.getTmdbId(), Results.class);
+				+ film.getTmdbId(), ResultsByTmdbId.class);
 		if (results != null) {
+			Results res = transformTmdbFilmToResults(results);
 			Film filmToSave = transformTmdbFilmToDvdThequeFilm(film,
-					results,
+					res,
 					new HashSet<Long>(),
 					true);
 			if (filmToSave != null) {

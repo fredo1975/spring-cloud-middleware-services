@@ -415,9 +415,7 @@ public class FilmControllerTest {
 		Assertions.assertNotNull(filmId);
 		
 		final Set<Results> results = new HashSet<>();
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(film.getTmdbId());
+		Results res = new Results(film.getTmdbId(),FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,null,null);
 		results.add(res);
 		TmdbResponse tmdbResponse = new TmdbResponse(1, Lists.newArrayList(results), results.size(), 1);
 		
@@ -428,7 +426,7 @@ public class FilmControllerTest {
 		          .andRespond(withSuccess(mapper.writeValueAsString(tmdbResponse), MediaType.APPLICATION_JSON));
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId()))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.id()))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString("2015-08-01T23:00:00.000+00:00"), MediaType.APPLICATION_JSON));
 		Credits credits = new Credits();
@@ -439,7 +437,7 @@ public class FilmControllerTest {
 		credits.setCrew(Lists.newArrayList(crew));
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-							+environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId()))
+							+environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.id()))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
 		
@@ -912,12 +910,10 @@ public class FilmControllerTest {
 		Assertions.assertNotNull(filmToRetrieveImage);
 		logger.debug("filmToRetrieveImage=" + filmToRetrieveImage);
 
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(film.getTmdbId());
+		Results res = new Results(film.getTmdbId(),FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,null,null);
 		
 		mockServer.expect(ExpectedCount.once(), 
-		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId()))
+		          requestTo(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.id()))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
 		
@@ -1026,13 +1022,9 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveProcessedFilm() throws Exception {
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(FilmBuilder.tmdbId2);
-		List<Genres> l = new ArrayList<>();
-		Genres genres1 = new Genres(35L, "Comedy");
-		l.add(genres1);
-		res.setGenres(l);
+		List<Long> l = new ArrayList<>();
+		l.add(35L);
+		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1052,17 +1044,17 @@ public class FilmControllerTest {
 		credits.setCast(casts);
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(TMDB_RELEASE_DATE), MediaType.APPLICATION_JSON));
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
 		Film film = new FilmBuilder.Builder(FilmBuilder.TITRE_FILM_TMBD_ID_844)
@@ -1105,13 +1097,9 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmDvd() throws Exception {
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(FilmBuilder.tmdbId2);
-		List<Genres> l = new ArrayList<>();
-		Genres genres1 = new Genres(35L, "Comedy");
-		l.add(genres1);
-		res.setGenres(l);
+		List<Long> l = new ArrayList<>();
+		l.add(35L);
+		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1131,19 +1119,19 @@ public class FilmControllerTest {
 		credits.setCast(casts);
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(TMDB_RELEASE_DATE), MediaType.APPLICATION_JSON));
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
 		Film film = new Film();
@@ -1171,13 +1159,10 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmNetflix() throws Exception {
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(FilmBuilder.tmdbId2);
-		List<Genres> l = new ArrayList<>();
-		Genres genres1 = new Genres(35L, "Comedy");
-		l.add(genres1);
-		res.setGenres(l);
+		List<Long> l = new ArrayList<>();
+		l.add(35L);
+		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
+
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1197,19 +1182,19 @@ public class FilmControllerTest {
 		credits.setCast(casts);
 		mockServer.expect(ExpectedCount.once(),
 						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId())))
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.id())))
 				.andExpect(method(HttpMethod.GET))
 				.andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
 
 		mockServer.expect(ExpectedCount.once(),
 						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId())))
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.id())))
 				.andExpect(method(HttpMethod.GET))
 				.andRespond(withSuccess(mapper.writeValueAsString(TMDB_RELEASE_DATE), MediaType.APPLICATION_JSON));
 
 		mockServer.expect(ExpectedCount.once(),
 						requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId())))
+								+environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.id())))
 				.andExpect(method(HttpMethod.GET))
 				.andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
 		Film film = new Film();
@@ -1237,13 +1222,9 @@ public class FilmControllerTest {
 	@Test
 	@Transactional
 	public void testSaveNewFilmEnSalle() throws Exception {
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(FilmBuilder.tmdbId2);
-		List<Genres> l = new ArrayList<>();
-		Genres genres1 = new Genres(35L, "Comedy");
-		l.add(genres1);
-		res.setGenres(l);
+		List<Long> l = new ArrayList<>();
+		l.add(35L);
+		Results res = new Results(FilmBuilder.tmdbId2,FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,l,null);
 		Credits credits = new Credits();
 		Crew crew = new Crew();
 		crew.setCredit_id("52fe42ecc3a36847f802d26d");
@@ -1264,19 +1245,19 @@ public class FilmControllerTest {
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(res), MediaType.APPLICATION_JSON));
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_RELEASE_DATE)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(TMDB_RELEASE_DATE), MediaType.APPLICATION_JSON));
 		
 		mockServer.expect(ExpectedCount.once(), 
 		          requestTo(new URI(environment.getRequiredProperty(FilmController.TMDB_SERVICE_URL)
-		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.getId())))
+		        		  +environment.getRequiredProperty(FilmController.TMDB_SERVICE_CREDITS)+"?tmdbId="+res.id())))
 		          .andExpect(method(HttpMethod.GET))
 		          .andRespond(withSuccess(mapper.writeValueAsString(credits), MediaType.APPLICATION_JSON));
 		Film film = new Film();
@@ -1766,9 +1747,7 @@ public class FilmControllerTest {
 		FilmBuilder.assertFilmIsNotNull(film, false, FilmBuilder.RIP_DATE_OFFSET, FilmOrigine.DVD, FilmBuilder.FILM_DATE_SORTIE, null, false);
 		
 		final Set<Results> results = new HashSet<>();
-		Results res = new Results();
-		res.setTitle(FilmBuilder.TITRE_FILM_TMBD_ID_844);
-		res.setId(film.getTmdbId());
+		Results res = new Results(film.getTmdbId(),FilmBuilder.TITRE_FILM_TMBD_ID_844,null,null,null,null,0,null,null);
 		results.add(res);
 		
 		

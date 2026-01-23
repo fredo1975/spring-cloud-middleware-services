@@ -76,12 +76,9 @@ public class TmdbServiceControllerTest {
 	}
 	
 	private Results buildResults() {
-		Results results = new Results();
-		results.setId(TMDB_ID_1271);
-		results.setPoster_path(POSTER_PATH_FILM_TMBD_ID_1271);
-		results.setTitle(TITRE_FILM_TMBD_ID_1271);
-		results.setRelease_date(RELEASE_DATE_FILM_TMBD_ID_1271);
-		results.setOriginal_title(TITRE_FILM_TMBD_ID_1271);
+		Results results = new Results(TMDB_ID_1271, TITRE_FILM_TMBD_ID_1271, TITRE_FILM_TMBD_ID_1271,
+				POSTER_PATH_FILM_TMBD_ID_1271, RELEASE_DATE_FILM_TMBD_ID_1271, null, 0, null, null);
+
 		return results;
 	}
 	@WithMockUser(roles = "use")
@@ -151,12 +148,7 @@ public class TmdbServiceControllerTest {
 		SearchResults searchResults = new SearchResults();
 		searchResults.setTotal_results(1);
 		searchResults.setTotal_pages(0);
-		Results res = new Results();
-		res.setId(TMDB_ID_1271);
-		res.setTitle(TITRE_FILM_TMBD_ID_1271);
-		res.setOriginal_title(TITRE_FILM_TMBD_ID_1271);
-		res.setPoster_path(POSTER_PATH_FILM_TMBD_ID_1271);
-		res.setRelease_date(RELEASE_DATE_FILM_TMBD_ID_1271);
+		Results res = new Results(TMDB_ID_1271, TITRE_FILM_TMBD_ID_1271, TITRE_FILM_TMBD_ID_1271, POSTER_PATH_FILM_TMBD_ID_1271, RELEASE_DATE_FILM_TMBD_ID_1271, null, 0, null, null);
 		List<Results> l = List.of(res);
 		searchResults.setResults(l);
 		mockServer.expect(ExpectedCount.once(), 
@@ -183,12 +175,8 @@ public class TmdbServiceControllerTest {
 		SearchResults searchResults = new SearchResults();
 		searchResults.setTotal_results(1);
 		searchResults.setTotal_pages(0);
-		Results res = new Results();
-		res.setId(TMDB_ID_1271);
-		res.setTitle(TITRE_FILM_TMBD_ID_1271);
-		res.setOriginal_title(TITRE_FILM_TMBD_ID_1271);
-		res.setPoster_path(POSTER_PATH_FILM_TMBD_ID_1271);
-		res.setRelease_date(RELEASE_DATE_FILM_TMBD_ID_1271);
+		Results res = new Results(TMDB_ID_1271, TITRE_FILM_TMBD_ID_1271, TITRE_FILM_TMBD_ID_1271, POSTER_PATH_FILM_TMBD_ID_1271, RELEASE_DATE_FILM_TMBD_ID_1271, null, 0, null, null);
+
 		List<Results> l = List.of(res);
 		searchResults.setResults(l);
 		mockServer.expect(ExpectedCount.once(), 
