@@ -71,6 +71,6 @@ public class AllocineController {
 			@RequestParam(name = "offset", required = false)Integer offset,
 			@RequestParam(name = "limit", required = false)Integer limit,
 			@RequestParam(name = "sort", required = false)String sort){
-		return ResponseEntity.ok(allocineService.paginatedSarch(query, offset, limit, sort));
+		return ResponseEntity.ok(allocineService.paginatedSearch(query, offset, limit, sort));
 	}
 }
