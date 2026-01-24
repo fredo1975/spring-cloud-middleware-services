@@ -124,11 +124,11 @@ public class AllocineService {
 		var page = buildDefaultPageRequest(offset, limit, sort);
 		if(StringUtils.isEmpty(query)) {
 			var p = ficheFilmRepository.findAll(page);
-			var l = p.getContent().stream().map(f->FicheFilmRec.fromEntity(f)).collect(Collectors.toList());
+			var l = p.getContent().stream().map(FicheFilmRec::fromEntity).collect(Collectors.toList());
 			return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
 		}
 		var p = ficheFilmRepository.findAll(builder.with(query).build(), page);
-		var l = p.getContent().stream().map(f->FicheFilmRec.fromEntity(f)).collect(Collectors.toList());
+		var l = p.getContent().stream().map(FicheFilmRec::fromEntity).collect(Collectors.toList());
         return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
 	}
 	
