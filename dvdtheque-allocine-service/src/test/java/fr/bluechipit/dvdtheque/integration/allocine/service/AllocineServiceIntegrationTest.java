@@ -5,6 +5,7 @@ import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.config.test.HazelcastConfiguration;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
+import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -70,7 +71,7 @@ public class AllocineServiceIntegrationTest {
 		assertEquals(optionalFicheFilmRetrievedFromCache2.get(),allFicheFilmFromPageRetrievedFromDb.get(allFicheFilmFromPageRetrievedFromDb.size()-1));
 		List<FicheFilm> ficheFilmListDbRetrieved0 = allocineService.retrieveFicheFilmByTitle(ficheFilm0.getTitle());
 		assertNotNull(ficheFilmListDbRetrieved0);
-		Optional<List<FicheFilm>> ficheFilmCacheRetrievd0 = allocineService.findInCacheByFicheFilmTitle(ficheFilmListDbRetrieved0.get(0).getTitle());
+		Optional<List<FicheFilm>> ficheFilmCacheRetrievd0 = allocineService.findInCacheByFicheFilmTitle(StringUtils.upperCase(ficheFilmListDbRetrieved0.get(0).getTitle()));
 		assertEquals(ficheFilmCacheRetrievd0.get().get(0),ficheFilm0);
     }
     
