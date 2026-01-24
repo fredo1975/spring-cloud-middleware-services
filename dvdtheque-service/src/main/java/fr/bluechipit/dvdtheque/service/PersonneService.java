@@ -1,11 +1,11 @@
-package fr.bluechipit.dvdtheque.service.impl;
+package fr.bluechipit.dvdtheque.service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.query.Predicate;
-import com.hazelcast.query.Predicates;
-import fr.bluechipit.dvdtheque.dao.domain.Personne;
-import fr.bluechipit.dvdtheque.dao.repository.PersonneDao;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -13,7 +13,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
+import com.hazelcast.query.Predicate;
+import com.hazelcast.query.Predicates;
+
+import fr.bluechipit.dvdtheque.dao.domain.Personne;
+import fr.bluechipit.dvdtheque.dao.repository.PersonneDao;
 
 @Service("personneService")
 public class PersonneService {

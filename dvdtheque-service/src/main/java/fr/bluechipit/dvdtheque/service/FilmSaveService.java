@@ -1,4 +1,4 @@
-package fr.bluechipit.dvdtheque.service.impl;
+package fr.bluechipit.dvdtheque.service;
 
 import enums.FilmOrigine;
 import fr.bluechipit.dvdtheque.dao.domain.Film;

@@ -1,4 +1,4 @@
-package fr.bluechipit.dvdtheque.service.impl;
+package fr.bluechipit.dvdtheque.service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -24,7 +24,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
@@ -71,13 +70,13 @@ public class FilmService {
 	private final RestTemplate restTemplate;
 	private final Environment environment;
 	private final FilmSaveService filmSaveService;
-	@Autowired
-	private SpecificationsBuilder<Film> builder;
+	private final SpecificationsBuilder<Film> builder;
 
 	public FilmService(FilmDao filmDao, DvdDao dvdDao, GenreDao genreDao, PersonneService personneService, HazelcastInstance instance,ExcelFilmHandler excelFilmHandler,
 					   RestTemplate restTemplate,
 					   Environment environment,
-					   FilmSaveService filmSaveService) {
+					   FilmSaveService filmSaveService,
+					   SpecificationsBuilder<Film> builder) {
 		this.filmDao = filmDao;
 		this.genreDao = genreDao;
 		this.personneService = personneService;
@@ -86,6 +85,7 @@ public class FilmService {
 		this.restTemplate = restTemplate;
 		this.environment = environment;
 		this.filmSaveService = filmSaveService;
+		this.builder = builder;
 		this.init();
 	}
 
@@ -104,7 +104,7 @@ public class FilmService {
 			return filmDao.findAll().stream()
 					.map(FilmDto::toDto)
 					.sorted(Comparator.comparing(FilmDto::getTitre))
-					.toList(); // Java 16+ syntax
+					.toList();
 		} catch (Exception e) {
 			logger.error("Error retrieving films: {}", e.getMessage(), e);
 			return Collections.emptyList();
@@ -504,15 +504,14 @@ public class FilmService {
 
 	public static void saveImage(final String imageUrl, final String destinationFile) throws IOException {
 		URL url = new URL(imageUrl);
-		InputStream is = url.openStream();
-		OutputStream os = new FileOutputStream(destinationFile);
-		byte[] b = new byte[2048];
-		int length;
-		while ((length = is.read(b)) != -1) {
-			os.write(b, 0, length);
+		try (InputStream is = url.openStream();
+			 OutputStream os = new FileOutputStream(destinationFile)) {
+			byte[] buffer = new byte[8192]; // Larger buffer
+			int length;
+			while ((length = is.read(buffer)) != -1) {
+				os.write(buffer, 0, length);
+			}
 		}
-		is.close();
-		os.close();
 	}
 
 	public Set<Long> findAllTmdbFilms(final Set<Long> tmdbIds) {

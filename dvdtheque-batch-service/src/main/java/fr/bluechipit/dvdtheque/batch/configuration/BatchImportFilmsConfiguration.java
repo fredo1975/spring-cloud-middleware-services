@@ -33,12 +33,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizeRequest;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -63,8 +63,6 @@ public class BatchImportFilmsConfiguration{
     @Autowired
     @Qualifier("rippedFlagTasklet")
     private Tasklet 												rippedFlagTasklet;
-	@Autowired
-	private TaskExecutor 											taskExecutor;
     @Autowired
     @Qualifier("retrieveDateInsertionTasklet")
     private Tasklet 												retrieveDateInsertionTasklet;
@@ -228,12 +226,47 @@ public class BatchImportFilmsConfiguration{
                 .reader(reader(null))
                 .processor(filmProcessor())
                 .writer(filmWriter())
-				.taskExecutor(taskExecutor)
+				.taskExecutor(filmBatchTaskExecutor())
                 .build();
     }
 
-	@Bean
-	public TaskExecutor taskExecutor() {
-		return new SimpleAsyncTaskExecutor("spring_batch");
+	@Value("${batch.thread.pool.core.size:5}")
+	private int corePoolSize;
+
+	@Value("${batch.thread.pool.max.size:5}")
+	private int maxPoolSize;
+
+	@Value("${batch.thread.pool.queue.capacity:25}")
+	private int queueCapacity;
+
+	@Bean(name = "filmBatchTaskExecutor")
+	public TaskExecutor filmBatchTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+
+		// Core pool size - number of threads to keep in the pool, even if idle
+		executor.setCorePoolSize(corePoolSize);
+
+		// Maximum pool size - maximum number of threads to allow in the pool
+		executor.setMaxPoolSize(maxPoolSize);
+
+		// Queue capacity - capacity for the queue
+		executor.setQueueCapacity(queueCapacity);
+
+		// Thread name prefix for easier debugging
+		executor.setThreadNamePrefix("film-batch-");
+
+		// Rejection policy when queue is full
+		executor.setRejectedExecutionHandler(new java.util.concurrent.ThreadPoolExecutor.CallerRunsPolicy());
+
+		// Wait for tasks to complete on shutdown
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+
+		// Timeout for waiting on shutdown (in seconds)
+		executor.setAwaitTerminationSeconds(60);
+
+		// Initialize the executor
+		executor.initialize();
+
+		return executor;
 	}
 }
