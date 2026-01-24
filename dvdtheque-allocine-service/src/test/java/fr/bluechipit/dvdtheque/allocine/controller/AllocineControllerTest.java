@@ -73,13 +73,13 @@ public class AllocineControllerTest {
 
 	@Test
 	@WithMockUser(roles = "user")
-	public void paginatedSarch() throws Exception {
+	public void paginatedSearch() throws Exception {
 		var film = new FicheFilm("title",1,"url",1);
 		film.setId(1);
 		var dto = FicheFilmRec.fromEntity(film);
 		var l = new ArrayList<FicheFilmRec>();
 		l.add(dto);
-		Mockito.when(allocineService.paginatedSarch(anyString(),anyInt(),anyInt(),anyString()))
+		Mockito.when(allocineService.paginatedSearch(anyString(),anyInt(),anyInt(),anyString()))
 		.thenReturn(new PageImpl<FicheFilmRec>(l,PageRequest.of(0, 10),l.size()));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/paginatedSarch")
 				.param("query", "")

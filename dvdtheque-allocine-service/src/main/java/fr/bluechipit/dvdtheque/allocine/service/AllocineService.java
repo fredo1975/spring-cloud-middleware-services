@@ -1,5 +1,6 @@
 package fr.bluechipit.dvdtheque.allocine.service;
 
+import com.google.common.util.concurrent.RateLimiter;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
@@ -32,7 +33,9 @@ import specifications.filter.SpecificationsBuilder;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -41,387 +44,569 @@ import java.util.stream.Collectors;
 @ComponentScan({"fr.fredos.dvdtheque.common.specifications.filter","specifications.filter"})
 public class AllocineService {
 	protected Logger logger = LoggerFactory.getLogger(AllocineService.class);
+
 	private final FicheFilmRepository ficheFilmRepository;
 	private final Environment environment;
-	private final static String AHREF = "a[href]";
-	private final static String HREF = "href";
-	private final static String SPAN = "span";
-	private final static String P = "p";
-	private final static String H2 = "h2";
-	private final static String DIV = "div";
-	private final static String DIV_EVAL_HOLDER = "div.eval-holder";
-	private final static String DIV_RATING_MDL_1_HOLDER = "div.rating-mdl.n10.stareval-stars";
-	private final static String DIV_RATING_MDL_2_HOLDER = "div.rating-mdl.n20.stareval-stars";
-	private final static String DIV_RATING_MDL_3_HOLDER = "div.rating-mdl.n30.stareval-stars";
-	private final static String DIV_RATING_MDL_4_HOLDER = "div.rating-mdl.n40.stareval-stars";
-	private final static String DIV_RATING_MDL_5_HOLDER = "div.rating-mdl.n50.stareval-stars";
-	private final static String DIV_REVIEWS_PRESS_COMMENT = "div.reviews-press-comment";
-	private final static String SECTION = "section";
-	private final static String FILM_DELIMITER = "/film/fichefilm_gen_cfilm=";
-	private final static String SEARCH_PAGE_DELIMITER = "?page=";
-	private final static String BASE_URL = "https://www.allocine.fr";
-	private final static String LIST_FILM_URL = "/films/";
-	private final static String CRITIQUE_PRESSE_FILM_BASE_URL = "/film/fichefilm-";
-	private final static String CRITIQUE_PRESSE_FILM_END_URL = "/critiques/presse/";
+	private final HazelcastInstance instance;
+	private final SpecificationsBuilder<FicheFilm> builder;
+	private final ExecutorService fixedThreadPool;
 
 	@Value("${fichefilm.parsing.page}")
 	private int nbParsedPage;
-	private final HazelcastInstance instance;
-	private final SpecificationsBuilder<FicheFilm> builder;
-	IMap<Integer, FicheFilm> mapFicheFilms;
-	IMap<String, List<FicheFilm>> mapFicheFilmsByTtile;
+
+	@Value("${scraping.batch.size:50}")
+	private int batchSize;
+
+	@Value("${scraping.rate.limit.ms:1000}")
+	private long rateLimitMs;
+
+	private IMap<Integer, FicheFilm> mapFicheFilms;
+	private IMap<String, List<FicheFilm>> mapFicheFilmsByTitle;
+	private AtomicInteger pageNum;
+	private RateLimiter rateLimiter;
+
+	// HTML Selectors - Constants
+	private static final String AHREF = "a[href]";
+	private static final String HREF = "href";
+	private static final String SPAN = "span";
+	private static final String P = "p";
+	private static final String H2 = "h2";
+	private static final String DIV = "div";
+	private static final String SECTION = "section";
+	private static final String DIV_EVAL_HOLDER = "div.eval-holder";
+	private static final String DIV_REVIEWS_PRESS_COMMENT = "div.reviews-press-comment";
+
+	// Rating selectors
+	private static final String[] RATING_SELECTORS = {
+			"div.rating-mdl.n10.stareval-stars",
+			"div.rating-mdl.n20.stareval-stars",
+			"div.rating-mdl.n30.stareval-stars",
+			"div.rating-mdl.n40.stareval-stars",
+			"div.rating-mdl.n50.stareval-stars"
+	};
+
+	// URL patterns
+	private static final String BASE_URL = "https://www.allocine.fr";
+	private static final String LIST_FILM_URL = "/films/";
+	private static final String FILM_DELIMITER = "/film/fichefilm_gen_cfilm=";
+	private static final String SEARCH_PAGE_DELIMITER = "?page=";
+	private static final String CRITIQUE_PRESSE_FILM_BASE_URL = "/film/fichefilm-";
+	private static final String CRITIQUE_PRESSE_FILM_END_URL = "/critiques/presse/";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36";
+
+	// Retry configuration
+	private static final int MAX_RETRY_ATTEMPTS = 3;
+	private static final long RETRY_DELAY_MS = 2000;
+
 	@Autowired
-	AllocineService(FicheFilmRepository ficheFilmRepository, HazelcastInstance instance,
-					Environment environment,
-					SpecificationsBuilder<FicheFilm> builder,
-					ExecutorService fixedThreadPool) {
+	public AllocineService(
+			FicheFilmRepository ficheFilmRepository,
+			HazelcastInstance instance,
+			Environment environment,
+			SpecificationsBuilder<FicheFilm> builder,
+			ExecutorService fixedThreadPool) {
 		this.ficheFilmRepository = ficheFilmRepository;
 		this.instance = instance;
 		this.environment = environment;
 		this.builder = builder;
 		this.fixedThreadPool = fixedThreadPool;
+		this.rateLimiter = RateLimiter.create(1000.0 / rateLimitMs); // permits per second
 		this.init();
 	}
 
-    private final ExecutorService fixedThreadPool;
-	private AtomicInteger pageNum;
-	
 	public void init() {
 		mapFicheFilms = instance.getMap("ficheFilms");
-		mapFicheFilmsByTtile = instance.getMap("ficheFilmsByTitle");
+		mapFicheFilmsByTitle = instance.getMap("ficheFilmsByTitle");
+		logger.info("AllocineService initialized with cache maps");
 	}
 
-	private PageRequest buildDefaultPageRequest(Integer offset,
-			Integer limit,
-			String sort) {
-		Integer limitToSet;
-		Integer offsetToSet;
-		String sortToSet;
-		if(limit == null) {
-			limitToSet = Integer.valueOf(50);
-		}else {
-			limitToSet = limit;
-		}
-		if(offset == null) {
-			offsetToSet = Integer.valueOf(1);
-		}else {
-			offsetToSet = offset;
-		}
-		if(StringUtils.isEmpty(sort)) {
-			sortToSet = "-creationDate";
-		}else {
-			sortToSet = sort;
-		}
-		return PageRequestBuilder.getPageRequest(limitToSet,offsetToSet, sortToSet);
-	}
-	
-	
+	// ==================== Public API Methods ====================
+
 	@Transactional(readOnly = true)
-	public org.springframework.data.domain.Page<FicheFilmRec> paginatedSarch(String query,
+	public org.springframework.data.domain.Page<FicheFilmRec> paginatedSearch(String query,
 																			 Integer offset,
 																			 Integer limit,
 																			 String sort){
-		var page = buildDefaultPageRequest(offset, limit, sort);
-		if(StringUtils.isEmpty(query)) {
-			var p = ficheFilmRepository.findAll(page);
-			var l = p.getContent().stream().map(FicheFilmRec::fromEntity).collect(Collectors.toList());
-			return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
-		}
-		var p = ficheFilmRepository.findAll(builder.with(query).build(), page);
-		var l = p.getContent().stream().map(FicheFilmRec::fromEntity).collect(Collectors.toList());
-        return new PageImpl<FicheFilmRec>(l,page,p.getTotalElements());
-	}
-	
-	private synchronized Page inc(AtomicInteger pageNum) {
-		var localPage = pageNum.incrementAndGet();
-		Page page = new Page(localPage);
-		page.setNumPage(localPage);
-		return page;
-	}
-	
-	public void scrapAllAllocineFicheFilm() {
-		Integer _page = Integer.valueOf(1);
-		Page page = new Page(_page);
-		Set<FicheFilm> allFicheFilmFromPage = retrieveAllFicheFilmFromPage(page);
-		if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-			processCritiquePress(allFicheFilmFromPage);
-		}
+		PageRequest pageRequest = buildDefaultPageRequest(offset, limit, sort);
+		org.springframework.data.domain.Page<FicheFilm> page = StringUtils.isEmpty(query)
+				? ficheFilmRepository.findAll(pageRequest)
+				: ficheFilmRepository.findAll(builder.with(query).build(), pageRequest);
 
-		while (page.getNumPage() < nbParsedPage) {
-			if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-				allFicheFilmFromPage.clear();
-			}
-			page.setNumPage(page.getNumPage() + 1);
-			allFicheFilmFromPage = retrieveAllFicheFilmFromPage(page);
-			if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-				processCritiquePress(allFicheFilmFromPage);
-			}
-		}
-	}
-	/**
-	 * 
-	 */
-	
-	public void scrapAllAllocineFicheFilmMultithreaded() {
-		Callable<String> callableTask = null;
-		pageNum = new AtomicInteger(Integer.valueOf(0));
-		logger.info("***** start scrapping allociné critiques presse *****");
-		for(int i=0;i<nbParsedPage;i++) {
-			callableTask = () -> {
-				var page = inc(pageNum);
-				
-				Set<FicheFilm> allFicheFilmFromPage = retrieveAllFicheFilmFromPage(page);
-				if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-					processCritiquePress(allFicheFilmFromPage);
-				}
-				allFicheFilmFromPage = null;
-				
-				var res = String.format("page number %s treated",page.getNumPage());
-				logger.info(res);
-				
-				return res;
-			};
-			fixedThreadPool.submit(callableTask);
-		}
-		logger.info("***** end scrapping allociné critiques presse *****");
-	}
-	
-	@Transactional(propagation = Propagation.REQUIRES_NEW,readOnly = false)
-	public FicheFilm saveFicheFilm(FicheFilm ficheFilm) {
-		try{
-			return ficheFilmRepository.save(ficheFilm);
-		}catch(Exception e) {
-			logger.error("an error occured while saving ficheFilm {}",ficheFilm.toString(),e);
-		}
-		return null;
-	}
-	
-	@Transactional(propagation = Propagation.REQUIRES_NEW,readOnly = false)
-	public void saveFicheFilmList(List<FicheFilm> ficheFilmList) {
-		try{
-			ficheFilmRepository.saveAll(ficheFilmList);
-		}catch(Exception e) {
-			logger.error("an error occured while saving ficheFilm {}",ficheFilmList.toString(),e);
-		}
-	}
-	/**
-	 * 
-	 * @param allFicheFilmFromPage
-	 */
-	private void processCritiquePress(final Set<FicheFilm> allFicheFilmFromPage) {
-		if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-			var l = new ArrayList<FicheFilm>();
-			for (FicheFilm ficheFilm : allFicheFilmFromPage) {
-				final Map<Integer, CritiquePresse> map = retrieveCritiquePresseMap(ficheFilm);
-				Optional<FicheFilm> op = findByFicheFilmId(ficheFilm.getAllocineFilmId());
-				if(MapUtils.isNotEmpty(map) && op.isEmpty()) {
-					//saveFicheFilm(ficheFilm);
-					l.add(ficheFilm);
-					mapFicheFilms.putIfAbsent(ficheFilm.getAllocineFilmId(), ficheFilm);
-				}
-			}
-			saveFicheFilmList(l);
-		}
+		List<FicheFilmRec> records = page.getContent().stream()
+				.map(FicheFilmRec::fromEntity)
+				.collect(Collectors.toList());
+
+		return new PageImpl<>(records, pageRequest, page.getTotalElements());
 	}
 
-	/**
-	 * 
-	 * @param ficheFilm
-	 * @return
-	 */
-	private Map<Integer, CritiquePresse> retrieveCritiquePresseMap(FicheFilm ficheFilm) {
-		Map<Integer, CritiquePresse> map = new HashMap<>();
-		Document document;
-		try {
-			document = Jsoup.connect(ficheFilm.getUrl()).userAgent(
-					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36")
-					.get();
-
-			var es = document.select(SECTION);
-			for (Element e : es) {
-				var es2 = e.select(DIV);
-				for (Element e2 : es2) {
-					var es3 = e2.select(SECTION);
-					for (Element e4 : es3) {
-						var masthead = e4.select(DIV_REVIEWS_PRESS_COMMENT);
-						for (Element ec : masthead) {
-							// logger.debug("### ec.getAllElements()="+ec.getAllElements());
-							var esH2 = ec.select(H2);
-							var index = 0;
-							for (Element e8 : esH2) {
-								// logger.debug("### e8.getAllElements()="+e8.getAllElements());
-								var esSpan = e8.select(SPAN);
-								for (Element e9 : esSpan) {
-									if (StringUtils.isNotEmpty(e9.text())) {
-										var cp = new CritiquePresse();
-										cp.setNewsSource(e9.text());
-										cp.setBody("...");
-										cp.setAuthor("...");
-										cp.setRating(0d);
-										// logger.debug("### cp="+cp.toString());
-										map.put(Integer.valueOf(index++), cp);
-										cp.setFicheFilm(ficheFilm);
-										ficheFilm.addCritiquePresse(cp);
-									}
-								}
-							}
-							var esP = ec.select(P);
-							index = 0;
-							for (Element e8 : esP) {
-								if (StringUtils.isNotEmpty(e8.text())) {
-									var cp = map.get(index++);
-									if(StringUtils.isNotEmpty(e8.text())) {
-										cp.setBody(e8.text());
-									}
-									// logger.debug("### cp="+cp.toString());
-								}
-							}
-							var es4 = ec.select(DIV_EVAL_HOLDER);
-							index = 0;
-							for (Element e5 : es4) {
-								// logger.info("######### e5.getAllElements()="+e5.getAllElements());
-								var a = e5.select(DIV_EVAL_HOLDER);
-								// logger.debug("######### a="+a.text());
-								var cp = map.get(index++);
-								if(cp != null && a != null && StringUtils.isNotEmpty(a.text())) {
-									cp.setAuthor(a.text());
-
-									Double rating = null;
-									if (e5.select(DIV_RATING_MDL_1_HOLDER).size() > 0) {
-										// logger.debug("######### 1**");
-										rating = 1.0d;
-									}else if (e5.select(DIV_RATING_MDL_2_HOLDER).size() > 0) {
-										// logger.debug("######### 2**");
-										rating = 2.0d;
-									}else if (e5.select(DIV_RATING_MDL_3_HOLDER).size() > 0) {
-										// logger.debug("######### 3**");
-										rating = 3.0d;
-									}else if (e5.select(DIV_RATING_MDL_4_HOLDER).size() > 0) {
-										// logger.debug("######### 4**");
-										rating = 4.0d;
-									}else if (e5.select(DIV_RATING_MDL_5_HOLDER).size() > 0) {
-										// logger.debug("######### 5**");
-										rating = 5.0d;
-									}else{
-										rating = 0.0d;
-									}
-									cp.setRating(rating);
-									if(StringUtils.isEmpty(cp.getBody())) {
-										cp.setBody("...");
-									}
-									logger.debug("### cp=" + cp.toString());
-								}
-							}
-						}
-					}
-				}
-			}
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		return map;
-	}
-
-	/**
-	 * 
-	 * @param page
-	 * @return
-	 */
-	private Set<FicheFilm> retrieveAllFicheFilmFromPage(Page page) {
-		Document listFilmdocument = null;
-		Set<FicheFilm> allFicheFilmFromPage = null;
-		try {
-			logger.debug("### page.getNumPage() {}", page.getNumPage());
-			if (page.getNumPage() == 1) {
-				listFilmdocument = Jsoup.connect(BASE_URL + LIST_FILM_URL).userAgent(
-						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36")
-						.get();
-			} else {
-				listFilmdocument = Jsoup.connect(BASE_URL + LIST_FILM_URL + SEARCH_PAGE_DELIMITER + page.getNumPage())
-						.userAgent(
-								"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36")
-						.get();
-			}
-			allFicheFilmFromPage = retrieveAllFicheFilmFromPage(listFilmdocument, page.getNumPage());
-
-			if (CollectionUtils.isNotEmpty(allFicheFilmFromPage)) {
-				logger.debug("### found {} films {}", allFicheFilmFromPage.size(), allFicheFilmFromPage.toString());
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return allFicheFilmFromPage;
-	}
-
-	/**
-	 * 
-	 * @param listFilmdocument
-	 * @param numPage
-	 * @return
-	 */
-	private Set<FicheFilm> retrieveAllFicheFilmFromPage(final Document listFilmdocument, final int numPage) {
-		Set<FicheFilm> set = new HashSet<>();
-		Elements links = listFilmdocument.select(AHREF);
-		for (Element link : links) {
-			if (StringUtils.contains(link.attr(HREF), FILM_DELIMITER)) {
-				logger.debug("### link : " + link.text());
-				logger.debug("### link : " + link.attr(HREF));
-				final String filmTempId = StringUtils.substringAfter(link.attr(HREF), FILM_DELIMITER);
-				final String filmId = StringUtils.substringBefore(filmTempId, ".html");
-				logger.debug("### filmId : " + filmId);
-				String url = BASE_URL + CRITIQUE_PRESSE_FILM_BASE_URL + filmId + CRITIQUE_PRESSE_FILM_END_URL;
-				logger.debug("### url : " + url);
-				set.add(new FicheFilm(link.text(), Integer.valueOf(filmId), url, numPage));
-			}
-		}
-		return set;
-	}
-
-	
 	public List<FicheFilm> retrieveAllFicheFilm() {
 		return ficheFilmRepository.findAll();
 	}
 
-	
 	public Optional<FicheFilm> retrieveFicheFilm(int id) {
 		return ficheFilmRepository.findById(id);
 	}
-	
+
 	public List<FicheFilm> retrieveFicheFilmByTitle(String title) {
-		Optional<List<FicheFilm>> opt = findInCacheByFicheFilmTitle(title);
-		if(opt.isPresent()) {
-			return opt.get();
+		if (StringUtils.isEmpty(title)) {
+			return Collections.emptyList();
 		}
-		List<FicheFilm> l = new ArrayList<>(new HashSet<>(ficheFilmRepository.findByTitle(title)));
-		if(CollectionUtils.isNotEmpty(l)) {
-			
-			mapFicheFilmsByTtile.putIfAbsent(StringUtils.upperCase(l.get(0).getTitle()), l);
+
+		String normalizedTitle = StringUtils.upperCase(title);
+		Optional<List<FicheFilm>> cached = findInCacheByFicheFilmTitle(normalizedTitle);
+
+		if (cached.isPresent()) {
+			logger.debug("Cache hit for title: {}", title);
+			return cached.get();
 		}
-		return l;
+
+		List<FicheFilm> results = new ArrayList<>(
+				new HashSet<>(ficheFilmRepository.findByTitle(title))
+		);
+
+		if (!results.isEmpty()) {
+			mapFicheFilmsByTitle.putIfAbsent(normalizedTitle, results);
+		}
+
+		return results;
 	}
-	
-	
+
 	public Optional<FicheFilm> findByFicheFilmId(Integer ficheFilmId) {
-		Optional<FicheFilm> ficheFilmOpt = findInCacheByFicheFilmId(ficheFilmId);
-		if(ficheFilmOpt.isPresent()) {
-			return ficheFilmOpt;
+		if (ficheFilmId == null) {
+			return Optional.empty();
 		}
+
+		Optional<FicheFilm> cached = findInCacheByFicheFilmId(ficheFilmId);
+		if (cached.isPresent()) {
+			return cached;
+		}
+
 		FicheFilm ficheFilm = ficheFilmRepository.findByFicheFilmId(ficheFilmId);
-		if(ficheFilm != null) {
+		if (ficheFilm != null) {
 			mapFicheFilms.putIfAbsent(ficheFilmId, ficheFilm);
 		}
+
 		return Optional.ofNullable(ficheFilm);
 	}
-	
+
+	// ==================== Scraping Methods ====================
+
+	public void scrapAllAllocineFicheFilm() {
+		logger.info("Starting sequential scraping of {} pages", nbParsedPage);
+
+		for (int pageNumber = 1; pageNumber <= nbParsedPage; pageNumber++) {
+			try {
+				Page page = new Page(pageNumber);
+				processPage(page);
+			} catch (Exception e) {
+				logger.error("Failed to process page {}", pageNumber, e);
+			}
+		}
+
+		logger.info("Sequential scraping completed");
+	}
+
+	public ScrapingResult scrapAllAllocineFicheFilmMultithreaded() {
+		logger.info("Starting multithreaded scraping of {} pages", nbParsedPage);
+
+		pageNum = new AtomicInteger(0);
+		List<Future<PageResult>> futures = new ArrayList<>();
+
+		for (int i = 0; i < nbParsedPage; i++) {
+			Callable<PageResult> task = this::processNextPage;
+			futures.add(fixedThreadPool.submit(task));
+		}
+
+		ScrapingResult result = waitForCompletion(futures);
+		logger.info("Multithreaded scraping completed: {}", result);
+
+		return result;
+	}
+
+	// ==================== Private Processing Methods ====================
+
+	private PageResult processNextPage() {
+		Page page = incrementAndGetPage();
+
+		try {
+			return processPage(page);
+		} catch (Exception e) {
+			logger.error("Error processing page {}", page.getNumPage(), e);
+			return new PageResult(page.getNumPage(), 0, false, e.getMessage());
+		}
+	}
+
+	private PageResult processPage(Page page) {
+		logger.debug("Processing page {}", page.getNumPage());
+
+		Set<FicheFilm> ficheFilms = retrieveAllFicheFilmFromPage(page);
+
+		if (CollectionUtils.isEmpty(ficheFilms)) {
+			logger.warn("No films found on page {}", page.getNumPage());
+			return new PageResult(page.getNumPage(), 0, true, null);
+		}
+
+		int savedCount = processCritiquePress(ficheFilms);
+		logger.info("Page {} processed: {} films found, {} saved",
+				page.getNumPage(), ficheFilms.size(), savedCount);
+
+		return new PageResult(page.getNumPage(), savedCount, true, null);
+	}
+
+	private int processCritiquePress(Set<FicheFilm> ficheFilms) {
+		List<FicheFilm> toSave = new ArrayList<>();
+
+		for (FicheFilm ficheFilm : ficheFilms) {
+			try {
+				if (shouldProcessFicheFilm(ficheFilm)) {
+					Map<Integer, CritiquePresse> critiques = retrieveCritiquePresseMap(ficheFilm);
+
+					if (MapUtils.isNotEmpty(critiques)) {
+						toSave.add(ficheFilm);
+
+						// Save to cache
+						mapFicheFilms.putIfAbsent(ficheFilm.getAllocineFilmId(), ficheFilm);
+
+						// Batch save when reaching batch size
+						if (toSave.size() >= batchSize) {
+							saveFicheFilmBatch(toSave);
+							toSave.clear();
+						}
+					}
+				}
+			} catch (Exception e) {
+				logger.error("Error processing ficheFilm {}: {}",
+						ficheFilm.getAllocineFilmId(), e.getMessage());
+			}
+		}
+
+		// Save remaining items
+		if (!toSave.isEmpty()) {
+			saveFicheFilmBatch(toSave);
+		}
+
+		return toSave.size();
+	}
+
+	private boolean shouldProcessFicheFilm(FicheFilm ficheFilm) {
+		if (ficheFilm == null || ficheFilm.getAllocineFilmId() == 0) {
+			return false;
+		}
+
+		// Check cache first
+		if (findInCacheByFicheFilmId(ficheFilm.getAllocineFilmId()).isPresent()) {
+			logger.debug("FicheFilm {} already in cache, skipping", ficheFilm.getAllocineFilmId());
+			return false;
+		}
+
+		// Check database
+		Optional<FicheFilm> existing = findByFicheFilmId(ficheFilm.getAllocineFilmId());
+		return existing.isEmpty();
+	}
+
+	private Map<Integer, CritiquePresse> retrieveCritiquePresseMap(FicheFilm ficheFilm) {
+		for (int attempt = 1; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+			try {
+				rateLimiter.acquire(); // Rate limiting
+				return fetchCritiques(ficheFilm);
+			} catch (IOException e) {
+				logger.warn("Attempt {}/{} failed for film {}: {}",
+						attempt, MAX_RETRY_ATTEMPTS, ficheFilm.getAllocineFilmId(), e.getMessage());
+
+				if (attempt < MAX_RETRY_ATTEMPTS) {
+					sleep(RETRY_DELAY_MS * attempt);
+				}
+			}
+		}
+
+		logger.error("All retry attempts exhausted for film {}", ficheFilm.getAllocineFilmId());
+		return Collections.emptyMap();
+	}
+
+	private Map<Integer, CritiquePresse> fetchCritiques(FicheFilm ficheFilm) throws IOException {
+		Document document = Jsoup.connect(ficheFilm.getUrl())
+				.userAgent(USER_AGENT)
+				.timeout(10000)
+				.get();
+
+		Map<Integer, CritiquePresse> critiquesMap = new HashMap<>();
+		Elements reviewSections = document.select(DIV_REVIEWS_PRESS_COMMENT);
+
+		for (Element reviewSection : reviewSections) {
+			int index = 0;
+
+			// Extract news sources
+			Map<Integer, CritiquePresse> tempMap = extractNewsSources(reviewSection, ficheFilm);
+
+			// Extract bodies
+			extractBodies(reviewSection, tempMap);
+
+			// Extract ratings and authors
+			extractRatingsAndAuthors(reviewSection, tempMap);
+
+			critiquesMap.putAll(tempMap);
+		}
+
+		return critiquesMap;
+	}
+
+	private Map<Integer, CritiquePresse> extractNewsSources(Element reviewSection, FicheFilm ficheFilm) {
+		Map<Integer, CritiquePresse> map = new HashMap<>();
+		Elements headers = reviewSection.select(H2 + " " + SPAN);
+		int index = 0;
+
+		for (Element header : headers) {
+			String newsSource = header.text();
+			if (StringUtils.isNotEmpty(newsSource)) {
+				CritiquePresse critique = new CritiquePresse();
+				critique.setNewsSource(newsSource);
+				critique.setBody("...");
+				critique.setAuthor("...");
+				critique.setRating(0.0);
+				critique.setFicheFilm(ficheFilm);
+
+				map.put(index++, critique);
+				ficheFilm.addCritiquePresse(critique);
+			}
+		}
+
+		return map;
+	}
+
+	private void extractBodies(Element reviewSection, Map<Integer, CritiquePresse> critiquesMap) {
+		Elements paragraphs = reviewSection.select(P);
+		int index = 0;
+
+		for (Element paragraph : paragraphs) {
+			String body = paragraph.text();
+			if (StringUtils.isNotEmpty(body)) {
+				CritiquePresse critique = critiquesMap.get(index++);
+				if (critique != null) {
+					critique.setBody(body);
+				}
+			}
+		}
+	}
+
+	private void extractRatingsAndAuthors(Element reviewSection, Map<Integer, CritiquePresse> critiquesMap) {
+		Elements evalHolders = reviewSection.select(DIV_EVAL_HOLDER);
+		int index = 0;
+
+		for (Element evalHolder : evalHolders) {
+			CritiquePresse critique = critiquesMap.get(index++);
+			if (critique == null) continue;
+
+			// Extract author
+			String author = evalHolder.select(DIV_EVAL_HOLDER).text();
+			if (StringUtils.isNotEmpty(author)) {
+				critique.setAuthor(author);
+			}
+
+			// Extract rating
+			Double rating = extractRating(evalHolder);
+			critique.setRating(rating);
+
+			// Ensure body is not empty
+			if (StringUtils.isEmpty(critique.getBody())) {
+				critique.setBody("...");
+			}
+
+			logger.debug("Extracted critique: {}", critique);
+		}
+	}
+
+	private Double extractRating(Element element) {
+		for (int i = RATING_SELECTORS.length - 1; i >= 0; i--) {
+			if (element.select(RATING_SELECTORS[i]).size() > 0) {
+				return (double) (i + 1);
+			}
+		}
+		return 0.0;
+	}
+
+	private Set<FicheFilm> retrieveAllFicheFilmFromPage(Page page) {
+		try {
+			rateLimiter.acquire();
+
+			String url = page.getNumPage() == 1
+					? BASE_URL + LIST_FILM_URL
+					: BASE_URL + LIST_FILM_URL + SEARCH_PAGE_DELIMITER + page.getNumPage();
+
+			Document document = Jsoup.connect(url)
+					.userAgent(USER_AGENT)
+					.timeout(10000)
+					.get();
+
+			return extractFicheFilmsFromDocument(document, page.getNumPage());
+
+		} catch (IOException e) {
+			logger.error("Failed to retrieve films from page {}", page.getNumPage(), e);
+			return Collections.emptySet();
+		}
+	}
+
+	private Set<FicheFilm> extractFicheFilmsFromDocument(Document document, int pageNumber) {
+		Set<FicheFilm> ficheFilms = new HashSet<>();
+		Elements links = document.select(AHREF);
+
+		for (Element link : links) {
+			String href = link.attr(HREF);
+
+			if (StringUtils.contains(href, FILM_DELIMITER)) {
+				try {
+					FicheFilm ficheFilm = createFicheFilmFromLink(link, href, pageNumber);
+					ficheFilms.add(ficheFilm);
+				} catch (Exception e) {
+					logger.warn("Failed to parse film from link: {}", href, e);
+				}
+			}
+		}
+
+		logger.debug("Extracted {} films from page {}", ficheFilms.size(), pageNumber);
+		return ficheFilms;
+	}
+
+	private FicheFilm createFicheFilmFromLink(Element link, String href, int pageNumber) {
+		String filmTempId = StringUtils.substringAfter(href, FILM_DELIMITER);
+		String filmId = StringUtils.substringBefore(filmTempId, ".html");
+		String url = BASE_URL + CRITIQUE_PRESSE_FILM_BASE_URL + filmId + CRITIQUE_PRESSE_FILM_END_URL;
+
+		logger.debug("Created FicheFilm: title={}, id={}, url={}", link.text(), filmId, url);
+
+		return new FicheFilm(link.text(), Integer.valueOf(filmId), url, pageNumber);
+	}
+
+	// ==================== Database Operations ====================
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public FicheFilm saveFicheFilm(FicheFilm ficheFilm) {
+		try {
+			FicheFilm saved = ficheFilmRepository.save(ficheFilm);
+			logger.debug("Saved FicheFilm: {}", saved.getAllocineFilmId());
+			return saved;
+		} catch (Exception e) {
+			logger.error("Error saving FicheFilm {}", ficheFilm.getAllocineFilmId(), e);
+			return null;
+		}
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public void saveFicheFilmBatch(List<FicheFilm> ficheFilms) {
+		if (CollectionUtils.isEmpty(ficheFilms)) {
+			return;
+		}
+
+		try {
+			ficheFilmRepository.saveAll(ficheFilms);
+			logger.info("Saved batch of {} FicheFilms", ficheFilms.size());
+		} catch (Exception e) {
+			logger.error("Error saving FicheFilm batch of size {}", ficheFilms.size(), e);
+		}
+	}
+
+	// ==================== Helper Methods ====================
+
+	private PageRequest buildDefaultPageRequest(Integer offset, Integer limit, String sort) {
+		int actualLimit = limit != null ? limit : 50;
+		int actualOffset = offset != null ? offset : 1;
+		String actualSort = StringUtils.isNotEmpty(sort) ? sort : "-creationDate";
+
+		return PageRequestBuilder.getPageRequest(actualLimit, actualOffset, actualSort);
+	}
+
+	private synchronized Page incrementAndGetPage() {
+		int currentPage = pageNum.incrementAndGet();
+		Page page = new Page(currentPage);
+		page.setNumPage(currentPage);
+		return page;
+	}
+
+	private ScrapingResult waitForCompletion(List<Future<PageResult>> futures) {
+		int successCount = 0;
+		int failureCount = 0;
+		int totalSaved = 0;
+
+		for (Future<PageResult> future : futures) {
+			try {
+				PageResult result = future.get();
+				if (result.isSuccess()) {
+					successCount++;
+					totalSaved += result.getSavedCount();
+				} else {
+					failureCount++;
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				logger.error("Scraping task interrupted", e);
+				failureCount++;
+			} catch (ExecutionException e) {
+				logger.error("Scraping task failed", e);
+				failureCount++;
+			}
+		}
+
+		return new ScrapingResult(successCount, failureCount, totalSaved);
+	}
+
 	public Optional<FicheFilm> findInCacheByFicheFilmId(Integer ficheFilmId) {
 		FicheFilm ficheFilm = mapFicheFilms.get(ficheFilmId);
 		return Optional.ofNullable(ficheFilm);
 	}
-	
+
 	public Optional<List<FicheFilm>> findInCacheByFicheFilmTitle(String title) {
-		List<FicheFilm> ficheFilmList = mapFicheFilmsByTtile.get(StringUtils.upperCase(title));
-		return Optional.ofNullable(ficheFilmList);
+		List<FicheFilm> ficheFilms = mapFicheFilmsByTitle.get(title);
+		return Optional.ofNullable(ficheFilms);
+	}
+
+	private void sleep(long millis) {
+		try {
+			Thread.sleep(millis);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			logger.warn("Sleep interrupted", e);
+		}
+	}
+
+	// ==================== Inner Classes ====================
+
+	public static class PageResult {
+		private final int pageNumber;
+		private final int savedCount;
+		private final boolean success;
+		private final String errorMessage;
+
+		public PageResult(int pageNumber, int savedCount, boolean success, String errorMessage) {
+			this.pageNumber = pageNumber;
+			this.savedCount = savedCount;
+			this.success = success;
+			this.errorMessage = errorMessage;
+		}
+
+		public int getPageNumber() { return pageNumber; }
+		public int getSavedCount() { return savedCount; }
+		public boolean isSuccess() { return success; }
+		public String getErrorMessage() { return errorMessage; }
+	}
+
+	public static class ScrapingResult {
+		private final int successfulPages;
+		private final int failedPages;
+		private final int totalSaved;
+
+		public ScrapingResult(int successfulPages, int failedPages, int totalSaved) {
+			this.successfulPages = successfulPages;
+			this.failedPages = failedPages;
+			this.totalSaved = totalSaved;
+		}
+
+		public int getSuccessfulPages() { return successfulPages; }
+		public int getFailedPages() { return failedPages; }
+		public int getTotalSaved() { return totalSaved; }
+
+		@Override
+		public String toString() {
+			return String.format("ScrapingResult{successful=%d, failed=%d, totalSaved=%d}",
+					successfulPages, failedPages, totalSaved);
+		}
 	}
 }
