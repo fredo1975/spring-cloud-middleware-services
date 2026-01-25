@@ -128,13 +128,13 @@ public class BatchImportFilmsConfiguration{
 	}
     
 	@Bean(name = "importFilmsJob")
-	public Job importFilmsJob() throws Exception {
+	public Job importFilmsJob(Step importFilmsStep) throws Exception {
 		logger.info("######## importFilmsJob");
 		return new JobBuilder("importFilms", jobRepository)
 				.listener(new DvdthequeJobResultListener())
 				.incrementer(new RunIdIncrementer())
 				.start(cleanDBStep())
-				.next(importFilmsStep())
+				.next(importFilmsStep)
 				.next(setRippedFlagStep())
 				.next(setRetrieveDateInsertionStep())
 				.build();
@@ -220,10 +220,10 @@ public class BatchImportFilmsConfiguration{
     	return new DbFilmWriter();
     }
     @Bean
-    protected Step importFilmsStep() {
+    protected Step importFilmsStep(FlatFileItemReader<FilmCsvImportFormat> reader) {
     	return new StepBuilder("importFilmsStep", jobRepository)
     			.<FilmCsvImportFormat, Film>chunk(50,transactionManager)
-                .reader(reader(null))
+                .reader(reader)
                 .processor(filmProcessor())
                 .writer(filmWriter())
 				.taskExecutor(filmBatchTaskExecutor())

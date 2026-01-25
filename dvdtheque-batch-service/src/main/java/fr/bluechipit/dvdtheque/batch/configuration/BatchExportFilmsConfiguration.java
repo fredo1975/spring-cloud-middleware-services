@@ -28,7 +28,7 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.client.RestTemplate;
-import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -51,10 +51,10 @@ public class BatchExportFilmsConfiguration {
 	public static String 											DVDTHEQUE_SERVICE_ALL="dvdtheque-service.films";
 	
 	@Bean(name = "runExportFilmsJob")
-	public Job runExportFilmsJob() {
+	public Job runExportFilmsJob(Step exportFilmsStep) {
 		return new JobBuilder("exportFilms", jobRepository)
 				.incrementer(new RunIdIncrementer())
-				.start(exportFilmsStep())
+				.start(exportFilmsStep  )
 				.build();
 	}
 	@StepScope
@@ -81,15 +81,17 @@ public class BatchExportFilmsConfiguration {
     protected ExcelStreamFilmWriter excelFilmWriter() {
     	return new ExcelStreamFilmWriter();
     }
-    
+
     @Bean
-    protected Step exportFilmsStep() {
-    	return new StepBuilder("exportFilms", jobRepository)
-                .<Film, Film>chunk(800,transactionManager).reader(dvdthequeServiceFilmReader())
+    protected Step exportFilmsStep(ListItemReader<Film> reader) { // Spring injectera le bean avec le bon scope
+        return new StepBuilder("exportFilms", jobRepository)
+                .<Film, Film>chunk(800, transactionManager)
+                .reader(reader)
                 .writer(excelFilmWriter())
                 .allowStartIfComplete(true)
                 .build();
     }
+
     @Bean
     public ObjectMapper mapper() {
     	return new ObjectMapper();
