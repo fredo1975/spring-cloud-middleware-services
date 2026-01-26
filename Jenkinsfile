@@ -38,7 +38,7 @@ pipeline {
                 script {
                     // Mapping project names to their directory and service names
                     def serviceMap = [
-                        'service-config': [dir: 'config-service', service: 'dvdtheque_server_config', needsCommons: false],
+                        'service-config': [dir: 'config-service', service: 'dvdtheque-server-config', needsCommons: false],
                         'eureka':         [dir: 'discovery-service', service: 'dvdtheque_discovery_server', needsCommons: false],
                         'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque_api_gateway_server', needsCommons: false],
                         'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque_rest', needsCommons: true],
@@ -76,15 +76,22 @@ private void deployToServers(String env, String projectDir, String serviceName) 
         def cleanIp = ip.trim()
                 echo "Processing ${serviceName} on ${cleanIp}"
 
-                // 2. Stop Service
-                sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
+                // 1. Préparation du terrain (Correction des permissions pour les logs)
+                        // Note: On remplace les tirets par des underscores pour le nom du dossier si nécessaire
+                        def folderName = "${serviceName}_service".replace('-', '_')
 
-                // 3. Transfer Artifact
-                sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:/opt/${serviceName}_service/${projectDir}.jar"
+                        // 2. Arrêt du service (Correction de la quote orpheline)
+                        sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
 
-                // 4. Start and Verify (The verify step helps catch log-startup issues)
-                sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
-                sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
+                        // 3. Transfert de l'artéfact
+                        // On renomme le JAR en config-service.jar (ou projectDir.jar) pour la simplicité du lien systemd
+                        sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:/opt/${folderName}/${projectDir}.jar"
+
+                        // 4. Redémarrage et vérification immédiate
+                        sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
+
+                        // Cette commande échouera le build Jenkins si le service ne démarre pas (ex: erreur logback)
+                        sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
     }
 }
 /** * Helper to checkout the correct git branch based on environment
