@@ -18,17 +18,12 @@ pipeline {
         stage('Initialize') {
             steps {
                 echo "Deploying ${params.project} to ${ENV} version ${VERSION}"
-                sh '''
-                                    echo "VERSION = ${VERSION}"
-                                    echo "PROD_SERVER1_IP = ${PROD_SERVER1_IP}"
-                                    echo "PROD_SERVER2_IP = ${PROD_SERVER2_IP}"
-                                    echo "DEV_SERVER1_IP = ${DEV_SERVER1_IP}"
-                                    echo "DEV_SERVER2_IP = ${DEV_SERVER2_IP}"
-                                    echo "VERSION = ${VERSION}"
-                                    echo "ARTIFACT = ${ARTIFACT}"
-                                    echo "project = ${project}"
-                                    echo "ENV = ${ENV}"
-                                '''
+                // Utilisation de doubles guillemets triples pour l'interpolation correcte
+                sh """
+                   echo "VERSION = ${VERSION}"
+                   echo "PROJECT = ${params.project}"
+                    echo "ENV = ${ENV}"
+                """
                 gitCheckout(ENV)
             }
         }
@@ -54,7 +49,14 @@ pipeline {
 
                         dir(config.dir) {
                             buildService(ENV)
-                            deployToServers(ENV, config.dir, config.service)
+                            // GESTION DU CIBLAGE SPECIFIQUE
+                            if (params.project == 'dvdtheque-batch' || params.project == 'dvdtheque-allocine') {
+                                // Forcer uniquement sur le .108 en production
+                                def target = (ENV == 'prod') ? "192.168.1.108" : null
+                                deployToServers(ENV, config.dir, config.service, target)
+                            } else {
+                                deployToServers(ENV, config.dir, config.service)
+                            }
                         }
                     } else {
                         error "Unknown project: ${params.project}"
