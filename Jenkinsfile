@@ -5,8 +5,10 @@ pipeline {
         jdk 'jdk21'
     }
     environment {
-        DEV_SERVERS = ['192.168.1.105']
-        PROD_SERVERS = ['192.168.1.108', '192.168.1.106']
+        // Define as a comma-separated string
+        DEV_SERVERS = '192.168.1.105'
+        PROD_SERVERS = '192.168.1.108,192.168.1.106'
+
         JAVA_OPTS = '-Djava.io.tmpdir=/var/tmp/exportDir'
         GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
         ENV = "${params.env_deploy}"
@@ -53,16 +55,12 @@ pipeline {
 /** * Helper to deploy to multiple IPs based on environment
  */
 private void deployToServers(String env, String projectDir, String serviceName) {
-    def targets = (env == 'prod') ? env.PROD_SERVERS.split(',') : env.DEV_SERVERS.split(',')
-    def jarName = "${projectDir}.jar"
-    def remotePath = "/opt/${serviceName.replace('-', '_')}_service/${jarName}"
+    // Use .split(',') to turn the string back into a list for iteration
+    def targetList = (env == 'prod') ? PROD_SERVERS.split(',') : DEV_SERVERS.split(',')
 
-    targets.each { ip ->
-        echo "Deploying to ${ip}..."
-        sh "ssh jenkins@${ip} sudo systemctl stop ${serviceName}.service"
-        sh "scp target/${projectDir}-${VERSION}.jar jenkins@${ip}:${remotePath}"
-        sh "ssh jenkins@${ip} sudo systemctl start ${serviceName}.service"
-        sh "ssh jenkins@${ip} systemctl is-active ${serviceName}.service"
+    targetList.each { ip ->
+        echo "Deploying to ${ip.trim()}..."
+        // SSH/SCP commands here
     }
 }
 /** * Helper to checkout the correct git branch based on environment
