@@ -43,6 +43,10 @@
         </logger>
     </springProfile>
 
+    <root level="INFO">
+        <appender-ref ref="Console" />
+    </root>
+
     <!-- Profil docker : n'utiliser que la console (logs vers stdout/stderr) -->
     <springProfile name="docker">
         <root level="INFO">
