@@ -38,7 +38,7 @@ pipeline {
                 script {
                     // Mapping project names to their directory and service names
                     def serviceMap = [
-                        'service-config': [dir: 'config-service', service: 'dvdtheque-server-config', needsCommons: false],
+                        'service-config': [dir: 'config-service', service: 'dvdtheque_server_config', needsCommons: false],
                         'eureka':         [dir: 'discovery-service', service: 'dvdtheque_discovery_server', needsCommons: false],
                         'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque_api_gateway_server', needsCommons: false],
                         'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque_rest', needsCommons: true],
