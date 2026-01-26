@@ -67,35 +67,37 @@ pipeline {
     }
 }
 
-/** * Helper to deploy to multiple IPs based on environment
+/** * Helper pour déployer. Accepte une IP optionnelle (specificIp)
  */
-private void deployToServers(String env, String projectDir, String serviceName) {
-    // Use .split(',') to turn the string back into a list for iteration
-    def targetList = (env == 'prod') ? PROD_SERVERS.split(',') : DEV_SERVERS.split(',')
+private void deployToServers(String env, String projectDir, String serviceName, String specificIp = null) {
+    def targetList = []
+
+    if (specificIp) {
+        targetList = [specificIp]
+    } else {
+        targetList = (env == 'prod') ? PROD_SERVERS.split(',') : DEV_SERVERS.split(',')
+    }
 
     targetList.each { ip ->
-        echo "Deploying to ${ip.trim()}..."
         def cleanIp = ip.trim()
-                echo "Processing ${serviceName} on ${cleanIp}"
+        echo "Processing ${serviceName} on ${cleanIp}"
 
-                // 1. Préparation du terrain (Correction des permissions pour les logs)
-                        // Note: On remplace les tirets par des underscores pour le nom du dossier si nécessaire
-                        def folderName = "${serviceName}_service".replace('-', '_')
+        // 1. Création dossier + Permissions (évite les erreurs de logs)
+        def folderPath = "/opt/${serviceName}_service"
+        sh "ssh jenkins@${cleanIp} 'sudo mkdir -p ${folderPath}/logs && sudo chown -R jenkins:jenkins ${folderPath}'"
 
-                        // 2. Arrêt du service (Correction de la quote orpheline)
-                        sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
+        // 2. Stop Service (Sans la quote orpheline !)
+        sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
 
-                        // 3. Transfert de l'artéfact
-                        // On renomme le JAR en config-service.jar (ou projectDir.jar) pour la simplicité du lien systemd
-                        sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:/opt/${folderName}/${projectDir}.jar"
+        // 3. Transfer Artifact (Renommé pour correspondre au fichier .service)
+        sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:${folderPath}/${projectDir}.jar"
 
-                        // 4. Redémarrage et vérification immédiate
-                        sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
-
-                        // Cette commande échouera le build Jenkins si le service ne démarre pas (ex: erreur logback)
-                        sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
+        // 4. Start and Verify
+        sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
+        sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
     }
 }
+
 /** * Helper to checkout the correct git branch based on environment
  */
 private void gitCheckout(String env){
