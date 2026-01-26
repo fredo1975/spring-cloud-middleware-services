@@ -77,8 +77,12 @@ private void deployToServers(String env, String projectDir, String serviceName) 
                 echo "Processing ${serviceName} on ${cleanIp}"
 
                 // 2. Stop Service
-                sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service || true"
+                sh "ssh -o BatchMode=yes jenkins@${cleanIp} 'sudo systemctl stop ${serviceName}.service'"
 
+                sh """
+                echo "target : target/${projectDir}-${VERSION}.jar"
+                echo "target : /opt/${serviceName}_service/${projectDir}.jar"
+                """
                 // 3. Transfer Artifact
                 sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:/opt/${serviceName}_service/${projectDir}.jar"
 
