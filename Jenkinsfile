@@ -5,323 +5,68 @@ pipeline {
         jdk 'jdk21'
     }
     environment {
-    	//def DEV_SERVER1_IP = '192.168.1.103'
-    	def DEV_SERVER2_IP = '192.168.1.105'
-    	def PROD_SERVER1_IP = '192.168.1.108'
-    	def PROD_SERVER2_IP = '192.168.1.106'
-    	def JAVA_OPTS='-Djava.io.tmpdir=/var/tmp/exportDir'
-    	GIT_COMMIT_SHORT = sh(
-                script: "printf \$(git rev-parse --short HEAD)",
-                returnStdout: true
-        )
-
-        def ENV = "${env_deploy}"
-        def VERSION = getArtifactVersion(ENV,GIT_COMMIT_SHORT)
-        def ARTIFACT = "dvdtheque-${VERSION}.jar"
-
+        DEV_SERVERS = ['192.168.1.105']
+        PROD_SERVERS = ['192.168.1.108', '192.168.1.106']
+        JAVA_OPTS = '-Djava.io.tmpdir=/var/tmp/exportDir'
+        GIT_COMMIT_SHORT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+        ENV = "${params.env_deploy}"
+        VERSION = getArtifactVersion(ENV, GIT_COMMIT_SHORT)
     }
     stages {
-        stage ('Initialize') {
+        stage('Initialize') {
             steps {
-                sh '''
-                    echo "VERSION = ${VERSION}"
-                    echo "PROD_SERVER1_IP = ${PROD_SERVER1_IP}"
-                    echo "PROD_SERVER2_IP = ${PROD_SERVER2_IP}"
-                    echo "DEV_SERVER1_IP = ${DEV_SERVER1_IP}"
-                    echo "DEV_SERVER2_IP = ${DEV_SERVER2_IP}"
-                    echo "VERSION = ${VERSION}"
-                    echo "ARTIFACT = ${ARTIFACT}"
-                    echo "project = ${project}"
-                    echo "ENV = ${ENV}"
-                '''
+                echo "Deploying ${params.project} to ${ENV} version ${VERSION}"
+                gitCheckout(ENV)
             }
         }
-        stage('Clone repository') {
-			steps {
-				script {
-					checkout scm
-				}
-			}
-		}
-		stage('Building config-service on dev env') {
-                		    when {
-                                expression { params.project == 'service-config' && params.env_deploy == 'dev'}
-                            }
-                		    steps {
-                                echo "Building service-config on dev env"
-                                gitCheckout(params.env_deploy)
-                                dir("config-service") {
-                                    buildService(params.env_deploy)
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-server-config.service'
-                                    sh """
-                                        scp target/config-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_server_config_service/config-service.jar
-                                    """
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-server-config.service'
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-server-config.service'
-                                }
-                            }
-                		}
-                		stage('Building config-service on prod env') {
-                                        		    when {
-                                                        expression { params.project == 'service-config' && params.env_deploy == 'prod'}
-                                                    }
-                                        		    steps {
-                                                        echo "Building service-config on prod env"
-                                                        gitCheckout(params.env_deploy)
-                                                        dir("config-service") {
-                                                            buildService(params.env_deploy)
-                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-server-config.service'
-                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-server-config.service'
-                                                            sh """
-                                                                scp target/config-service-${VERSION}.jar jenkins@${$PROD_SERVER1_IP}:/opt/dvdtheque_server_config_service/config-service.jar
-                                                                scp target/config-service-${VERSION}.jar jenkins@${$PROD_SERVER2_IP}:/opt/dvdtheque_server_config_service/config-service.jar
-                                                            """
-                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-server-config.service'
-                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-server-config.service'
-                                                            sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-server-config.service'
-                                                            sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-server-config.service'
-                                                        }
-                                                    }
-                                        		}
-		stage('Building discovery-service on dev env') {
-        		    when {
-                        expression { params.project == 'eureka' && params.env_deploy == 'dev'}
+
+        stage('Build and Deploy Service') {
+            steps {
+                script {
+                    // Mapping project names to their directory and service names
+                    def serviceMap = [
+                        'service-config': [dir: 'config-service', service: 'dvdtheque-server-config', needsCommons: false],
+                        'eureka':         [dir: 'discovery-service', service: 'dvdtheque-discovery-server', needsCommons: false],
+                        'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque-api-gateway-server', needsCommons: false],
+                        'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque-rest', needsCommons: true],
+                        'dvdtheque-tmdb': [dir: 'dvdtheque-tmdb-service', service: 'dvdtheque-tmdb', needsCommons: true]
+                        // Add others here...
+                    ]
+
+                    def config = serviceMap[params.project]
+                    if (config) {
+                        if (config.needsCommons) buildCommons()
+
+                        dir(config.dir) {
+                            buildService(ENV)
+                            deployToServers(ENV, config.dir, config.service)
+                        }
+                    } else {
+                        error "Unknown project: ${params.project}"
                     }
-        		    steps {
-                        echo "Building discovery-service on dev env"
-                        gitCheckout(params.env_deploy)
-                        dir("discovery-service") {
-                            buildService(params.env_deploy)
-                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
-                            sh """
-                                scp target/discovery-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
-                            """
-                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-discovery-server.service'
-                            sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-discovery-server.service'
-                        }
-                    }
-        		}
-        		stage('Building discovery-service on prod env') {
-                     when {
-                        expression { params.project == 'eureka' && params.env_deploy == 'prod'}
-                        }
-                        steps {
-                           echo "Building discovery-service on prod env"
-                           gitCheckout(params.env_deploy)
-                           dir("discovery-service") {
-                           buildService(params.env_deploy)
-                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-discovery-server.service'
-                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-discovery-server.service'
-                           sh """
-                           scp target/discovery-service-${VERSION}.jar jenkins@${$PROD_SERVER1_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
-                           """
-                           sh """
-                            scp target/discovery-service-${VERSION}.jar jenkins@${$PROD_SERVER2_IP}:/opt/dvdtheque_discovery_server_service/discovery-service.jar
-                           """
-                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-discovery-server.service'
-                           sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-discovery-server.service'
-                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-discovery-server.service'
-                           sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-discovery-server.service'
-                        }
-                     }
-                 }
-        stage('Building api-gateway-service on dev env') {
-                		    when {
-                                expression { params.project == 'api-gateway' && params.env_deploy == 'dev'}
-                            }
-                		    steps {
-                                echo "Building api-gateway-service on dev env"
-                                gitCheckout(params.env_deploy)
-                                dir("api-gateway-service") {
-                                    buildService(params.env_deploy)
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-api-gateway-server.service'
-                                    sh """
-                                        scp target/api-gateway-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_api_gateway_server_service/api-gateway-service.jar
-                                    """
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-api-gateway-server.service'
-                                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-api-gateway-server.service'
-                                }
-                            }
-                		}
-		stage('Building dvdtheque-service on dev env') {
-		    when {
-                expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'dev'}
-            }
-		    steps {
-                echo "Building dvdtheque-service on dev env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
-                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
-                    /*sh """
-                        scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-                    """*/
-                    sh """
-                        scp target/dvdtheque-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-                    """
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
-                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
-                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
-                }
-            }
-		}
-        stage('Building dvdtheque-allocine-service on dev env') {
-            when {
-                expression { params.project == 'dvdtheque-allocine' && params.env_deploy == 'dev'}
-            }
-            steps {
-                echo "Building dvdtheque-allocine-service on dev env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-allocine-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-allocine.service'
-                    sh """
-                        scp target/dvdtheque-allocine-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_allocine_service/dvdtheque-allocine-service.jar
-                    """
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-allocine.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-allocine.service'
                 }
             }
         }
-        stage('Building dvdtheque-tmdb-service on dev env') {
-            when {
-                expression { params.project == 'dvdtheque-tmdb' && params.env_deploy == 'dev'}
-            }
-            steps {
-                echo "Building dvdtheque-tmdb-service on dev env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-tmdb-service") {
-                    buildService(params.env_deploy)
-                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
- 			 		/*sh """
- 			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${DEV_SERVER1_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
- 			 		"""*/
- 			 		sh """
- 			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
- 			 		"""
-                    //sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-tmdb.service'
-                   // sh 'ssh jenkins@$DEV_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-tmdb.service'
-                }
-            }
-        }
-        stage('Building dvdtheque-batch-service on dev env') {
-            when {
-                expression { params.project == 'dvdtheque-batch' && params.env_deploy == 'dev'}
-            }
-            steps {
-                echo "Building dvdtheque-batch-service on dev env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-batch-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop dvdtheque-batch.service'
- 				 	sh """
-    			 		scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${DEV_SERVER2_IP}:/opt/dvdtheque_batch_service/dvdtheque-batch.jar
-    			 	"""
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl start dvdtheque-batch.service'
-                    sh 'ssh jenkins@$DEV_SERVER2_IP sudo systemctl status dvdtheque-batch.service'
-                }
-            }
-        }
-		stage('Building dvdtheque-service on prod env') {
-		    when {
-                expression { params.project == 'dvdtheque-rest' && params.env_deploy == 'prod'}
-            }
-		    steps {
-                echo "Building dvdtheque-service on prod env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-rest.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-rest.service'
-                    sh """
-			 			scp target/dvdtheque-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-			 		"""
-			 		sh """
-			 			scp target/dvdtheque-service-${VERSION}.jar jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_rest_service/dvdtheque-rest-services.jar
-			 		"""
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-rest.service'
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-rest.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-rest.service'
-                }
-            }
-		}
-		stage('Building dvdtheque-tmdb-service on prod env') {
-		    when {
-                expression { params.project == 'dvdtheque-tmdb' && params.env_deploy == 'prod'}
-            }
-		    steps {
-                echo "Building dvdtheque-tmdb-service on prod env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-tmdb-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl stop dvdtheque-tmdb.service'
-                    sh """
-			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
-			 		"""
-			 		sh """
-			 			scp target/dvdtheque-tmdb-service-${VERSION}.jar jenkins@${PROD_SERVER2_IP}:/opt/dvdtheque_tmdb_service/dvdtheque-tmdb-service.jar
-			 		"""
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl start dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-tmdb.service'
-                    sh 'ssh jenkins@$PROD_SERVER2_IP sudo systemctl status dvdtheque-tmdb.service'
-                }
-            }
-		}
-		stage('Building dvdtheque-allocine-service on prod env') {
-		    when {
-                expression { params.project == 'dvdtheque-allocine' && params.env_deploy == 'prod'}
-            }
-		    steps {
-                echo "Building dvdtheque-allocine-service on prod env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-allocine-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-allocine.service'
-                    sh """
-			 			scp target/dvdtheque-allocine-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_allocine_service/dvdtheque-allocine-service.jar
-			 		"""
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-allocine.service'
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-allocine.service'
-                }
-            }
-		}
-		stage('Building dvdtheque-batch-service on prod env') {
-		    when {
-                expression { params.project == 'dvdtheque-batch' && params.env_deploy == 'prod'}
-            }
-		    steps {
-                echo "Building dvdtheque-batch-service on prod env"
-                gitCheckout(params.env_deploy)
-                buildCommons()
-                dir("dvdtheque-batch-service") {
-                    buildService(params.env_deploy)
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl stop dvdtheque-batch.service'
-                    sh """
-			 			scp target/dvdtheque-batch-service-${VERSION}.jar jenkins@${PROD_SERVER1_IP}:/opt/dvdtheque_batch_service/dvdtheque-batch-service.jar
-			 		"""
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl start dvdtheque-batch.service'
-                    sh 'ssh jenkins@$PROD_SERVER1_IP sudo systemctl status dvdtheque-batch.service'
-                }
-            }
-		}
     }
 }
 
+/** * Helper to deploy to multiple IPs based on environment
+ */
+private void deployToServers(String env, String projectDir, String serviceName) {
+    def targets = (env == 'prod') ? env.PROD_SERVERS.split(',') : env.DEV_SERVERS.split(',')
+    def jarName = "${projectDir}.jar"
+    def remotePath = "/opt/${serviceName.replace('-', '_')}_service/${jarName}"
+
+    targets.each { ip ->
+        echo "Deploying to ${ip}..."
+        sh "ssh jenkins@${ip} sudo systemctl stop ${serviceName}.service"
+        sh "scp target/${projectDir}-${VERSION}.jar jenkins@${ip}:${remotePath}"
+        sh "ssh jenkins@${ip} sudo systemctl start ${serviceName}.service"
+        sh "ssh jenkins@${ip} systemctl is-active ${serviceName}.service"
+    }
+}
+/** * Helper to checkout the correct git branch based on environment
+ */
 private void gitCheckout(String env){
     if(env == "dev"){
         sh """
@@ -336,6 +81,8 @@ private void gitCheckout(String env){
         """
    }
 }
+/** * Helper to determine artifact version based on environment
+ */
 private String getArtifactVersion(String env,String gitCommit){
 	if(env == "dev"){
 		return "${gitCommit}-SNAPSHOT"
@@ -346,6 +93,8 @@ private String getArtifactVersion(String env,String gitCommit){
 	return ""
 }
 
+/** * Helper to build commons module
+ */
 private void buildCommons(){
     dir("dvdtheque-commons") {
         sh """
@@ -354,6 +103,8 @@ private void buildCommons(){
     }
 }
 
+/** * Helper to build service based on environment
+ */
 private void buildService(String env){
     if(env == "dev"){
         sh """
