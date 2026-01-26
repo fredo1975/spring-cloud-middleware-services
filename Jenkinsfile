@@ -31,7 +31,9 @@ pipeline {
                         'eureka':         [dir: 'discovery-service', service: 'dvdtheque-discovery-server', needsCommons: false],
                         'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque-api-gateway-server', needsCommons: false],
                         'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque-rest', needsCommons: true],
-                        'dvdtheque-tmdb': [dir: 'dvdtheque-tmdb-service', service: 'dvdtheque-tmdb', needsCommons: true]
+                        'dvdtheque-tmdb': [dir: 'dvdtheque-tmdb-service', service: 'dvdtheque-tmdb', needsCommons: true],
+                        'dvdtheque-batch': [dir: 'dvdtheque-batch-service', service: 'dvdtheque-batch', needsCommons: true],
+                        'dvdtheque-allocine': [dir: 'dvdtheque-allocine-service', service: 'dvdtheque-allocine', needsCommons: true]
                         // Add others here...
                     ]
 
