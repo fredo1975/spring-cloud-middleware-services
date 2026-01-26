@@ -39,12 +39,12 @@ pipeline {
                     // Mapping project names to their directory and service names
                     def serviceMap = [
                         'service-config': [dir: 'config-service', service: 'dvdtheque_server_config', needsCommons: false],
-                        'eureka':         [dir: 'discovery-service', service: 'dvdtheque-discovery-server', needsCommons: false],
-                        'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque-api-gateway-server', needsCommons: false],
-                        'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque-rest', needsCommons: true],
-                        'dvdtheque-tmdb': [dir: 'dvdtheque-tmdb-service', service: 'dvdtheque-tmdb', needsCommons: true],
-                        'dvdtheque-batch': [dir: 'dvdtheque-batch-service', service: 'dvdtheque-batch', needsCommons: true],
-                        'dvdtheque-allocine': [dir: 'dvdtheque-allocine-service', service: 'dvdtheque-allocine', needsCommons: true]
+                        'eureka':         [dir: 'discovery-service', service: 'dvdtheque_discovery_server', needsCommons: false],
+                        'api-gateway':    [dir: 'api-gateway-service', service: 'dvdtheque_api_gateway_server', needsCommons: false],
+                        'dvdtheque-rest': [dir: 'dvdtheque-service', service: 'dvdtheque_rest', needsCommons: true],
+                        'dvdtheque-tmdb': [dir: 'dvdtheque-tmdb-service', service: 'dvdtheque_tmdb', needsCommons: true],
+                        'dvdtheque-batch': [dir: 'dvdtheque-batch-service', service: 'dvdtheque_batch', needsCommons: true],
+                        'dvdtheque-allocine': [dir: 'dvdtheque-allocine-service', service: 'dvdtheque_allocine', needsCommons: true]
                         // Add others here...
                     ]
 
@@ -77,8 +77,7 @@ private void deployToServers(String env, String projectDir, String serviceName) 
                 echo "Processing ${serviceName} on ${cleanIp}"
 
                 // 2. Stop Service
-                sh "ssh -o BatchMode=yes jenkins@${cleanIp} 'sudo systemctl stop ${serviceName}.service'"
-
+                sh "ssh jenkins@$DEV_SERVER2_IP sudo systemctl stop ${serviceName}.service'"
                 sh """
                 echo "target : target/${projectDir}-${VERSION}.jar"
                 echo "target : /opt/${serviceName}_service/${projectDir}.jar"
