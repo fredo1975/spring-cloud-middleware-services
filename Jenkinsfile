@@ -18,6 +18,17 @@ pipeline {
         stage('Initialize') {
             steps {
                 echo "Deploying ${params.project} to ${ENV} version ${VERSION}"
+                sh '''
+                                    echo "VERSION = ${VERSION}"
+                                    echo "PROD_SERVER1_IP = ${PROD_SERVER1_IP}"
+                                    echo "PROD_SERVER2_IP = ${PROD_SERVER2_IP}"
+                                    echo "DEV_SERVER1_IP = ${DEV_SERVER1_IP}"
+                                    echo "DEV_SERVER2_IP = ${DEV_SERVER2_IP}"
+                                    echo "VERSION = ${VERSION}"
+                                    echo "ARTIFACT = ${ARTIFACT}"
+                                    echo "project = ${project}"
+                                    echo "ENV = ${ENV}"
+                                '''
                 gitCheckout(ENV)
             }
         }
@@ -62,7 +73,21 @@ private void deployToServers(String env, String projectDir, String serviceName) 
 
     targetList.each { ip ->
         echo "Deploying to ${ip.trim()}..."
-        // SSH/SCP commands here
+        def cleanIp = ip.trim()
+                echo "Processing ${serviceName} on ${cleanIp}"
+
+                // 1. Ensure log directory exists and has correct permissions
+                sh "ssh jenkins@${cleanIp} 'sudo mkdir -p /opt/${serviceName}_service/logs && sudo chown -R jenkins:jenkins /opt/${serviceName}_service'"
+
+                // 2. Stop Service
+                sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service || true"
+
+                // 3. Transfer Artifact
+                sh "scp target/${projectDir}-${VERSION}.jar jenkins@${cleanIp}:/opt/${serviceName}_service/${projectDir}.jar"
+
+                // 4. Start and Verify (The verify step helps catch log-startup issues)
+                sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
+                sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
     }
 }
 /** * Helper to checkout the correct git branch based on environment
