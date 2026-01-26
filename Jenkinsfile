@@ -76,9 +76,6 @@ private void deployToServers(String env, String projectDir, String serviceName) 
         def cleanIp = ip.trim()
                 echo "Processing ${serviceName} on ${cleanIp}"
 
-                // 1. Ensure log directory exists and has correct permissions
-                sh "ssh jenkins@${cleanIp} 'sudo mkdir -p /opt/${serviceName}_service/logs && sudo chown -R jenkins:jenkins /opt/${serviceName}_service'"
-
                 // 2. Stop Service
                 sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service || true"
 
