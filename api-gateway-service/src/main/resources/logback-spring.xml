@@ -7,7 +7,7 @@
         class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                %d %p [%t] %m%n
+                %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n
             </Pattern>
         </layout>
     </appender>
@@ -17,7 +17,7 @@
         <file>${LOGS}/dvdtheque-api-gateway-service.log</file>
         <encoder
             class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>%d %p [%t] %m%n</Pattern>
+            <Pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</Pattern>
         </encoder>
  
         <rollingPolicy
