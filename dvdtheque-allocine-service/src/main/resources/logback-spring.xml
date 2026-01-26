@@ -28,6 +28,8 @@
             <timeBasedFileNamingAndTriggeringPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>10MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>2GB</totalSizeCap>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
     </appender>
