@@ -82,10 +82,6 @@ private void deployToServers(String env, String projectDir, String serviceName, 
         def cleanIp = ip.trim()
         echo "Processing ${serviceName} on ${cleanIp}"
 
-        // 1. Création dossier + Permissions (évite les erreurs de logs)
-        def folderPath = "/opt/${serviceName}_service"
-        sh "ssh jenkins@${cleanIp} 'sudo mkdir -p ${folderPath}/logs && sudo chown -R jenkins:jenkins ${folderPath}'"
-
         // 2. Stop Service (Sans la quote orpheline !)
         sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
 
