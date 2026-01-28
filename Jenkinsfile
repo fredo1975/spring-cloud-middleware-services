@@ -82,8 +82,12 @@ private void deployToServers(String env, String projectDir, String serviceName, 
         def cleanIp = ip.trim()
         echo "Processing ${serviceName} on ${cleanIp}"
 
+
+         // Note: On remplace les tirets par des underscores pour le nom du dossier si nécessaire
+         def folderName = "${serviceName}_service".replace('-', '_')
+
         // 1. Création dossier + Permissions (évite les erreurs de logs)
-        def folderPath = "/opt/${serviceName}_service"
+        def folderPath = "/opt/${folderName}"
         sh "ssh jenkins@${cleanIp} 'sudo mkdir -p ${folderPath}/logs && sudo chown -R jenkins:jenkins ${folderPath}'"
 
         // 2. Stop Service (Sans la quote orpheline !)
