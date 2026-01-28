@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
@@ -54,7 +55,7 @@ public class BatchExportFilmsConfiguration {
 	public Job runExportFilmsJob(Step exportFilmsStep) {
 		return new JobBuilder("exportFilms", jobRepository)
 				.incrementer(new RunIdIncrementer())
-				.start(exportFilmsStep  )
+				.start(exportFilmsStep)
 				.build();
 	}
 	@StepScope
@@ -83,6 +84,7 @@ public class BatchExportFilmsConfiguration {
     }
 
     @Bean
+    @JobScope
     protected Step exportFilmsStep(ListItemReader<Film> reader) { // Spring injectera le bean avec le bon scope
         return new StepBuilder("exportFilms", jobRepository)
                 .<Film, Film>chunk(800, transactionManager)
