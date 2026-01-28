@@ -88,7 +88,7 @@ private void deployToServers(String env, String projectDir, String serviceName, 
 
         // 1. Création dossier + Permissions (évite les erreurs de logs)
         def folderPath = "/opt/${folderName}"
-        sh "ssh jenkins@${cleanIp} 'sudo mkdir -p ${folderPath}/logs && sudo chown -R jenkins:jenkins ${folderPath}'"
+        sh "ssh jenkins@${cleanIp} 'sudo mkdir -p ${folderPath}/logs'"
 
         // 2. Stop Service (Sans la quote orpheline !)
         sh "ssh jenkins@${cleanIp} sudo systemctl stop ${serviceName}.service"
