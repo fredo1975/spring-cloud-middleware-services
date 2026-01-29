@@ -1,6 +1,5 @@
 package fr.bluechipit.dvdtheque.batch.controller;
 
-import fr.bluechipit.dvdtheque.batch.film.backup.ExcelFilmHandler;
 import fr.bluechipit.dvdtheque.batch.film.backup.MultipartFileUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,15 +13,17 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.security.RolesAllowed;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/dvdtheque-batch-service/invokejob")
@@ -68,7 +69,7 @@ public class JobInvokerController {
 	@PostMapping(value = "/importFilmsJob", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public String handleImportFilmsJob(@RequestParam("file") MultipartFile file) throws Exception {
 
-		File resFile = null;
+		File resFile;
 		try {
 			resFile = this.multipartFileUtil.createFileToImport(file);
 		} catch (Exception e) {
@@ -90,7 +91,7 @@ public class JobInvokerController {
 	@RolesAllowed("user")
 	@PostMapping(value = "/films/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
-		File resFile = null;
+		File resFile;
 		try {
 			resFile = this.multipartFileUtil.createFileToImport(file);
 		} catch (Exception e) {

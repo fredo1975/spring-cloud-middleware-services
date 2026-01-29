@@ -27,12 +27,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import specifications.filter.PageRequestBuilder;
@@ -316,6 +319,18 @@ public class FilmService {
 				environment.getRequiredProperty(TMDB_SERVICE_URL),
 				environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS),
 				tmdbId);
+
+		/*
+		CompletableFuture<Film> tmdbFuture = CompletableFuture.supplyAsync(() -> {
+			ResultsByTmdbId results = restTemplate.getForObject(tmdbUrl, ResultsByTmdbId.class);
+			Results res = transformTmdbFilmToResults(results);
+			return transformTmdbFilmToDvdThequeFilm(null, res, new HashSet<>(), true);
+		});
+
+		CompletableFuture<Integer> ratingFuture = CompletableFuture.supplyAsync(() -> {
+			return retrieveAllocineFilmId(filmToSave);
+		});*/
+
 		return Optional.ofNullable(restTemplate.getForObject(tmdbUrl, ResultsByTmdbId.class))
 				.map(results -> {
 					Results res = transformTmdbFilmToResults(results);
@@ -332,6 +347,18 @@ public class FilmService {
 					return filmSaveService.saveNewFilm(filmToSave);
 				});
     }
+/*
+	private int retrieveAllocineFilmId(String titre,String titreO) {
+		String allocineUrl = String.format("%s%s?title=%s&titleO=%s",
+				environment.getRequiredProperty(ALLOCINE_SERVICE_URL),
+				environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE),
+				titre, titreO);
+
+		ResponseEntity<List<FicheFilmDto>> response = restTemplate.exchange(
+				allocineUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<FicheFilmDto>>() {});
+
+		return response.getBody() != null && !response.getBody().isEmpty() ? 0 : response.getBody().getFirst().getId();
+	}*/
 
 	private void enrichWithAllocineId(Film film) {
 		String allocineUrl = String.format("%s%s?title=%s&titleO=%s",
@@ -745,15 +772,28 @@ public class FilmService {
 	}
 
 	public void importFilmList(MultipartFile file) throws IOException {
-		byte[] csvBytes = file.getBytes();
+		MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+		// Transform MultipartFile en Resource
+		body.add("file", new ByteArrayResource(file.getBytes()) {
+			@Override
+			public String getFilename() {
+				return file.getOriginalFilename();
+			}
+		});
+
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-		headers.setContentDisposition(ContentDisposition.builder("attachment").filename(file.getOriginalFilename()).build());
-		HttpEntity<?> request = new HttpEntity<>(csvBytes, headers);
-		ResponseEntity<String> resultsResponse = restTemplate.exchange(
+		headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+
+		ResponseEntity<String> response = restTemplate.exchange(
 				environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_URL)
 						+ environment.getRequiredProperty(DVDTHEQUE_BATCH_SERVICE_IMPORT),
-				HttpMethod.POST, request, String.class);
-		logger.info(resultsResponse.getBody());
+				HttpMethod.POST,
+				requestEntity,
+				String.class
+		);
+
+		logger.info(response.getBody());
 	}
 }
