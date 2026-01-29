@@ -57,5 +57,6 @@
             <appender-ref ref="Console" />
         </logger>
     </springProfile>
- 
+
+    <logger name="com.hazelcast.internal.diagnostics.HealthMonitor" level="OFF" />
 </configuration>
