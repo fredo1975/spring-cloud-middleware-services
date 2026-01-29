@@ -34,7 +34,11 @@ public class JobInvokerController {
 	@Autowired
 	@Qualifier("runExportFilmsJob")
 	Job runExportFilmsJob;
-
+/*
+	@Autowired
+	@Qualifier("runExportCritiquesPresseJob")
+	Job runExportCritiquesPresseJob;
+*/
 	@Autowired
 	@Qualifier("importFilmsJob")
 	Job importFilmsJob;
@@ -50,31 +54,42 @@ public class JobInvokerController {
 		jobLauncher.run(runExportFilmsJob, jobParameters);
 		return "Batch exportFilmsJob has been invoked";
 	}
-
+/*
 	@RolesAllowed("user")
-	@RequestMapping("/importFilmsJob")
-	@PostMapping("/importFilmsJob")
-	public String handleImportFilmsJob(@RequestBody byte[] csvBytes) throws Exception {
-
-		try (FileOutputStream fos = new FileOutputStream("/tmp/films.xlsx")) {
-			fos.write(csvBytes);
-			//fos.close(); There is no more need for this line since you had created the instance of "fos" inside the try. And this will automatically close the OutputStream
-
-		}
-		FileSystemResource resource = new FileSystemResource("/tmp/films.xlsx");
-		if (!resource.exists()) {
-			throw new IllegalStateException("filePath must exist : " + resource.getPath());
-		}
+	@RequestMapping("/exportCritiquesPresseJob")
+	public String handleCritiquesPresseJob() throws Exception {
 		JobParameters jobParameters = new JobParametersBuilder().addLong("time", System.currentTimeMillis())
-				.addString("INPUT_FILE_PATH", resource.getPath()).toJobParameters();
-		jobLauncher.run(importFilmsJob, jobParameters);
-		return "Batch importFilmsJob has been invoked";
+				.toJobParameters();
+		jobLauncher.run(runExportCritiquesPresseJob, jobParameters);
+		return "Batch exportCritiquesPresseJob has been invoked";
+	}
+*/
+	@RolesAllowed("user")
+	@PostMapping(value = "/importFilmsJob", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public String handleImportFilmsJob(@RequestParam("file") MultipartFile file) throws Exception {
 
+		File resFile = null;
+		try {
+			resFile = this.multipartFileUtil.createFileToImport(file);
+		} catch (Exception e) {
+			logger.error(e.getMessage());
+			throw e;
+		}
+
+		// 3. Lancement du Job
+		JobParameters jobParameters = new JobParametersBuilder()
+				.addLong("time", System.currentTimeMillis())
+				.addString("INPUT_FILE_PATH", resFile.getAbsolutePath())
+				.toJobParameters();
+
+		jobLauncher.run(importFilmsJob, jobParameters);
+
+		return "Batch importFilmsJob has been invoked";
 	}
 
 	@RolesAllowed("user")
-	@PostMapping("/films/import")
-	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) throws IOException, JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
+	@PostMapping(value = "/films/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	ResponseEntity<Void> importFilmList(@RequestParam("file") MultipartFile file) throws JobInstanceAlreadyCompleteException, JobExecutionAlreadyRunningException, JobParametersInvalidException, JobRestartException {
 		File resFile = null;
 		try {
 			resFile = this.multipartFileUtil.createFileToImport(file);

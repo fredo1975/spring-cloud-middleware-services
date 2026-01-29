@@ -88,6 +88,15 @@ public class BatchImportFilmsConfiguration{
 			}else if(jobExecution.getStatus() == BatchStatus.FAILED){
 				jmsMessageSender.sendMessage(new JmsStatusMessage<Film>(JmsStatus.IMPORT_COMPLETED_ERROR, null,executionTime,JmsStatus.IMPORT_COMPLETED_ERROR.statusValue()));
 			}
+			String exitDesc = jobExecution.getExitStatus().getExitDescription();
+			if (exitDesc.contains("\u0000")) {
+				// Supprime le caractère nul qui fait planter Postgres
+				String cleaned = exitDesc.replace("\u0000", "[NULL]");
+				jobExecution.setExitStatus(new ExitStatus(
+						jobExecution.getExitStatus().getExitCode(),
+						cleaned
+				));
+			}
 		}
 	}
    
