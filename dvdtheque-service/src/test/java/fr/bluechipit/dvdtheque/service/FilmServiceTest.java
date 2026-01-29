@@ -111,7 +111,7 @@ public class FilmServiceTest {
         // Initialisation du service
         filmService = new FilmService(
                 filmDao,
-                null, // DvdDao non utilisé dans les tests
+                // DvdDao non utilisé dans les tests
                 genreDao,
                 personneService,
                 hazelcastInstance,
@@ -173,7 +173,7 @@ public class FilmServiceTest {
 
         // When
         FilmService newService = new FilmService(
-                filmDao, null, genreDao, personneService, hazelcastInstance,
+                filmDao, genreDao, personneService, hazelcastInstance,
                 excelFilmHandler, restTemplate, environment, filmSaveService,builder
         );
 
@@ -297,9 +297,9 @@ public class FilmServiceTest {
 
     @Test
     @DisplayName("transformTmdbFilmToDvdThequeFilm() doit marquer le film comme déjà dans la DVDthèque")
-    void transformTmdbFilmToDvdThequeFilm_ShouldMarkFilmAsAlreadyInDvdtheque() throws Exception {
+    void transformTmdbFilmToDvdThequeFilm_ShouldMarkFilmAsAlreadyInDvdtheque() {
         // Given
-        Set<Long> alreadyInSet = new HashSet<>(Arrays.asList(27205L));
+        Set<Long> alreadyInSet = new HashSet<>(List.of(27205L));
         setupMocksForTransform();
 
         // When
@@ -332,7 +332,7 @@ public class FilmServiceTest {
 
     @Test
     @DisplayName("saveFilm() doit sauvegarder un nouveau film depuis TMDB")
-    void saveFilm_ShouldSaveNewFilmFromTmdb() throws ParseException {
+    void saveFilm_ShouldSaveNewFilmFromTmdb() {
         // Given
         Long tmdbId = 27205L;
         String origine = "DVD";
@@ -348,7 +348,7 @@ public class FilmServiceTest {
         setupMocksForTransform();
 
         ResponseEntity<List<FicheFilmDto>> allocineResponse = ResponseEntity.ok(
-                Arrays.asList(createFicheFilmDto())
+                List.of(createFicheFilmDto())
         );
         when(restTemplate.exchange(
                 anyString(),
@@ -371,7 +371,7 @@ public class FilmServiceTest {
 
     @Test
     @DisplayName("saveFilm() doit retourner Optional.empty si le film existe déjà")
-    void saveFilm_ShouldReturnEmptyIfFilmExists() throws ParseException {
+    void saveFilm_ShouldReturnEmptyIfFilmExists() {
         // Given
         Long tmdbId = 27205L;
         when(filmDao.checkIfTmdbFilmExists(tmdbId)).thenReturn(1);
@@ -391,8 +391,7 @@ public class FilmServiceTest {
     void search_ShouldUseDefaultParametersIfNull() {
         // Given
         String query = "titre:like:Inception";
-        PageRequest pageRequest = PageRequest.of(0, 50);
-        Page<Film> page = new PageImpl<>(Arrays.asList(testFilm));
+        Page<Film> page = new PageImpl<>(Collections.singletonList(testFilm));
 
         when(builder.with(query)).thenReturn(builder);
         when(builder.build()).thenReturn(mock(Specification.class));
@@ -410,7 +409,7 @@ public class FilmServiceTest {
     @DisplayName("paginatedSarch() doit retourner tous les films si query vide")
     void paginatedSarch_ShouldReturnAllFilmsIfEmptyQuery() {
         // Given
-        Page<Film> page = new PageImpl<>(Arrays.asList(testFilm));
+        Page<Film> page = new PageImpl<>(Collections.singletonList(testFilm));
         when(filmDao.findAll(any(PageRequest.class))).thenReturn(page);
 
         // When
@@ -566,12 +565,12 @@ public class FilmServiceTest {
         cast.setName("Leonardo DiCaprio");
         cast.setCast_id("1");
         cast.setProfile_path("/profile.jpg");
-        credits.setCast(Arrays.asList(cast));
+        credits.setCast(List.of(cast));
 
         Crew crew = new Crew();
         crew.setName("Christopher Nolan");
         crew.setJob("Director");
-        credits.setCrew(Arrays.asList(crew));
+        credits.setCrew(List.of(crew));
 
         return credits;
     }
@@ -603,7 +602,7 @@ public class FilmServiceTest {
         critique.setRating(4.5);
         critique.setNewsSource("Le Monde");
 
-        dto.setCritiquePresse(new HashSet<>(Arrays.asList(critique)));
+        dto.setCritiquePresse(new HashSet<>(List.of(critique)));
         return dto;
     }
 
