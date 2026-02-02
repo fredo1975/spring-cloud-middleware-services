@@ -150,10 +150,10 @@ public class ExcelStreamFilmWriter implements ItemStreamWriter<Film> {
         addCell(film.getTmdbId().toString());
         // 6
         addCell(film.isVu()?"oui":"non");
-        
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         // 7
         if(film.getDateVue() != null) {
-        	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
         	addCell(film.getDateVue().format(formatter));
         }else {
         	addCell("");
@@ -161,7 +161,7 @@ public class ExcelStreamFilmWriter implements ItemStreamWriter<Film> {
         // 8
         if(film.getDateInsertion() != null) {
         	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        	addCell(sdf.format(film.getDateInsertion()));
+        	addCell(film.getDateInsertion().format(formatter));
         }else {
         	addCell("");
         }
@@ -183,7 +183,7 @@ public class ExcelStreamFilmWriter implements ItemStreamWriter<Film> {
             // 11
             if(film.getDvd().isRipped() && film.getDvd().getDateRip() != null) {
             	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                addCell(sdf.format(film.getDvd().getDateRip()));
+                addCell(film.getDvd().getDateRip().format(formatter));
             }else {
             	addCell("");
             }
@@ -196,7 +196,7 @@ public class ExcelStreamFilmWriter implements ItemStreamWriter<Film> {
             // 13
             if(film.getDateSortieDvd() != null) {
             	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                addCell(sdf.format(film.getDateSortieDvd()));
+                addCell(film.getDateSortieDvd().format(formatter));
             }else {
             	addCell("");
             }
