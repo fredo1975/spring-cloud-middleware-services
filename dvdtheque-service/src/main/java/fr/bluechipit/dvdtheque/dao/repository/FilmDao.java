@@ -4,6 +4,10 @@ import java.util.List;
 import java.util.Set;
 
 import enums.FilmOrigine;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +17,10 @@ import fr.bluechipit.dvdtheque.dao.domain.Personne;
 @Repository("filmDao")
 public interface FilmDao extends JpaRepository<Film, Long>, JpaSpecificationExecutor<Film>{
 	List<Film> findFilmByTitre(final String titre);
-	
+
+	@EntityGraph(attributePaths = {"acteur", "genre", "realisateur", "dvd"})
+	Page<Film> findAll(Specification<Film> spec, Pageable pageable);
+
 	@Query("from Film where UPPER(REPLACE(REPLACE(titre, ':', ''),'  ',' ')) = UPPER(:titre)")
 	Film findFilmByTitreWithoutSpecialsCharacters(final String titre);
 	

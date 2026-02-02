@@ -74,14 +74,14 @@ public class FilmBuilder {
 		private String titre;
 		private String titreO;
 		private Integer annee;
-		private Date dateSortie;
-		private Date dateInsertion;
-		private Date dateSortieDvd;
+		private LocalDate dateSortie;
+		private LocalDate dateInsertion;
+		private LocalDate dateSortieDvd;
 		private String realNom;
 		private String act1Nom;
 		private String act2Nom;
 		private String act3Nom;
-		private Date ripDate; 
+		private LocalDate ripDate;
 		private DvdFormat dvdFormat;
 		private Integer zone;
 		private Genre genre1;
@@ -104,13 +104,12 @@ public class FilmBuilder {
 			return this;
 		}
 		public Builder setDateSortie(String dateSortie) throws ParseException {
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-			this.dateSortie = sdf.parse(dateSortie);
+			this.dateSortie = LocalDate.parse(dateSortie);
 			return this;
 		}
 		public Builder setDateInsertion(String dateInsertion) throws ParseException {
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-			this.dateInsertion = sdf.parse(dateInsertion);
+			//SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
+			this.dateInsertion = LocalDate.parse(dateInsertion);
 			return this;
 		}
 		public Builder setRealNom(String realNom) {
@@ -129,7 +128,7 @@ public class FilmBuilder {
 			this.act3Nom = act3Nom;
 			return this;
 		}
-		public Builder setRipDate(Date ripDate) {
+		public Builder setRipDate(LocalDate ripDate) {
 			this.ripDate = ripDate;
 			return this;
 		}
@@ -154,8 +153,7 @@ public class FilmBuilder {
 			return this;
 		}
 		public Builder setDateSortieDvd(String dateSortie) throws ParseException {
-			SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-			this.dateSortieDvd = sdf.parse(dateSortie);
+			this.dateSortieDvd = LocalDate.parse(dateSortie);
 			return this;
 		}
 		public Builder setVu(boolean vu) {
