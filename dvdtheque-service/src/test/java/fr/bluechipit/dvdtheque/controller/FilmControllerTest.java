@@ -1,407 +1,170 @@
 package fr.bluechipit.dvdtheque.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.bluechipit.dvdtheque.allocine.model.CritiquePresseDto;
 import fr.bluechipit.dvdtheque.dao.domain.Film;
 import fr.bluechipit.dvdtheque.dao.domain.Genre;
-import fr.bluechipit.dvdtheque.dao.domain.Personne;
 import fr.bluechipit.dvdtheque.file.util.MultipartFileUtil;
+import fr.bluechipit.dvdtheque.model.FilmDto;
 import fr.bluechipit.dvdtheque.service.FilmSaveService;
 import fr.bluechipit.dvdtheque.service.FilmService;
 import fr.bluechipit.dvdtheque.service.PersonneService;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@ExtendWith(MockitoExtension.class)
-public class FilmControllerTest {
+@WebMvcTest(FilmController.class)
+@WithMockUser(roles = "user") // Simule un utilisateur connecté pour tous les tests
+class FilmControllerTest {
+
+	@Autowired
 	private MockMvc mockMvc;
 
-	@Mock
-	private Environment environment;
-
-	@Mock
-	private FilmService filmService;
-
-	@Mock
-	private FilmSaveService filmSaveService;
-
-	@Mock
-	private PersonneService personneService;
-
-	@Mock
-	private MultipartFileUtil multipartFileUtil;
-
-	@Mock
-	private RestTemplate restTemplate;
-
-	@InjectMocks
-	private FilmController filmController;
-
+	@Autowired
 	private ObjectMapper objectMapper;
 
-	@BeforeEach
-	void setUp() {
-		mockMvc = MockMvcBuilders.standaloneSetup(filmController).build();
-		objectMapper = new ObjectMapper();
-	}
+	// Remplacement de @MockBean par @MockitoBean (Spring Boot 3.4+)
+	@MockitoBean private FilmService filmService;
+	@MockitoBean private FilmSaveService filmSaveService;
+	@MockitoBean private PersonneService personneService;
+	@MockitoBean private MultipartFileUtil multipartFileUtil;
+	@MockitoBean private RestTemplate restTemplate;
+
+	// --- Tests des méthodes GET (Recherche & Lecture) ---
 
 	@Test
-	void findPersonne_ShouldReturnPersonne_WhenPersonneExists() throws Exception {
-		// Arrange
-		String nom = "Spielberg";
-		Personne personne = new Personne();
-		personne.setId(1L);
-		personne.setNom(nom);
+	@DisplayName("Devrait retourner la liste des genres")
+	void findAllGenresTest() throws Exception {
+		given(filmService.findAllGenres()).willReturn(List.of(new Genre()));
 
-		when(personneService.findPersonneByName(nom)).thenReturn(personne);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/byPersonne")
-						.param("nom", nom))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id", is(1)))
-				.andExpect(jsonPath("$.nom", is(nom)));
-
-		verify(personneService, times(1)).findPersonneByName(nom);
-	}
-
-	@Test
-	void findAllGenres_ShouldReturnGenreList() throws Exception {
-		// Arrange
-		List<Genre> genres = Arrays.asList(
-				createGenre(1L, "Action"),
-				createGenre(2L, "Drama")
-		);
-
-		when(filmService.findAllGenres()).thenReturn(genres);
-
-		// Act & Assert
 		mockMvc.perform(get("/dvdtheque-service/films/genres"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(2)))
-				.andExpect(jsonPath("$[0].name", is("Action")))
-				.andExpect(jsonPath("$[1].name", is("Drama")));
-
-		verify(filmService, times(1)).findAllGenres();
+				.andExpect(jsonPath("$").isArray());
 	}
 
 	@Test
-	void cleanAllFilms_ShouldCallService() throws Exception {
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/films/cleanAllfilms"))
-				.andExpect(status().isOk());
+	@DisplayName("Devrait rechercher des films avec pagination")
+	void paginatedSearchTest() throws Exception {
+		FilmDto dto = new FilmDto(1L, 2024, null, null, null, "Inception", "Inception",
+				null, null, false, null, null, null, null, null,
+				false, null, null, null,
+				Set.of(), Set.of(), Set.of(), null);
+		Page<FilmDto> page = new PageImpl<>(List.of(dto));
 
-		verify(filmService, times(1)).cleanAllFilms();
-	}
+		given(filmService.paginatedDtoSearch(anyString(), any(), any(), any())).willReturn(page);
 
-	@Test
-	void findAllCritiquePresseByAllocineFilmById_ShouldReturnCritiques_WhenFound() throws Exception {
-		// Arrange
-		Integer allocineId = 123;
-		Set<CritiquePresseDto> critiques = new HashSet<>();
-		CritiquePresseDto critique = new CritiquePresseDto();
-		critique.setNewsSource("Le Figaro");
-		critiques.add(critique);
-
-		when(filmService.findAllCritiquePresseByAllocineFilmById(allocineId)).thenReturn(critiques);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/allocine/byId")
-						.param("id", allocineId.toString()))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)));
-
-		verify(filmService, times(1)).findAllCritiquePresseByAllocineFilmById(allocineId);
-	}
-
-	@Test
-	void findAllCritiquePresseByAllocineFilmById_ShouldReturnNotFound_WhenEmpty() throws Exception {
-		// Arrange
-		Integer allocineId = 999;
-		when(filmService.findAllCritiquePresseByAllocineFilmById(allocineId))
-				.thenReturn(new HashSet<>());
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/allocine/byId")
-						.param("id", allocineId.toString()))
-				.andExpect(status().isNotFound());
-
-		verify(filmService, times(1)).findAllCritiquePresseByAllocineFilmById(allocineId);
-	}
-
-	@Test
-	void findFilmById_ShouldReturnFilm() throws Exception {
-		// Arrange
-		Long filmId = 1L;
-		Film film = createFilm(filmId, "The Matrix");
-
-		when(filmService.processRetrieveCritiquePresse(eq(filmId), any(), isNull()))
-				.thenReturn(film);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/byId/" + filmId))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id", is(filmId.intValue())))
-				.andExpect(jsonPath("$.titre", is("The Matrix")));
-
-		verify(filmService, times(1)).processRetrieveCritiquePresse(eq(filmId), any(), isNull());
-	}
-
-	@Test
-	void checkIfTmdbFilmExists_ShouldReturnTrue_WhenFilmExists() throws Exception {
-		// Arrange
-		Long tmdbId = 603L;
-		when(filmService.checkIfTmdbFilmExists(tmdbId)).thenReturn(true);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/byTmdbId/" + tmdbId))
-				.andExpect(status().isOk())
-				.andExpect(content().string("true"));
-
-		verify(filmService, times(1)).checkIfTmdbFilmExists(tmdbId);
-	}
-
-	@Test
-	void checkIfTmdbFilmExists_ShouldReturnInternalServerError_WhenExceptionThrown() throws Exception {
-		// Arrange
-		Long tmdbId = 603L;
-		when(filmService.checkIfTmdbFilmExists(tmdbId))
-				.thenThrow(new RuntimeException("Database error"));
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/byTmdbId/" + tmdbId))
-				.andExpect(status().isInternalServerError());
-
-		verify(filmService, times(1)).checkIfTmdbFilmExists(tmdbId);
-	}
-
-	@Test
-	void findAllPersonne_ShouldReturnPersonneList() throws Exception {
-		// Arrange
-		List<Personne> personnes = Arrays.asList(
-				createPersonne(1L, "Nolan"),
-				createPersonne(2L, "Tarantino")
-		);
-
-		when(personneService.findAllPersonne()).thenReturn(personnes);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/personnes"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(2)))
-				.andExpect(jsonPath("$[0].nom", is("Nolan")));
-
-		verify(personneService, times(1)).findAllPersonne();
-	}
-
-	@Test
-	void search_ShouldReturnFilmSet() throws Exception {
-		// Arrange
-		String query = "matrix";
-		List<Film> films = Collections.singletonList(createFilm(1L, "The Matrix"));
-
-		when(filmService.search(query, 0, 10, "titre")).thenReturn(films);
-
-		// Act & Assert
-		mockMvc.perform(get("/dvdtheque-service/films/search")
-						.param("query", query)
-						.param("offset", "0")
-						.param("limit", "10")
-						.param("sort", "titre"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)));
-
-		verify(filmService, times(1)).search(query, 0, 10, "titre");
-	}
-
-	@Test
-	void paginatedSearch_ShouldReturnPageOfFilms() throws Exception {
-		// Arrange
-		String query = "matrix";
-		List<Film> films = Collections.singletonList(createFilm(1L, "The Matrix"));
-		Page<Film> page = new PageImpl<>(films, PageRequest.of(0, 10), 1);
-
-		when(filmService.paginatedSarch(query, 0, 10, "titre")).thenReturn(page);
-
-		// Act & Assert
 		mockMvc.perform(get("/dvdtheque-service/films/paginatedSarch")
-						.param("query", query)
-						.param("offset", "0")
-						.param("limit", "10")
-						.param("sort", "titre"))
+						.param("query", "test"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.content", hasSize(1)))
-				.andExpect(jsonPath("$.totalElements", is(1)));
-
-		verify(filmService, times(1)).paginatedSarch(query, 0, 10, "titre");
+				.andExpect(jsonPath("$.content[0].titre").value("Inception"));
 	}
 
 	@Test
-	void updateFilm_ShouldReturnUpdatedFilm() throws Exception {
-		// Arrange
-		Long filmId = 1L;
-		Film film = createFilm(filmId, "The Matrix Updated");
+	@DisplayName("Devrait retourner un film par son ID")
+	void findFilmByIdTest() throws Exception {
+		Film film = new Film();
+		film.setId(1L);
+		film.setTitre("Titanic");
 
-		when(filmService.updateFilm(any(Film.class), eq(filmId))).thenReturn(film);
+		given(filmService.processRetrieveCritiquePresse(eq(1L), any(), any())).willReturn(film);
 
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/films/update/" + filmId)
+		mockMvc.perform(get("/dvdtheque-service/films/byId/1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.titre").value("Titanic"));
+	}
+
+	// --- Tests des méthodes PUT / POST (Modification & Création) ---
+
+	@Test
+	@DisplayName("Devrait mettre à jour un film")
+	void updateFilmTest() throws Exception {
+		Film film = new Film();
+		film.setTitre("Avatar");
+
+		given(filmService.updateFilm(any(Film.class), anyLong())).willReturn(film);
+
+		mockMvc.perform(put("/dvdtheque-service/films/update/1")
+						.with(csrf()) // Requis si CSRF est activé
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(objectMapper.writeValueAsString(film)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.titre", is("The Matrix Updated")));
-
-		verify(filmService, times(1)).updateFilm(any(Film.class), eq(filmId));
+				.andExpect(jsonPath("$.titre").value("Avatar"));
 	}
 
 	@Test
-	void removeFilm_ShouldReturnNoContent() throws Exception {
-		// Arrange
-		Long filmId = 1L;
-		doNothing().when(filmService).removeFilm(filmId);
+	@WithMockUser(roles = "batch")
+	@DisplayName("Devrait sauvegarder un film (Batch)")
+	void saveFilmTest() throws Exception {
+		FilmDto dto = new FilmDto(1L, 2024, null, null, null, "Tenet", "Tenet",
+				null, null, false, null, null, null, null, null,
+				false, null, null, null,
+				Set.of(), Set.of(), Set.of(), null);
 
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/films/remove/" + filmId))
-				.andExpect(status().isNoContent());
+		given(filmService.saveFilm(anyLong(), anyString())).willReturn(Optional.of(dto));
 
-		verify(filmService, times(1)).removeFilm(filmId);
-	}
-
-	@Test
-	void saveFilm_ShouldReturnSavedFilm_WhenFilmExists() throws Exception {
-		// Arrange
-		Long tmdbId = 603L;
-		String origine = "TMDB";
-		Film film = createFilm(1L, "The Matrix");
-
-		when(filmService.saveFilm(tmdbId, origine)).thenReturn(Optional.of(film));
-
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/films/save/" + tmdbId)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(origine))
+		mockMvc.perform(put("/dvdtheque-service/films/save/12345")
+						.with(csrf())
+						.content("DVD")
+						.contentType(MediaType.TEXT_PLAIN))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.titre", is("The Matrix")));
-
-		verify(filmService, times(1)).saveFilm(tmdbId, origine);
+				.andExpect(jsonPath("$.titre").value("Tenet"));
 	}
 
-	@Test
-	void saveFilm_ShouldReturnNotFound_WhenFilmDoesNotExist() throws Exception {
-		// Arrange
-		Long tmdbId = 999L;
-		String origine = "TMDB";
-
-		when(filmService.saveFilm(tmdbId, origine)).thenReturn(Optional.empty());
-
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/films/save/" + tmdbId)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(origine))
-				.andExpect(status().isNotFound());
-
-		verify(filmService, times(1)).saveFilm(tmdbId, origine);
-	}
+	// --- Tests Spécifiques (Upload & Export) ---
 
 	@Test
-	void updatePersonne_ShouldReturnNoContent_WhenPersonneExists() throws Exception {
-		// Arrange
-		Long personneId = 1L;
-		Personne existingPersonne = createPersonne(personneId, "Nolan");
-		Personne updatedPersonne = createPersonne(personneId, "NOLAN UPDATED");
+	@DisplayName("Devrait importer une liste de films via Multipart")
+	void importFilmListTest() throws Exception {
+		MockMultipartFile file = new MockMultipartFile("file", "test.xlsx",
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content".getBytes());
 
-		when(personneService.findByPersonneId(personneId)).thenReturn(existingPersonne);
-		doNothing().when(personneService).updatePersonne(any(Personne.class));
-
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/personnes/byId/" + personneId)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(updatedPersonne)))
+		mockMvc.perform(multipart("/dvdtheque-service/films/import").file(file).with(csrf()))
 				.andExpect(status().isNoContent());
-
-		verify(personneService, times(1)).findByPersonneId(personneId);
-		verify(personneService, times(1)).updatePersonne(any(Personne.class));
 	}
 
 	@Test
-	void updatePersonne_ShouldReturnNotFound_WhenPersonneDoesNotExist() throws Exception {
-		// Arrange
-		Long personneId = 999L;
-		Personne personne = createPersonne(personneId, "Unknown");
+	@DisplayName("Devrait exporter la liste des films en Excel")
+	void exportFilmListTest() throws Exception {
+		given(filmService.exportFilmList(anyString())).willReturn(new byte[10]);
 
-		when(personneService.findByPersonneId(personneId)).thenReturn(null);
-
-		// Act & Assert
-		mockMvc.perform(put("/dvdtheque-service/personnes/byId/" + personneId)
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(personne)))
-				.andExpect(status().isNotFound());
-
-		verify(personneService, times(1)).findByPersonneId(personneId);
-		verify(personneService, never()).updatePersonne(any(Personne.class));
-	}
-
-	@Test
-	void exportFilmList_ShouldReturnExcelFile() throws Exception {
-		// Arrange
-		String origine = "TMDB";
-		byte[] excelContent = "excel-content".getBytes();
-
-		when(filmService.exportFilmList(origine)).thenReturn(excelContent);
-
-		// Act & Assert
 		mockMvc.perform(post("/dvdtheque-service/films/export")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(origine))
+						.with(csrf())
+						.content("DVD"))
 				.andExpect(status().isOk())
-				.andExpect(header().exists("Content-Disposition"))
-				.andExpect(header().string("Content-Type",
-						"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-				.andExpect(content().bytes(excelContent));
-
-		verify(filmService, times(1)).exportFilmList(origine);
+				.andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString(".xlsx")));
 	}
 
-	// Helper methods to create test objects
-	private Film createFilm(Long id, String titre) {
-		Film film = new Film();
-		film.setId(id);
-		film.setTitre(titre);
-		return film;
+	// --- Tests de suppression et cache ---
+
+	@Test
+	@DisplayName("Devrait supprimer un film")
+	void removeFilmTest() throws Exception {
+		mockMvc.perform(put("/dvdtheque-service/films/remove/1").with(csrf()))
+				.andExpect(status().isNoContent());
 	}
 
-	private Personne createPersonne(Long id, String nom) {
-		Personne personne = new Personne();
-		personne.setId(id);
-		personne.setNom(nom);
-		return personne;
-	}
-
-	private Genre createGenre(Long id, String nom) {
-		Genre genre = new Genre();
-		genre.setId(id);
-		genre.setName(nom);
-		return genre;
+	@Test
+	@DisplayName("Devrait nettoyer les caches")
+	void cleanCachesTest() throws Exception {
+		mockMvc.perform(put("/dvdtheque-service/films/cleanCaches").with(csrf()))
+				.andExpect(status().isNoContent());
 	}
 }

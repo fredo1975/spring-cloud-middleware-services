@@ -39,11 +39,9 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import specifications.filter.PageRequestBuilder;
 import tmdb.model.*;
-import utils.DateUtils;
 
 import java.io.IOException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -96,12 +94,11 @@ public class FilmService {
 		logger.info("Loaded {} genres into cache", mapGenres.size());
 	}
 
-	@Transactional(readOnly = true)
 	public List<FilmDto> getAllFilmDtos() {
 		try {
 			return filmDao.findAll().stream()
-					.map(FilmDto::toDto)
-					.sorted(Comparator.comparing(FilmDto::getTitre))
+					.map(FilmDto::of)
+					.sorted(Comparator.comparing(FilmDto::titre))
 					.toList();
 		} catch (Exception e) {
 			logger.error("Error retrieving films: {}", e.getMessage(), e);
@@ -109,15 +106,20 @@ public class FilmService {
 		}
 	}
 
+	public List<FilmDto> getAllFilms(){
+		Page<FilmDto> films = paginatedDtoSearch("", 1, null, "");
+		List<FilmDto> list = new ArrayList<>(films.getContent());
+		while(films.hasNext()) {
+			Pageable p = films.nextPageable();
+			films = paginatedDtoSearch("", p.getPageNumber()+1, null, "");
+			list.addAll(films.getContent());
+		}
+		return list;
+	}
+
 	@Transactional(readOnly = true, noRollbackFor = { org.springframework.dao.EmptyResultDataAccessException.class })
 	public Film findFilmByTitreWithoutSpecialsCharacters(final String titre) {
 		return filmDao.findFilmByTitreWithoutSpecialsCharacters(titre);
-	}
-
-	private static int retrieveYearFromReleaseDate(final Date relDate) {
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(relDate);
-		return cal.get(Calendar.YEAR);
 	}
 
 	private void mapIdentity(Film existingFilm, Results results, Film transformed, Set<Long> tmdbAlreadyInSet){
@@ -159,11 +161,11 @@ public class FilmService {
 		if (film != null && film.getDvd() != null) {
 			transformedfilm.setDvd(film.getDvd());
 		}
-		Date releaseDate = fetchBestAvailableDate(results);
+		LocalDate releaseDate = fetchBestAvailableDate(results);
 
 		// 3. Handle Dates (Refactored to separate method)
-		transformedfilm.setAnnee(retrieveYearFromReleaseDate(releaseDate));
-		transformedfilm.setDateSortie(DateUtils.clearDate(releaseDate));
+		transformedfilm.setAnnee(releaseDate.getYear());
+		transformedfilm.setDateSortie(releaseDate);
 		// 4. Map Relationships (Genres and Credits)
 		mapGenresToFilm(results, transformedfilm);
 		try {
@@ -191,40 +193,28 @@ public class FilmService {
 		}
 	}
 
-	private Date fetchBestAvailableDate(Results results) {
-		Date releaseDate = null;
+	private LocalDate fetchBestAvailableDate(Results results) {
+		LocalDate releaseDate = null;
 		try {
 			// Attempt 1: Specific TMDB Release Date service (FR release usually)
 			String url = environment.getRequiredProperty(TMDB_SERVICE_URL)
 					+ environment.getRequiredProperty(TMDB_SERVICE_RELEASE_DATE)
 					+ "?tmdbId=" + results.id();
 
-			releaseDate = restTemplate.getForObject(url, Date.class);
+			releaseDate = restTemplate.getForObject(url, LocalDate.class);
 		} catch (Exception e) {
 			logger.warn("Could not fetch specific release date for tmdbId={}, falling back to results object.", results.id());
 		}
 
 		// Attempt 2: Use the date string already present in the Results object
 		if (releaseDate == null && StringUtils.isNotEmpty(results.release_date())) {
-			try {
-				SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
-				releaseDate = sdf.parse(results.release_date());
-			} catch (ParseException ex) {
-				logger.error("Failed to parse release_date string: {}", results.release_date());
-			}
-		}
+            releaseDate = LocalDate.parse(results.release_date());
+        }
 
 		// Attempt 3: Absolute fallback to avoid NullPointerExceptions in your app logic
 		if (releaseDate == null) {
-			try {
-				SimpleDateFormat sdf = new SimpleDateFormat(DateUtils.TMDB_DATE_PATTERN, Locale.FRANCE);
-				releaseDate = sdf.parse("2000-01-01");
-			} catch (ParseException e) {
-				// This should never happen with a hardcoded valid string
-				releaseDate = new Date();
-			}
+			releaseDate = LocalDate.parse("2000-01-01");
 		}
-
 		return releaseDate;
 	}
 
@@ -289,7 +279,7 @@ public class FilmService {
 				resultsByTmdbId.genres().stream().map(Genres::id).collect(Collectors.toList()),
 				resultsByTmdbId.homepage());
 	}
-	public Optional<Film> saveFilm(Long tmdbId, String origine) {
+	public Optional<FilmDto> saveFilm(Long tmdbId, String origine) {
         if (checkIfTmdbFilmExists(tmdbId)) {
             return Optional.empty();
         }
@@ -323,7 +313,7 @@ public class FilmService {
 					prepareFilmForPersistence(filmToSave, filmOrigine);
 
 					// 5. Save
-					return filmSaveService.saveNewFilm(filmToSave);
+					return FilmDto.of(filmSaveService.saveNewFilm(filmToSave));
 				});
     }
 /*
@@ -357,7 +347,7 @@ public class FilmService {
 	private void prepareFilmForPersistence(Film film, FilmOrigine origin) {
 		film.setId(null);
 		film.setOrigine(origin);
-		film.setDateInsertion(DateUtils.clearDate(new Date()));
+		film.setDateInsertion(LocalDate.now());
 
 		if (FilmOrigine.DVD.equals(origin)) {
 			film.setDvd(buildDvd(film.getAnnee(), 2, null, null, DvdFormat.DVD));
@@ -402,19 +392,19 @@ public class FilmService {
 		FilmOrigine filmOrigine = FilmOrigine.valueOf(origine);
 		//Page<Film> films;
 		if(filmOrigine == FilmOrigine.TOUS) {
-			Page<Film> films = paginatedSarch("",1, null, "");
+			Page<Film> films = paginatedSearch("",1, null, "");
 			list.addAll(films.getContent());
 			while(films.hasNext()) {
 				Pageable p = films.nextPageable();
-				films = paginatedSarch("",p.getPageNumber()+1, null, "");
+				films = paginatedSearch("",p.getPageNumber()+1, null, "");
 				list.addAll(films.getContent());
 			}
 		}else {
-			Page<Film> films = paginatedSarch("origine:eq:"+filmOrigine+":AND",1, null, "");
+			Page<Film> films = paginatedSearch("origine:eq:"+filmOrigine+":AND",1, null, "");
 			list.addAll(films.getContent());
 			while(films.hasNext()) {
 				Pageable p = films.nextPageable();
-				films = paginatedSarch("origine:eq:"+filmOrigine+":AND",p.getPageNumber()+1, null, "");
+				films = paginatedSearch("origine:eq:"+filmOrigine+":AND",p.getPageNumber()+1, null, "");
 				list.addAll(films.getContent());
 			}
 		}
@@ -478,15 +468,26 @@ public class FilmService {
 		return PageRequestBuilder.getPageRequest(limitToSet,offsetToSet, sortToSet);
 	}
 
-	public Page<Film> paginatedSarch(String query,
+	public Page<FilmDto> paginatedDtoSearch(String query,
 			Integer offset,
 			Integer limit,
 			String sort){
 		var page = buildDefaultPageRequest(offset, limit, sort);
 		if(StringUtils.isEmpty(query)) {
+			return filmDao.findAll(page).map(FilmDto::of);
+		}
+        return filmDao.findAll(builder.with(query).build(), page).map(FilmDto::of);
+	}
+
+	public Page<Film> paginatedSearch(String query,
+											Integer offset,
+											Integer limit,
+											String sort){
+		var page = buildDefaultPageRequest(offset, limit, sort);
+		if(StringUtils.isEmpty(query)) {
 			return filmDao.findAll(page);
 		}
-        return filmDao.findAll(builder.with(query).build(), page);
+		return filmDao.findAll(builder.with(query).build(), page);
 	}
 
 
@@ -511,7 +512,7 @@ public class FilmService {
 		return cal.getTime();
 	}
 
-	public Dvd buildDvd(final Integer annee, final Integer zone, final String edition, final Date ripDate,
+	public Dvd buildDvd(final Integer annee, final Integer zone, final String edition, final LocalDate ripDate,
 			final DvdFormat dvdFormat) {
 		Dvd dvd = new Dvd();
 		if (annee != null) {
@@ -528,7 +529,7 @@ public class FilmService {
 			dvd.setEdition(edition);
 		}
 		if (ripDate != null) {
-			dvd.setDateRip(clearDate(ripDate));
+			dvd.setDateRip(ripDate);
 		}
 		if (dvdFormat != null) {
 			dvd.setFormat(dvdFormat);
@@ -676,7 +677,7 @@ public class FilmService {
 	}
 
 	public void retrieveAllFilmImages(){
-		Page<Film> films = paginatedSarch("", null, null, "");
+		Page<Film> films = paginatedSearch("", null, null, "");
 		for(int i = 0 ; i<films.getContent().size();i++) {
 			Film film = films.getContent().get(i);
 			Boolean posterExists = restTemplate.getForObject(
@@ -693,7 +694,7 @@ public class FilmService {
 		}
 	}
 
-	public Film saveProcessedFilm(Film film) {
+	public FilmDto saveProcessedFilm(Film film) {
 		ResultsByTmdbId results = restTemplate.getForObject(environment.getRequiredProperty(TMDB_SERVICE_URL)
 				+ environment.getRequiredProperty(FilmController.TMDB_SERVICE_RESULTS) + "?tmdbId="
 				+ film.getTmdbId(), ResultsByTmdbId.class);
@@ -709,7 +710,7 @@ public class FilmService {
 				if(film.getDateInsertion() != null) {
 					filmToSave.setDateInsertion(film.getDateInsertion());
 				}else {
-					filmToSave.setDateInsertion(DateUtils.clearDate(new Date()));
+					filmToSave.setDateInsertion(LocalDate.now());
 				}
 				filmToSave.setVu(film.isVu());
 				filmToSave.setDateVue(film.getDateVue());
@@ -717,7 +718,7 @@ public class FilmService {
 				Film savedFilm = filmSaveService.saveNewFilm(filmToSave);
 				logger.info(filmToSave.toString());
 				filmToSave.setId(savedFilm.getId());
-				return filmToSave;
+				return FilmDto.of(filmToSave);
 			}
 		}
 		throw new FilmNotFoundException("Film with tmdbId "+film.getTmdbId()+" not found");

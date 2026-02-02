@@ -26,13 +26,13 @@ public class Film implements Serializable, Comparable<Film> {
 	private Integer annee;
 	@Column(name = "date_sortie")
 	@Temporal(TemporalType.DATE)
-	private Date dateSortie;
+	private LocalDate dateSortie;
 	@Column(name = "date_insertion")
 	@Temporal(TemporalType.DATE)
-	private Date dateInsertion;
+	private LocalDate dateInsertion;
 	@Column(name = "date_sortie_dvd")
 	@Temporal(TemporalType.DATE)
-	private Date dateSortieDvd;
+	private LocalDate dateSortieDvd;
 	@Column(name = "titre")
 	@NotNull
 	private String titre;
@@ -158,23 +158,23 @@ public class Film implements Serializable, Comparable<Film> {
 	public void setOrigine(FilmOrigine origine) {
 		this.origine = origine;
 	}
-	public Date getDateSortie() {
+	public LocalDate getDateSortie() {
 		return dateSortie;
 	}
-	public void setDateSortie(Date dateSortie) {
+	public void setDateSortie(LocalDate dateSortie) {
 		this.dateSortie = dateSortie;
 	}
-	public Date getDateInsertion() {
+	public LocalDate getDateInsertion() {
 		return dateInsertion;
 	}
-	public void setDateInsertion(Date dateInsertion) {
+	public void setDateInsertion(LocalDate dateInsertion) {
 		this.dateInsertion = dateInsertion;
 	}
 	
-	public Date getDateSortieDvd() {
+	public LocalDate getDateSortieDvd() {
 		return dateSortieDvd;
 	}
-	public void setDateSortieDvd(Date dateSortieDvd) {
+	public void setDateSortieDvd(LocalDate dateSortieDvd) {
 		this.dateSortieDvd = dateSortieDvd;
 	}
 	@Override

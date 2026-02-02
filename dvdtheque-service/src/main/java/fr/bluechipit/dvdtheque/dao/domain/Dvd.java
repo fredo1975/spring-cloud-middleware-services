@@ -1,6 +1,7 @@
 package fr.bluechipit.dvdtheque.dao.domain;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 import enums.DvdFormat;
@@ -8,8 +9,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "dvd")
-public class Dvd implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class Dvd {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -21,7 +21,7 @@ public class Dvd implements Serializable {
 	private String edition;
 	@Column(name = "date_rip")
 	@Temporal(TemporalType.DATE)
-	private Date dateRip;
+	private LocalDate dateRip;
 	@Column(name = "format")
 	private DvdFormat format;
 	@Column(name = "ripped")
@@ -51,10 +51,10 @@ public class Dvd implements Serializable {
 	public void setEdition(String _edition) {
 		this.edition = _edition;
 	}
-	public Date getDateRip() {
+	public LocalDate getDateRip() {
 		return dateRip;
 	}
-	public void setDateRip(Date dateRip) {
+	public void setDateRip(LocalDate dateRip) {
 		this.dateRip = dateRip;
 	}
 	public DvdFormat getFormat() {
