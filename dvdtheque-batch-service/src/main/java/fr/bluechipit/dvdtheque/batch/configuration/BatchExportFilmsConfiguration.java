@@ -1,6 +1,5 @@
 package fr.bluechipit.dvdtheque.batch.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.bluechipit.dvdtheque.batch.writer.ExcelStreamFilmWriter;
 import model.Film;
 import org.slf4j.Logger;
@@ -43,8 +42,6 @@ public class BatchExportFilmsConfiguration {
     @Autowired
     private PlatformTransactionManager 								transactionManager;
     @Autowired
-    private RestTemplate											restTemplate;
-    @Autowired
     private Environment 											environment;
     @Autowired
     private AuthorizedClientServiceOAuth2AuthorizedClientManager 	authorizedClientServiceAndManager;
@@ -60,7 +57,7 @@ public class BatchExportFilmsConfiguration {
 	}
 	@StepScope
     @Bean
-    protected ListItemReader<Film> dvdthequeServiceFilmReader() {
+    protected ListItemReader<Film> dvdthequeServiceFilmReader(RestTemplate restTemplate) {
 		OAuth2AuthorizeRequest authorizeRequest = OAuth2AuthorizeRequest.withClientRegistrationId("keycloak")
 				.principal("fr/bluechipit/dvdtheque/batch")
 				.build();
@@ -94,11 +91,6 @@ public class BatchExportFilmsConfiguration {
                 .build();
     }
 
-    @Bean
-    public ObjectMapper mapper() {
-    	return new ObjectMapper();
-    }
-    
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
