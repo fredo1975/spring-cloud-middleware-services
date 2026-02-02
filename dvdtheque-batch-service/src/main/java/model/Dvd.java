@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import enums.DvdFormat;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Dvd implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -12,7 +12,7 @@ public class Dvd implements Serializable {
 	private Integer annee;
 	private Integer zone;
 	private String edition;
-	private Date dateRip;
+	private LocalDate dateRip;
 	private DvdFormat format;
 	private boolean ripped;
 	public Long getId() {
@@ -39,10 +39,10 @@ public class Dvd implements Serializable {
 	public void setEdition(String _edition) {
 		this.edition = _edition;
 	}
-	public Date getDateRip() {
+	public LocalDate getDateRip() {
 		return dateRip;
 	}
-	public void setDateRip(Date dateRip) {
+	public void setDateRip(LocalDate dateRip) {
 		this.dateRip = dateRip;
 	}
 	public DvdFormat getFormat() {

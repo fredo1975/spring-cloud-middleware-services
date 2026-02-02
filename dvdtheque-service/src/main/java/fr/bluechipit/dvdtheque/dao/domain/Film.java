@@ -1,19 +1,19 @@
 package fr.bluechipit.dvdtheque.dao.domain;
 
+import enums.FilmOrigine;
+import fr.bluechipit.dvdtheque.model.CritiquePresse;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.collections.CollectionUtils;
+import org.hibernate.annotations.BatchSize;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import enums.FilmOrigine;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import org.apache.commons.collections.CollectionUtils;
-import fr.bluechipit.dvdtheque.model.CritiquePresse;
 
 @Entity
 @Table(name = "film")
@@ -48,12 +48,14 @@ public class Film implements Serializable, Comparable<Film> {
 			name = "film_realisateur",
 			joinColumns = @JoinColumn(name = "film_id"),
 			inverseJoinColumns = @JoinColumn(name = "realisateur_id"))
+	@BatchSize(size = 20)
 	private Set<Personne> realisateur = new HashSet<>();
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
 			name = "film_acteur",
 			joinColumns = @JoinColumn(name = "film_id"),
 			inverseJoinColumns = @JoinColumn(name = "acteur_id"))
+	@BatchSize(size = 20)
 	private Set<Personne> acteur = new HashSet<>();
 	@Column(name = "vu")
 	private boolean vu;
@@ -70,6 +72,7 @@ public class Film implements Serializable, Comparable<Film> {
 			name = "film_genre",
 			joinColumns = @JoinColumn(name = "film_id"),
 			inverseJoinColumns = @JoinColumn(name = "genre_id"))
+	@BatchSize(size = 10)
 	private Set<Genre> genre = new HashSet<>();
 	@Column(name = "homepage")
 	private String homepage;

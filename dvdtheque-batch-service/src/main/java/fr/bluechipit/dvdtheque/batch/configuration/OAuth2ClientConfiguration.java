@@ -40,6 +40,7 @@ public class OAuth2ClientConfiguration {
 		    request.getHeaders().setBearerAuth(token.getTokenValue());
 		    return execution.execute(request, body);
 		});
+        //rest.setMessageConverters(List.of(new MappingJackson2HttpMessageConverter(objectMapper)));
 		return rest;
     }
 	@Bean

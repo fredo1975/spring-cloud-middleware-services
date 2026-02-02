@@ -473,6 +473,7 @@ public class FilmService {
 			Integer limit,
 			String sort){
 		var page = buildDefaultPageRequest(offset, limit, sort);
+		logger.info(page.toString());
 		if(StringUtils.isEmpty(query)) {
 			return filmDao.findAll(page).map(FilmDto::of);
 		}

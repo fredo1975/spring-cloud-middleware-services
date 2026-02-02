@@ -1,5 +1,7 @@
 package fr.bluechipit.dvdtheque.batch;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.jms.Topic;
 import org.apache.activemq.command.ActiveMQTopic;
 import org.springframework.boot.SpringApplication;
@@ -25,9 +27,13 @@ public class BatchApplication {
 
 	@Bean // Serialize message content to json using TextMessage
 	public MessageConverter jacksonJmsMessageConverter() {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+		mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 		MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
 		converter.setTargetType(MessageType.TEXT);
 		converter.setTypeIdPropertyName("_type");
+		converter.setObjectMapper(mapper);
 		return converter;
 	}
 }
