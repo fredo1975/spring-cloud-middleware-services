@@ -1,10 +1,8 @@
 package fr.bluechipit.dvdtheque.model;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.format.DateTimeFormatter;
@@ -54,24 +52,19 @@ public class ExcelFilmHandler {
         this.currentColumnNumber = 0;
         this.createHeaderRow();
     }
-    public Workbook createSheetFromByteArray(byte[] b) throws EncryptedDocumentException, IOException {
-    	InputStream is = new ByteArrayInputStream(b);
-    	return WorkbookFactory.create(is);
-    }
+
     public Workbook createSheetFromFile(File f) throws EncryptedDocumentException, IOException {
     	return WorkbookFactory.create(f);
     }
-    public SXSSFRow getRow() {
-		return this.row;
-	}
+
     public void setRow(SXSSFRow row) {
 		this.row = row;
 	}
 	public void createHeaderRow() {
     	addRow();
-    	for(int i=0;i<EXCEL_HEADER_TAB.length;i++) {
-    		addCell(EXCEL_HEADER_TAB[i]);
-    	}
+        for (String s : EXCEL_HEADER_TAB) {
+            addCell(s);
+        }
     }
 	private void addRow() {
 		this.row = this.sheet.createRow(currentRowNumber);
@@ -119,8 +112,7 @@ public class ExcelFilmHandler {
         }
         // 8
         if(film.getDateInsertion() != null) {
-        	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-        	addCell(sdf.format(film.getDateInsertion()));
+        	addCell(film.getDateInsertion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }else {
         	addCell("");
         }
@@ -142,7 +134,7 @@ public class ExcelFilmHandler {
             // 11
             if(film.getDvd().isRipped() && film.getDvd().getDateRip() != null) {
             	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                addCell(sdf.format(film.getDvd().getDateRip()));
+                addCell(film.getDvd().getDateRip().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             }else {
             	addCell("");
             }
@@ -154,8 +146,7 @@ public class ExcelFilmHandler {
             }
             // 13
             if(film.getDateSortieDvd() != null) {
-            	DateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                addCell(sdf.format(film.getDateSortieDvd()));
+            	addCell(film.getDateSortieDvd().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             }else {
             	addCell("");
             }

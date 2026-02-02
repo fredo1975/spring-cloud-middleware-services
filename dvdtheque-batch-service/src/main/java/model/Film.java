@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import enums.FilmOrigine;
+
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -18,9 +18,9 @@ public class Film implements Serializable, Comparable<Film>{
 	private static final long serialVersionUID = 1L;
 	private Long id;
 	private Integer annee;
-	private Date dateSortie;
-	private Date dateInsertion;
-	private Date dateSortieDvd;
+	private LocalDate dateSortie;
+	private LocalDate dateInsertion;
+	private LocalDate dateSortieDvd;
 	private String titre;
 	private String titreO;
 	private Dvd dvd;
@@ -125,16 +125,16 @@ public class Film implements Serializable, Comparable<Film>{
 	public void setOrigine(FilmOrigine origine) {
 		this.origine = origine;
 	}
-	public Date getDateSortie() {
+	public LocalDate getDateSortie() {
 		return dateSortie;
 	}
-	public void setDateSortie(Date dateSortie) {
+	public void setDateSortie(LocalDate dateSortie) {
 		this.dateSortie = dateSortie;
 	}
-	public Date getDateInsertion() {
+	public LocalDate getDateInsertion() {
 		return dateInsertion;
 	}
-	public void setDateInsertion(Date dateInsertion) {
+	public void setDateInsertion(LocalDate dateInsertion) {
 		this.dateInsertion = dateInsertion;
 	}
 	public LocalDate getDateVue() {
@@ -143,10 +143,10 @@ public class Film implements Serializable, Comparable<Film>{
 	public void setDateVue(LocalDate dateVue) {
 		this.dateVue = dateVue;
 	}
-	public Date getDateSortieDvd() {
+	public LocalDate getDateSortieDvd() {
 		return dateSortieDvd;
 	}
-	public void setDateSortieDvd(Date dateSortieDvd) {
+	public void setDateSortieDvd(LocalDate dateSortieDvd) {
 		this.dateSortieDvd = dateSortieDvd;
 	}
 	@Override
