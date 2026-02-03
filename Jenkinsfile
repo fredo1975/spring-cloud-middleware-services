@@ -22,8 +22,10 @@ pipeline {
                 sh """
                    echo "VERSION = ${VERSION}"
                    echo "PROJECT = ${params.project}"
-                    echo "ENV = ${ENV}"
+                   echo "ENV = ${ENV}"
                 """
+                sh 'java -version'
+                sh 'mvn clean compile'
                 gitCheckout(ENV)
             }
         }
