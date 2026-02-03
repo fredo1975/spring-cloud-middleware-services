@@ -25,6 +25,7 @@ pipeline {
                    echo "ENV = ${ENV}"
                 """
                 sh 'java -version'
+                sh 'javac -version'
                 sh 'mvn -v'
                 gitCheckout(ENV)
             }
