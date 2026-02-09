@@ -16,5 +16,10 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['127.0.0.1:8086']
+  
+  - job_name: 'batch-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:8089']
 
   # les autres services (gateway, batch, etc.)
