@@ -18,6 +18,8 @@ services:
       - "7443:7443" # Keycloak https port
       - "61613:61613" # stomp relay port
       - "61614:61614" # stomp relay port
+      - "9090:9090" # Port Prometheus
+      - "3000:3000" # Port Grafana
   keycloak:
     image: quay.io/keycloak/keycloak:20.0.3
     environment:
@@ -105,5 +107,23 @@ services:
     depends_on:
       discovery-service:
         condition: service_healthy
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    # On le met aussi sur le network service pour qu'il voit les autres via localhost
+    network_mode: "service:localhost"
+    depends_on:
+      - dvdtheque-service # Attendre qu'au moins un service soit là
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    # Grafana a besoin de son propre port 3000,
+    # mais comme 'localhost' (le service Alpine) mappe déjà beaucoup de ports,
+    # on l'ajoute à la liste des ports du service 'localhost' en haut du fichier.
+    network_mode: "service:localhost"
 volumes:
   keycloak:
