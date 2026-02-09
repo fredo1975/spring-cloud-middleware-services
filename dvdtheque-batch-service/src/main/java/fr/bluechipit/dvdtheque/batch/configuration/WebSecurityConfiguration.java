@@ -22,7 +22,7 @@ public class WebSecurityConfiguration {
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
-	       .authorizeHttpRequests((authz) -> authz.anyRequest().authenticated())
+	       .authorizeHttpRequests((authz) -> authz.requestMatchers("/actuator/prometheus").permitAll().anyRequest().authenticated())
 	       .oauth2ResourceServer(resourceServerConfigurer -> resourceServerConfigurer
                    .jwt(jwtConfigurer -> jwtConfigurer
                            .jwtAuthenticationConverter(jwtAuthenticationConverter())));
