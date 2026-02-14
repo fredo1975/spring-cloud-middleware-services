@@ -736,7 +736,7 @@ public class FilmService {
 		});
 
 		HttpHeaders headers = new HttpHeaders();
-		//headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+		headers.setContentType(MediaType.valueOf(Objects.requireNonNull(file.getContentType()))); // e.g., application/vnd.ms-excel
 
 		HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
