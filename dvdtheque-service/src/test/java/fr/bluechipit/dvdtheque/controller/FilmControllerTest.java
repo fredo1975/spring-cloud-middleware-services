@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
@@ -32,7 +33,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FilmController.class)
-@WithMockUser(roles = "user") // Simule un utilisateur connecté pour tous les tests
+@WithMockUser(roles = "user")
+@ActiveProfiles("test")
 class FilmControllerTest {
 
 	@Autowired
@@ -47,8 +49,6 @@ class FilmControllerTest {
 	@MockitoBean private PersonneService personneService;
 	@MockitoBean private MultipartFileUtil multipartFileUtil;
 	@MockitoBean private RestTemplate restTemplate;
-
-	// --- Tests des méthodes GET (Recherche & Lecture) ---
 
 	@Test
 	@DisplayName("Devrait retourner la liste des genres")
