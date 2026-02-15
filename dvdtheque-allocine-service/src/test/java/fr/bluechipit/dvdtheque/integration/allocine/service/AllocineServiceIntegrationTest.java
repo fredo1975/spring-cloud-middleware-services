@@ -53,11 +53,6 @@ public class AllocineServiceIntegrationTest {
 	@Transactional
 	//@Disabled
 	public void retrieveAllocineScrapingFicheFilmTest() throws IOException {
-    	/*
-		Jwt jwt = Jwt.withTokenValue("token").header("alg", "none").claim("sub", "user").build();
-		Collection<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("SCOPE_read");
-		JwtAuthenticationToken token = new JwtAuthenticationToken(jwt, authorities);
-    		*/
 		allocineService.scrapAllAllocineFicheFilm();
 		TestTransaction.flagForCommit();
 		List<FicheFilm> allFicheFilmFromPageRetrievedFromDb = allocineService.retrieveAllFicheFilm();
@@ -76,9 +71,20 @@ public class AllocineServiceIntegrationTest {
 	}
 
 	@Test
+	@Transactional
+	//@Disabled
+	public void retrieveAllocineScrapingUnitaryFicheFilmTest() throws IOException {
+
+		allocineService.extractFicheFilm("scarface");
+		TestTransaction.flagForCommit();
+		Optional<FicheFilm> ficheFilmCacheRetrievd = allocineService.findInCacheByFicheFilmId(900);
+		assertEquals(ficheFilmCacheRetrievd.get().getTitle(),"scarface");
+	}
+
+	@Test
 	public void paginatedSarch() throws ParseException{
 		FicheFilm ficheFilmSaved = saveFilm();
-		var page = allocineService.paginatedSearch("", 1, 1, "-title");
+		var page = allocineService.paginatedSearch("", 1, 1, "-id");
 		assertNotNull(page);
 		assertThat(page.getContent()).isNotEmpty();
 		assertThat(page.getContent().size()==1).isTrue();
