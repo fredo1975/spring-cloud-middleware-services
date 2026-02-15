@@ -7,6 +7,7 @@ import fr.bluechipit.dvdtheque.allocine.domain.CritiquePresse;
 import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.domain.Page;
 import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
+import fr.bluechipit.dvdtheque.allocine.dto.SearchResponseDTO;
 import fr.bluechipit.dvdtheque.allocine.repository.FicheFilmRepository;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import specifications.filter.PageRequestBuilder;
 import specifications.filter.SpecificationsBuilder;
 
@@ -50,6 +52,7 @@ public class AllocineService {
 	private final HazelcastInstance instance;
 	private final SpecificationsBuilder<FicheFilm> builder;
 	private final ExecutorService fixedThreadPool;
+	private final RestTemplate restTemplate;
 
 	@Value("${fichefilm.parsing.page}")
 	private int nbParsedPage;
@@ -92,6 +95,7 @@ public class AllocineService {
 	private static final String SEARCH_PAGE_DELIMITER = "?page=";
 	private static final String CRITIQUE_PRESSE_FILM_BASE_URL = "/film/fichefilm-";
 	private static final String CRITIQUE_PRESSE_FILM_END_URL = "/critiques/presse/";
+	private static final String AUTO_COMPLETED_URL = "/_/autocomplete/";
 	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36";
 
 	// Retry configuration
@@ -104,13 +108,15 @@ public class AllocineService {
 			HazelcastInstance instance,
 			Environment environment,
 			SpecificationsBuilder<FicheFilm> builder,
-			ExecutorService fixedThreadPool) {
+			ExecutorService fixedThreadPool,
+			RestTemplate restTemplate) {
 		this.ficheFilmRepository = ficheFilmRepository;
 		this.instance = instance;
 		this.environment = environment;
 		this.builder = builder;
 		this.fixedThreadPool = fixedThreadPool;
 		this.rateLimiter = RateLimiter.create(1000.0 / rateLimitMs); // permits per second
+		this.restTemplate = restTemplate;
 		this.init();
 	}
 
@@ -424,6 +430,23 @@ public class AllocineService {
 		return 0.0;
 	}
 
+	public Optional<FicheFilm> extractFicheFilm(String title) {
+		String url = BASE_URL + AUTO_COMPLETED_URL + title;
+		SearchResponseDTO response = restTemplate.getForEntity(url, SearchResponseDTO.class).getBody();
+        if(response != null){
+			var res = response.results().stream().filter(f-> StringUtils.equalsIgnoreCase(f.label(), title)).findFirst();
+			if(res.isPresent()){
+				var id = res.get().data().id();
+				var ff = new FicheFilm(title,
+						Integer.valueOf(id),
+						"https://www.allocine.fr/film/fichefilm-"+id+"/critiques/presse/", 1000);
+				int saved = processCritiquePress(Set.of(ff));
+				logger.info("Saved {} critiques for film {}", saved, title);
+				return Optional.of(ff);
+			}
+		}
+		return Optional.empty();
+	}
 	private Set<FicheFilm> retrieveAllFicheFilmFromPage(Page page) {
 		try {
 			rateLimiter.acquire();

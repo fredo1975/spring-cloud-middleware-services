@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 import specifications.filter.SpecificationsBuilder;
 
 import java.util.*;
@@ -43,6 +44,9 @@ public class AllocineServiceTest {
     private Environment environment;
 
     @Mock
+    private RestTemplate restTemplate;
+
+    @Mock
     private SpecificationsBuilder<FicheFilm> builder;
 
     @Mock
@@ -53,12 +57,6 @@ public class AllocineServiceTest {
 
     @Mock
     private IMap<String, List<FicheFilm>> mapFicheFilmsByTitle;
-
-    @Captor
-    private ArgumentCaptor<List<FicheFilm>> ficheFilmListCaptor;
-
-    @Captor
-    private ArgumentCaptor<FicheFilm> ficheFilmCaptor;
 
     private AllocineService allocineService;
 
@@ -73,7 +71,8 @@ public class AllocineServiceTest {
                 hazelcastInstance,
                 environment,
                 builder,
-                executorService
+                executorService,
+                restTemplate
         );
 
         // Set private fields

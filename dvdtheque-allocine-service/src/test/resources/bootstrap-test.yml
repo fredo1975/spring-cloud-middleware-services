@@ -29,3 +29,7 @@ fichefilm:
     
 hazelcast:
   enabled: false
+
+scraping:
+  batch:
+    size: 1

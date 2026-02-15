@@ -38,6 +38,12 @@ public class AllocineController {
 				}
 			}
 		}
+		// means we have not found the critique presse with the title and the original title
+		// we are going to retrieve it directly on allocine and save it in database
+		if(CollectionUtils.isEmpty(ll)) {
+			var res = allocineService.extractFicheFilm(title);
+            res.ifPresent(ficheFilm -> ll.add(convertToDto(ficheFilm)));
+		}
 		return ResponseEntity.ok(ll);
 	}
 
