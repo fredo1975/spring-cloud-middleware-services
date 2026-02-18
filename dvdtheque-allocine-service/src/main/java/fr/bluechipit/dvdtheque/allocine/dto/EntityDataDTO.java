@@ -14,5 +14,5 @@ public record EntityDataDTO(int id,
                             String thumbnail,
                             @JsonProperty("is_program") Boolean isProgram,
                             List<String> activities,
-                            String nationality) {
+                            NationalityDTO nationality) {
 }
