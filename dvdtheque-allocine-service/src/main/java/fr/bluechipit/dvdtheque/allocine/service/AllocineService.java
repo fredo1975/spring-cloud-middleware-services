@@ -251,8 +251,10 @@ public class AllocineService {
 			logger.warn("No films found on page {}", page.getNumPage());
 			return new PageResult(page.getNumPage(), 0, true, null);
 		}
-
-		int savedCount = processCritiquePress(ficheFilms);
+		int savedCount;
+		synchronized (this){
+			savedCount = processCritiquePress(ficheFilms);
+		}
 		logger.info("Page {} processed: {} films found, {} saved",
 				page.getNumPage(), ficheFilms.size(), savedCount);
 
