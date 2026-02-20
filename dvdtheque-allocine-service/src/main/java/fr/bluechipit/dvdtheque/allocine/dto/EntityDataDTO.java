@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record EntityDataDTO(int id,
+public record EntityDataDTO(String id,
                             String year,
                             @JsonProperty("poster_path") String posterPath,
                             @JsonProperty("director_name") List<String> directorName,
