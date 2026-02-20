@@ -101,7 +101,7 @@ private void deployToServers(String env, String projectDir, String serviceName, 
 
         // 4. Start and Verify
         sh "ssh jenkins@${cleanIp} sudo systemctl start ${serviceName}.service"
-        sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (journalctl -u ${serviceName}.service -n 20 && exit 1)'"
+        sh "ssh jenkins@${cleanIp} 'systemctl is-active ${serviceName}.service || (sudo journalctl -u ${serviceName}.service -n 20 && exit 1)'"
     }
 }
 
