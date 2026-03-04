@@ -21,7 +21,7 @@ services:
       - "9090:9090" # Port Prometheus
       - "3000:3000" # Port Grafana
   keycloak:
-    image: quay.io/keycloak/keycloak:20.0.3
+    image: quay.io/keycloak/keycloak:latest
     environment:
       KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8080
@@ -30,14 +30,17 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
       KC_LOG_LEVEL: debug
+      TZ: Europe/Paris
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
       interval: 15s
       timeout: 2s
       retries: 15
-    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443","--http-relative-path=/auth",]
+    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443",]
     volumes:
-      - keycloak:/opt/keycloak-20.0.3/data/
+      - keycloak:/opt/keycloak-latest/data/
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     restart: always
     network_mode: "service:localhost"
   config-service:
@@ -49,6 +52,8 @@ services:
       interval: 5s
       timeout: 2s
       retries: 3
+    environment:
+      - TZ=Europe/Paris
     network_mode: "service:localhost"
   discovery-service:
     build:
@@ -60,6 +65,8 @@ services:
       timeout: 2s
       retries: 3
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       config-service:
         condition: service_healthy
@@ -68,6 +75,8 @@ services:
       context: ./api-gateway-service
     container_name: api-gateway-service
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -77,6 +86,8 @@ services:
       dockerfile: dvdtheque-service/Dockerfile
     container_name: dvdtheque-service
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -86,6 +97,8 @@ services:
         dockerfile: dvdtheque-tmdb-service/Dockerfile
     container_name: dvdtheque-tmdb-service
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
         discovery-service:
             condition: service_healthy
@@ -95,6 +108,8 @@ services:
         dockerfile: dvdtheque-allocine-service/Dockerfile
     container_name: dvdtheque-allocine-service
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
         discovery-service:
             condition: service_healthy
@@ -104,6 +119,8 @@ services:
       dockerfile: dvdtheque-batch-service/Dockerfile
     container_name: dvdtheque-batch-service
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       discovery-service:
         condition: service_healthy
@@ -114,6 +131,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     # On le met aussi sur le network service pour qu'il voit les autres via localhost
     network_mode: "service:localhost"
+    environment:
+      - TZ=Europe/Paris
     depends_on:
       - dvdtheque-service # Attendre qu'au moins un service soit là
   grafana:
@@ -121,6 +140,7 @@ services:
     container_name: grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - TZ=Europe/Paris
     # Grafana a besoin de son propre port 3000,
     # mais comme 'localhost' (le service Alpine) mappe déjà beaucoup de ports,
     # on l'ajoute à la liste des ports du service 'localhost' en haut du fichier.
