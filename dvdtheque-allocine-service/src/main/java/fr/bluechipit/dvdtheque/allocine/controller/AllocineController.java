@@ -5,6 +5,8 @@ import fr.bluechipit.dvdtheque.allocine.dto.FicheFilmRec;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/dvdtheque-allocine-service")
 public class AllocineController {
+	protected Logger logger = LoggerFactory.getLogger(AllocineController.class);
 	@Autowired
 	private AllocineService allocineService;
 
@@ -40,8 +43,10 @@ public class AllocineController {
 		}
 		// means we have not found the critique presse with the title and the original title
 		// we are going to retrieve it directly on allocine and save it in database
+		logger.info("getAllocineFicheFilmByTitle - title: {}, titleO: {}, found in database: {}", title, titleO, CollectionUtils.isNotEmpty(ll));
 		if(CollectionUtils.isEmpty(ll)) {
 			var res = allocineService.extractFicheFilm(title);
+			logger.info("getAllocineFicheFilmByTitle - title: {}, titleO: {}, found on allocine: {}", title, titleO, res.isPresent());
             res.ifPresent(ficheFilm -> ll.add(convertToDto(ficheFilm)));
 		}
 		return ResponseEntity.ok(ll);
@@ -54,7 +59,7 @@ public class AllocineController {
         return ficheFilm.map(film -> ResponseEntity.ok(convertToDto(film))).orElseGet(() -> ResponseEntity.notFound().build());
     }
 	private FicheFilmRec convertToDto(FicheFilm ficheFilm) {
-		if(ficheFilm != null) {
+		if(ficheFilm != null && ficheFilm.getId() != 0) {
             return FicheFilmRec.fromEntity(ficheFilm);
 		}
 		return null;
