@@ -94,18 +94,6 @@ public class FilmService {
 		logger.info("Loaded {} genres into cache", mapGenres.size());
 	}
 
-	public List<FilmDto> getAllFilmDtos() {
-		try {
-			return filmDao.findAll().stream()
-					.map(FilmDto::of)
-					.sorted(Comparator.comparing(FilmDto::titre))
-					.toList();
-		} catch (Exception e) {
-			logger.error("Error retrieving films: {}", e.getMessage(), e);
-			return Collections.emptyList();
-		}
-	}
-
 	public List<FilmDto> getAllFilms(){
 		Page<FilmDto> films = paginatedDtoSearch("", 1, null, "");
 		List<FilmDto> list = new ArrayList<>(films.getContent());
@@ -115,11 +103,6 @@ public class FilmService {
 			list.addAll(films.getContent());
 		}
 		return list;
-	}
-
-	@Transactional(readOnly = true, noRollbackFor = { org.springframework.dao.EmptyResultDataAccessException.class })
-	public Film findFilmByTitreWithoutSpecialsCharacters(final String titre) {
-		return filmDao.findFilmByTitreWithoutSpecialsCharacters(titre);
 	}
 
 	private void mapIdentity(Film existingFilm, Results results, Film transformed, Set<Long> tmdbAlreadyInSet){
@@ -339,7 +322,8 @@ public class FilmService {
 				allocineUrl, HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                 });
 
-		if (response.getBody() != null && !response.getBody().isEmpty()) {
+		logger.info("response.getBody()="+response.getBody().toString());
+		if (response.getBody() != null && !response.getBody().isEmpty() && response.getBody().getFirst() != null && response.getBody().getFirst().getId() != 0) {
 			film.setAllocineFicheFilmId(response.getBody().getFirst().getId());
 		}
 	}
@@ -472,6 +456,7 @@ public class FilmService {
 			Integer offset,
 			Integer limit,
 			String sort){
+		logger.info("paginatedDtoSearch query {}", query);
 		var page = buildDefaultPageRequest(offset, limit, sort);
 		logger.info(page.toString());
 		if(StringUtils.isEmpty(query)) {
@@ -622,7 +607,7 @@ public class FilmService {
 								+ environment.getRequiredProperty(ALLOCINE_SERVICE_BY_TITLE) + "?title=" + film.getTitre()+"&titleO="+ film.getTitreO(),
 						HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                         });
-				if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody())) {
+				if(ficheFilmDtoResponse.getBody() != null && CollectionUtils.isNotEmpty(ficheFilmDtoResponse.getBody()) && ficheFilmDtoResponse.getBody().getFirst() != null) {
 					Set<CritiquePresseDto> cpDtoSet = ficheFilmDtoResponse.getBody().getFirst().getCritiquePresse();
 					consumer.accept(film,cpDtoSet);
 				}
@@ -649,6 +634,7 @@ public class FilmService {
 	}
 
 	public Film updateFilm(Film film,Long id){
+		logger.info("Updating film with id {}: {}", id, film.getDateSortieDvd());
 		Film mergedFilm = filmSaveService.updateFilm(film);
         return processRetrieveCritiquePresse(id, (f, set) -> addCritiquePresseToFilm(set, mergedFilm),mergedFilm);
 	}

@@ -31,6 +31,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -106,7 +109,32 @@ class FilmServiceTest {
 
         // THEN
         assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).titre()).isEqualTo("Test Movie");
+        assertThat(result.getContent().getFirst().titre()).isEqualTo("Test Movie");
+    }
+
+    @Test
+    @DisplayName("Devrait effectuer une recherche paginée de DTOs multithreadée sans problèmes de concurrence")
+    void paginatedDtoSearchMultiThreadedTest() throws ExecutionException, InterruptedException {
+        // GIVEN
+        Film film = new Film();
+        film.setTitre("Test Movie");
+        Page<Film> page = new PageImpl<>(List.of(film));
+
+        given(filmDao.findAll(any(PageRequest.class))).willReturn(page);
+
+        ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(10);
+        CompletableFuture<Page<FilmDto>> future1 = CompletableFuture.supplyAsync(() -> filmService.paginatedDtoSearch("", 1, 10, "titre"), executor);
+        CompletableFuture<Page<FilmDto>> future2 = CompletableFuture.supplyAsync(() -> filmService.paginatedDtoSearch("", 1, 10, "titre"), executor);
+        CompletableFuture<Page<FilmDto>> future3 = CompletableFuture.supplyAsync(() -> filmService.paginatedDtoSearch("", 1, 10, "titre"), executor);
+        assertThat(future1.get().map(FilmDto::titre).getContent()).hasSize(1);
+        assertThat(future2.get().map(FilmDto::titre).getContent()).hasSize(1);
+        assertThat(future3.get().map(FilmDto::titre).getContent()).hasSize(1);
+        // WHEN
+        Page<FilmDto> result = filmService.paginatedDtoSearch("", 1, 10, "titre");
+
+        // THEN
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().titre()).isEqualTo("Test Movie");
     }
 
     @Test
@@ -158,7 +186,7 @@ class FilmServiceTest {
 
         // THEN
         assertThat(genres).hasSize(1);
-        assertThat(genres.get(0).getName()).isEqualTo("Action");
+        assertThat(genres.getFirst().getName()).isEqualTo("Action");
     }
 
     @Test
