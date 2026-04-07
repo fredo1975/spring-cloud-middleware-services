@@ -51,9 +51,15 @@ public class AllocineControllerTest {
 	@Test
 	@WithMockUser(roles = "batch")
 	public void getAllocineFicheFilmById() throws Exception {
-		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt())).thenReturn(Optional.of(new FicheFilm()));
+		var ficherFilm = new FicheFilm();
+		ficherFilm.setId(1);
+		ficherFilm.setAllocineFilmId(1);
+		ficherFilm.setPageNumber(1);
+		ficherFilm.setUrl("url");
+		ficherFilm.setTitle("title");
+		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt())).thenReturn(Optional.of(ficherFilm));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byId")
-				.param("id", String.valueOf(0))
+				.param("id", String.valueOf(1))
 				.with(jwt().jwt(builder -> builder.subject("test")))
 				.with(csrf()))
 		.andExpect(status().isOk())
