@@ -24,6 +24,9 @@ RUN chmod +x dvdtheque-allocine-service/mvnw && \
 # 2. Préparation du Service (Download des dépendances)
 COPY dvdtheque-allocine-service/pom.xml dvdtheque-allocine-service/pom.xml
 RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-commons && \
+    ../dvdtheque-allocine-service/mvnw install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
     cd dvdtheque-allocine-service && ./mvnw dependency:go-offline -DskipTests
 ################################################################################
 
@@ -43,9 +46,9 @@ COPY dvdtheque-allocine-service/src dvdtheque-allocine-service/src
 RUN --mount=type=cache,target=/root/.m2 \
     cd dvdtheque-allocine-service && \
     ./mvnw package -DskipTests && \
-    # On cherche le JAR le plus lourd (le Fat JAR de Spring Boot)
-    # ou on exclut explicitement le JAR "original"
-    cp target/$(ls target/ | grep .jar | grep -v original | head -n 1) target/app.jar
+    find target/ -maxdepth 1 -name "*.jar" \
+        ! -name "*original*" ! -name "*javadoc*" ! -name "*sources*" \
+        -exec cp {} target/app.jar \;
 
 ################################################################################
 

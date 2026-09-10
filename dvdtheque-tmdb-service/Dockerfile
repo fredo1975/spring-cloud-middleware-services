@@ -14,6 +14,9 @@ RUN chmod +x dvdtheque-tmdb-service/mvnw && \
 # 2. Préparation du Service (Download des dépendances)
 COPY dvdtheque-tmdb-service/pom.xml dvdtheque-tmdb-service/pom.xml
 RUN --mount=type=cache,target=/root/.m2 \
+    cd dvdtheque-commons && \
+    ../dvdtheque-tmdb-service/mvnw install -DskipTests
+RUN --mount=type=cache,target=/root/.m2 \
     cd dvdtheque-tmdb-service && ./mvnw dependency:go-offline -DskipTests
 ################################################################################
 
