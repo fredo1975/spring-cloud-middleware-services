@@ -4,6 +4,7 @@ import enums.FilmOrigine;
 import fr.bluechipit.dvdtheque.model.CritiquePresse;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.annotations.BatchSize;
 
@@ -25,13 +26,10 @@ public class Film implements Serializable, Comparable<Film> {
 	@Column(name = "annee")
 	private Integer annee;
 	@Column(name = "date_sortie")
-	@Temporal(TemporalType.DATE)
 	private LocalDate dateSortie;
 	@Column(name = "date_insertion")
-	@Temporal(TemporalType.DATE)
 	private LocalDate dateInsertion;
 	@Column(name = "date_sortie_dvd")
-	@Temporal(TemporalType.DATE)
 	private LocalDate dateSortieDvd;
 	@Column(name = "titre")
 	@NotNull
