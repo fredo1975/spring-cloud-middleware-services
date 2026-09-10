@@ -1,10 +1,9 @@
 package fr.bluechipit.dvdtheque.dao.domain;
 
-import java.io.Serializable;
-import java.time.LocalDate;
-
 import enums.DvdFormat;
 import jakarta.persistence.*;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "dvd")
@@ -80,12 +79,9 @@ public class Dvd {
 			return false;
 		Dvd other = (Dvd) obj;
 		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
-	}
+            return other.id == null;
+		} else return id.equals(other.id);
+    }
 	@Override
 	public int hashCode() {
 		final int prime = 31;
