@@ -2,7 +2,6 @@ package fr.bluechipit.dvdtheque.dao.domain;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 import enums.DvdFormat;
 import jakarta.persistence.*;
@@ -20,7 +19,6 @@ public class Dvd {
 	@Column(name = "edition")
 	private String edition;
 	@Column(name = "date_rip")
-	@Temporal(TemporalType.DATE)
 	private LocalDate dateRip;
 	@Column(name = "format")
 	private DvdFormat format;
