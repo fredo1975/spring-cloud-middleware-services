@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.annotations.BatchSize;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,7 +20,8 @@ import java.util.Set;
 @Entity
 @Table(name = "film")
 public class Film implements Serializable, Comparable<Film> {
-	private static final long serialVersionUID = -1382161470818168805L;
+	@Serial
+    private static final long serialVersionUID = -1382161470818168805L;
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -36,7 +38,7 @@ public class Film implements Serializable, Comparable<Film> {
 	private String titre;
 	@Column(name = "titre_o")
 	private String titreO;
-	@JoinColumn(name = "dvd_id",nullable = true)
+	@JoinColumn(name = "dvd_id")
 	@OneToOne(cascade=CascadeType.ALL)
 	private Dvd dvd;
 	@Column(name = "origine")
@@ -78,9 +80,9 @@ public class Film implements Serializable, Comparable<Film> {
 	private String homepage;
 	@Transient
 	private boolean alreadyInDvdtheque;
-	@Column(name="update_ts", insertable=false, updatable=true)
+	@Column(name="update_ts", insertable=false)
 	private LocalDateTime dateMaj;
-	@Column(name="vue_date", insertable=true, updatable=true)
+	@Column(name="vue_date")
 	private LocalDate dateVue;
 	@Transient
 	private List<CritiquePresse> critiquePresse;
@@ -197,12 +199,9 @@ public class Film implements Serializable, Comparable<Film> {
 			return false;
 		Film other = (Film) obj;
 		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		return true;
-	}
+            return other.id == null;
+		} else return id.equals(other.id);
+    }
 	public String getPosterPath() {
 		return posterPath;
 	}
@@ -243,9 +242,7 @@ public class Film implements Serializable, Comparable<Film> {
 	public List<CritiquePresse> getCritiquePresse() {
 		return critiquePresse;
 	}
-	public void setCritiquePresse(List<CritiquePresse> critiquePresse) {
-		this.critiquePresse = critiquePresse;
-	}
+
 	public LocalDate getDateVue() {
 		return dateVue;
 	}
