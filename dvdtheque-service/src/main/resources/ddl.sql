@@ -127,7 +127,7 @@ CREATE TABLE "dvdtheque-service".film (
                                           titre varchar(255) NOT NULL,
                                           titre_o varchar(255) DEFAULT NULL::character varying NULL,
                                           dvd_id int4 NULL,
-                                          origine int4 NOT NULL,
+                                          origine varchar(255) NOT NULL,
                                           poster_path varchar(255) DEFAULT NULL::character varying NULL,
                                           tmdb_id int4 NULL,
                                           overview text NULL,
