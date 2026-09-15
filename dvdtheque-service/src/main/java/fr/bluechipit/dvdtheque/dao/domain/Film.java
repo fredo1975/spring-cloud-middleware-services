@@ -42,6 +42,8 @@ public class Film implements Serializable, Comparable<Film> {
 	@OneToOne(cascade=CascadeType.ALL)
 	private Dvd dvd;
 	@Column(name = "origine")
+	@NotNull
+	@Enumerated(EnumType.STRING)
 	private FilmOrigine origine;
 	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(
