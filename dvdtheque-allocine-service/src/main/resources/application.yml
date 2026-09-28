@@ -8,9 +8,4 @@ spring:
       fail-fast: true
 logging:
   level:
-    root: info      
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "*"
+    root: info
