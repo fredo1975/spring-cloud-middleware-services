@@ -2,7 +2,7 @@ pipeline {
     agent any
     tools {
         maven 'Maven 3.9.12'
-        jdk 'jdk21'
+        jdk 'jdk25'
     }
     environment {
         // Define as a comma-separated string
