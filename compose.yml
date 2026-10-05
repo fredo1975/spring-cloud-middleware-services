@@ -30,15 +30,18 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: "true"
       KC_LOG_LEVEL: debug
+      KC_DB_USERNAME: sa
+      KC_DB_PASSWORD: password
       TZ: Europe/Paris
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ready" ]
       interval: 15s
       timeout: 2s
       retries: 15
-    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443",]
+    command: [ "start-dev", "--http-port", "8080", "--https-port", "7443", "--import-realm",]
     volumes:
-      - keycloak:/opt/keycloak-latest/data/
+      - keycloak:/opt/keycloak/data/
+      - ./keycloak:/opt/keycloak/data/import:ro
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     restart: always
