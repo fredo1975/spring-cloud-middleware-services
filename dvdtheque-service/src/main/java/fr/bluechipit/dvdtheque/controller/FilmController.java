@@ -26,7 +26,7 @@ import tmdb.model.Credits;
 import tmdb.model.Crew;
 import tmdb.model.Results;
 
-import javax.annotation.security.RolesAllowed;
+import jakarta.annotation.security.RolesAllowed;
 import java.io.IOException;
 import java.text.ParseException;
 import java.time.LocalDateTime;

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM eclipse-temurin:21-jdk as deps
+FROM eclipse-temurin:25-jdk as deps
 WORKDIR /build
 
 # 1. Préparation des Commons (Installation dans le repo local)
@@ -47,7 +47,7 @@ RUN java -Djarmode=layertools -jar dvdtheque-service/target/app.jar extract --de
 
 ################################################################################
 
-FROM eclipse-temurin:21-jdk AS final
+FROM eclipse-temurin:25-jdk AS final
 WORKDIR /app
 
 ARG UID=10001
