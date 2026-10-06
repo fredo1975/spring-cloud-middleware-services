@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import specifications.filter.FilterOperation;
 import specifications.filter.SearchCriteria;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;

@@ -7,11 +7,10 @@ import fr.bluechipit.dvdtheque.config.HazelcastConfigurationTest;
 import fr.bluechipit.dvdtheque.config.TestWebSocketConfig;
 import fr.bluechipit.dvdtheque.dao.domain.Film;
 import jms.model.JmsStatusMessage;
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +24,6 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -81,7 +79,7 @@ public class DvdthequeWebSocketControllerTest {
         assertThat(stompSession).isNotNull();
     }
     
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
     	Hazelcast.shutdownAll();
     	try {
