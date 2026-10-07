@@ -63,7 +63,7 @@ services:
       context: ./discovery-service
     container_name: discovery-service
     healthcheck:
-      test: curl --fail http://localhost:8761 || exit 1
+      test: curl --fail http://localhost:8761/actuator/health || exit 1
       interval: 5s
       timeout: 2s
       retries: 3
