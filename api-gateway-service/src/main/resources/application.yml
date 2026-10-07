@@ -1,4 +1,10 @@
 server:
   port: 8762
 
+spring:
+  application:
+    name: api-gateway-service
+  config:
+    import: optional:configserver:http://localhost:8888
+
 management.endpoints.web.exposure.include: gateway,metrics,health, info
