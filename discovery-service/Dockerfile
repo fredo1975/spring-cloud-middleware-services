@@ -52,7 +52,7 @@ FROM package as extract
 
 WORKDIR /build
 
-RUN java -Djarmode=layertools -jar target/app.jar extract --destination target/extracted
+RUN java -Djarmode=tools -jar target/app.jar extract --layers dependencies,spring-boot-loader,snapshot-dependencies,application --destination target/extracted
 
 ################################################################################
 
@@ -85,7 +85,9 @@ RUN adduser \
     appuser
 USER appuser
 
-# Copy the executable from the "package" stage.
+# Copy the layered application from the "extract" stage.
+WORKDIR /app
+
 COPY --from=extract build/target/extracted/dependencies/ ./
 COPY --from=extract build/target/extracted/spring-boot-loader/ ./
 COPY --from=extract build/target/extracted/snapshot-dependencies/ ./
@@ -93,4 +95,4 @@ COPY --from=extract build/target/extracted/application/ ./
 
 EXPOSE 8761
 
-ENTRYPOINT [ "java","-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-Djava.security.egd=file:/dev/./urandom", "org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "java","-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar" ]
