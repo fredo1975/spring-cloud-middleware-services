@@ -10,13 +10,16 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.core.job.parameters.JobParametersBuilder;
 import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -24,6 +27,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.SimpleMessageConverter;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -31,6 +35,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
@@ -60,7 +65,7 @@ public class BatchExportFilmsConfigurationTest {
 	@Autowired
 	private JobRepository 			jobRepository;
 
-	@MockBean
+	@MockitoBean
 	AuthorizedClientServiceOAuth2AuthorizedClientManager authorizedClientServiceAndManager;
 	
 	private Film buildfilm() {
@@ -131,7 +136,9 @@ public class BatchExportFilmsConfigurationTest {
 	
 	@Bean
 	JmsTemplate jmsTemplate() {
-		return Mockito.mock(JmsTemplate.class);
+		JmsTemplate jmsTemplate = Mockito.mock(JmsTemplate.class);
+		Mockito.when(jmsTemplate.getMessageConverter()).thenReturn(new SimpleMessageConverter());
+		return jmsTemplate;
 	}
 
 	@Bean

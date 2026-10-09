@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.SimpleMessageConverter;
 import org.springframework.security.oauth2.client.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -31,7 +32,9 @@ public class BatchTestConfiguration {
 
 	@Bean
 	JmsTemplate jmsTemplate() {
-		return Mockito.mock(JmsTemplate.class);
+		JmsTemplate jmsTemplate = Mockito.mock(JmsTemplate.class);
+		Mockito.when(jmsTemplate.getMessageConverter()).thenReturn(new SimpleMessageConverter());
+		return jmsTemplate;
 	}
 
 	@Bean
