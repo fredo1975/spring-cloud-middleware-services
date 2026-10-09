@@ -63,7 +63,7 @@ public class TmdbService {
     }
 
     private SearchResults fetchPage(String title, int page) {
-        String url = UriComponentsBuilder.fromHttpUrl(environment.getRequiredProperty("themoviedb.search.movie.query"))
+        String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty("themoviedb.search.movie.query"))
                 .queryParam("api_key", environment.getRequiredProperty("themoviedb.api.key"))
                 .queryParam("query", title)
                 .queryParam("language", "fr")
@@ -73,7 +73,7 @@ public class TmdbService {
     }
     @Cacheable(value = "tmdbReleaseDates", key = "#tmdbId")
     public LocalDate fetchBestReleaseDate(Long tmdbId) {
-        String url = UriComponentsBuilder.fromHttpUrl(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
+        String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
                 .path("/{tmdbId}/release_dates")
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
                 .buildAndExpand(tmdbId)
@@ -114,7 +114,7 @@ public class TmdbService {
     public Credits fetchTmdbCredits(Long tmdbId) {
         logger.info("Fetching credits from TMDB for ID: {}", tmdbId);
 
-        String url = UriComponentsBuilder.fromHttpUrl(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
+        String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
                 .path("/{tmdbId}/credits")
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
                 .buildAndExpand(tmdbId)
@@ -132,7 +132,7 @@ public class TmdbService {
     public SearchResults fetchSearchResultsByTitle(String title, Integer page) {
         int pageNumber = (page == null) ? 1 : page;
 
-        String url = UriComponentsBuilder.fromHttpUrl(environment.getRequiredProperty(TMDB_SEARCH_MOVIE_QUERY))
+        String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_SEARCH_MOVIE_QUERY))
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
                 .queryParam("query", title)
                 .queryParam("language", "fr")
@@ -166,7 +166,7 @@ public class TmdbService {
 
     @Cacheable(value = "tmdbMovieDetails", key = "#tmdbId")
     public Optional<ResultsByTmdbId> fetchTmdbMovieById(final Long tmdbId) {
-        String url = UriComponentsBuilder.fromHttpUrl(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
+        String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
                 .path("/{tmdbId}")
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
                 .queryParam("language", "fr")

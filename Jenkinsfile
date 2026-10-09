@@ -105,19 +105,24 @@ private void deployToServers(String env, String projectDir, String serviceName, 
     }
 }
 
-/** * Helper to checkout the correct git branch based on environment
+/** * Helper to checkout the correct git branch based on environment.
+ * Uses fetch + hard reset so a diverged Jenkins workspace can never block the build.
  */
 private void gitCheckout(String env){
     if(env == "dev"){
         sh """
-            git checkout develop
-            git pull
+            git fetch --prune origin
+            git checkout --force develop
+            git reset --hard origin/develop
+            git clean -fdq
         """
     }
     if(env == "prod"){
         sh """
-            git checkout main
-            git pull
+            git fetch --prune origin
+            git checkout --force main
+            git reset --hard origin/main
+            git clean -fdq
         """
    }
 }
