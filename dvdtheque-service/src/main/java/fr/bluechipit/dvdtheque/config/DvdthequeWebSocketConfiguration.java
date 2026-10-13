@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -50,7 +50,7 @@ public class DvdthequeWebSocketConfiguration implements WebSocketMessageBrokerCo
 
 	@Override
 	public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
-		messageConverters.add(new MappingJackson2MessageConverter());
+		messageConverters.add(new JacksonJsonMessageConverter());
 		return WebSocketMessageBrokerConfigurer.super.configureMessageConverters(messageConverters);
 	}
 	

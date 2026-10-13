@@ -15,14 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.JacksonJsonMessageConverter;
 import org.springframework.messaging.simp.stomp.*;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.socket.WebSocketHttpHeaders;
@@ -55,7 +55,7 @@ public class DvdthequeWebSocketControllerTest {
     private static final String SUBSCRIBE_TOPIC_ENDPOINT = "/topic/";
     private StompSession 							stompSession;
     private RestTemplate 							restTemplate;
-    @MockBean
+    @MockitoBean
 	private JwtDecoder 								jwtDecoder;
     private static final String STOMP_ENDPOINT = 	"dvdtheque-ws";
     private StompSessionHandlerAdapter 				sessionHandler;
@@ -64,7 +64,7 @@ public class DvdthequeWebSocketControllerTest {
     public void setup() throws InterruptedException, ExecutionException, TimeoutException {
     	restTemplate = new RestTemplate();
     	stompClient = new WebSocketStompClient(new SockJsClient(Arrays.asList(new WebSocketTransport(new StandardWebSocketClient()))));
-    	stompClient.setMessageConverter(new MappingJackson2MessageConverter());
+    	stompClient.setMessageConverter(new JacksonJsonMessageConverter());
     	String host = "localhost";
         WEBSOCKET_URI = "ws://"+host+":"+port+"/"+STOMP_ENDPOINT;
         String homeUrl = "http://{host}:{port}/"+STOMP_ENDPOINT;
