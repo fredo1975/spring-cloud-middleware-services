@@ -1,6 +1,6 @@
 package fr.bluechipit.dvdtheque.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import fr.bluechipit.dvdtheque.dao.domain.Film;
 import fr.bluechipit.dvdtheque.dao.domain.Genre;
 import fr.bluechipit.dvdtheque.file.util.MultipartFileUtil;
@@ -11,7 +11,8 @@ import fr.bluechipit.dvdtheque.service.PersonneService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.OAuth2ResourceServerWebSecurityAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
@@ -32,7 +33,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(FilmController.class)
+@WebMvcTest(value = FilmController.class, excludeAutoConfiguration = OAuth2ResourceServerWebSecurityAutoConfiguration.class)
 @WithMockUser(roles = "user")
 @ActiveProfiles("test")
 class FilmControllerTest {
@@ -41,7 +42,7 @@ class FilmControllerTest {
 	private MockMvc mockMvc;
 
 	@Autowired
-	private ObjectMapper objectMapper;
+	private JsonMapper objectMapper;
 
 	// Remplacement de @MockBean par @MockitoBean (Spring Boot 3.4+)
 	@MockitoBean private FilmService filmService;

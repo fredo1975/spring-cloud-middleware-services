@@ -35,7 +35,9 @@ RUN --mount=type=cache,target=/root/.m2 \
     cd dvdtheque-service && \
     ./mvnw package -DskipTests && \
     # Utilisation de find pour trouver le bon JAR (l'exécutable) et le renommer proprement
-    find target/ -name "*.jar" -not -name "*original*" -exec cp {} target/app.jar \;
+    find target/ -maxdepth 1 -name "*.jar" \
+        ! -name "*original*" ! -name "*javadoc*" ! -name "*sources*" \
+        -exec cp {} target/app.jar \;
 
 ################################################################################
 
@@ -43,7 +45,7 @@ FROM package as extract
 WORKDIR /build
 
 # On pointe précisément sur le jar dans le sous-dossier
-RUN java -Djarmode=layertools -jar dvdtheque-service/target/app.jar extract --destination target/extracted
+RUN java -Djarmode=tools -jar dvdtheque-service/target/app.jar extract --layers dependencies,spring-boot-loader,snapshot-dependencies,application --destination target/extracted
 
 ################################################################################
 
@@ -62,4 +64,4 @@ COPY --from=extract /build/target/extracted/application/ ./
 
 EXPOSE 8083
 
-ENTRYPOINT [ "java", "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-agentlib:jdwp=transport=dt_socket,address=*:5005,server=y,suspend=n","org.springframework.boot.loader.launch.JarLauncher" ]
+ENTRYPOINT [ "java", "-Dspring.profiles.active=docker","-Dspring.cloud.config.label=develop","-agentlib:jdwp=transport=dt_socket,address=*:5005,server=y,suspend=n","-jar", "app.jar" ]
