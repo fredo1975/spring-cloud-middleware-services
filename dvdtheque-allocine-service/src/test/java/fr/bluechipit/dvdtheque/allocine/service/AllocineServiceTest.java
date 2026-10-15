@@ -22,6 +22,7 @@ import specifications.filter.SpecificationsBuilder;
 
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -412,6 +413,89 @@ public class AllocineServiceTest {
         // Assert
         assertThat(result).isPresent();
         assertThat(result.get()).hasSize(2);
+    }
+
+    // ==================== Deduplication & Mapping Tests ====================
+
+    @Test
+    void paginatedSearch_ShouldMapEntitiesToDtos() {
+        // Arrange
+        List<FicheFilm> ficheFilms = createSampleFicheFilms(2);
+        Page<FicheFilm> page = new PageImpl<>(ficheFilms);
+        when(ficheFilmRepository.findAll(any(PageRequest.class))).thenReturn(page);
+
+        // Act
+        Page<FicheFilmRec> result = allocineService.paginatedSearch("", 1, 10, "-creationDate");
+
+        // Assert
+        assertThat(result.getContent()).extracting(FicheFilmRec::title)
+                .containsExactly("Film 1", "Film 2");
+        assertThat(result.getContent()).extracting(FicheFilmRec::allocineFilmId)
+                .containsExactly(1, 2);
+    }
+
+    @Test
+    void retrieveFicheFilmByTitle_WithDuplicateEntities_ShouldDeduplicate() {
+        // Arrange
+        String title = "Inception";
+        FicheFilm first = createFicheFilm(7, title);
+        FicheFilm duplicate = createFicheFilm(7, title);
+        when(mapFicheFilmsByTitle.get("INCEPTION")).thenReturn(null);
+        when(ficheFilmRepository.findByTitle(title)).thenReturn(List.of(first, duplicate));
+
+        // Act
+        List<FicheFilm> result = allocineService.retrieveFicheFilmByTitle(title);
+
+        // Assert
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void retrieveFicheFilmByTitle_WhenNothingFound_ShouldNotPopulateCache() {
+        // Arrange
+        String title = "Ghost";
+        when(mapFicheFilmsByTitle.get("GHOST")).thenReturn(null);
+        when(ficheFilmRepository.findByTitle(title)).thenReturn(Collections.emptyList());
+
+        // Act
+        List<FicheFilm> result = allocineService.retrieveFicheFilmByTitle(title);
+
+        // Assert
+        assertThat(result).isEmpty();
+        verify(mapFicheFilmsByTitle, never()).putIfAbsent(anyString(), anyList());
+    }
+
+    // ==================== Completion Handling Tests ====================
+
+    @Test
+    void waitForCompletion_WithFailingFutures_ShouldCountFailures() throws Exception {
+        // Arrange
+        @SuppressWarnings("unchecked")
+        Future<AllocineService.PageResult> successFuture = mock(Future.class);
+        @SuppressWarnings("unchecked")
+        Future<AllocineService.PageResult> executionFailure = mock(Future.class);
+        @SuppressWarnings("unchecked")
+        Future<AllocineService.PageResult> interruptedFailure = mock(Future.class);
+
+        when(successFuture.get()).thenReturn(new AllocineService.PageResult(1, 10, true, null));
+        when(executionFailure.get()).thenThrow(new ExecutionException("boom", new RuntimeException("boom")));
+        when(interruptedFailure.get()).thenThrow(new InterruptedException("interrupted"));
+
+        // Act
+        AllocineService.ScrapingResult result;
+        try {
+            result = ReflectionTestUtils.invokeMethod(allocineService, "waitForCompletion",
+                    List.of(successFuture, executionFailure, interruptedFailure));
+        } finally {
+            // clear the interrupt flag set by the service on InterruptedException
+            Thread.interrupted();
+        }
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getSuccessfulPages()).isEqualTo(1);
+        assertThat(result.getFailedPages()).isEqualTo(2);
+        assertThat(result.getTotalSaved()).isEqualTo(10);
     }
 
     // ==================== Integration Tests ====================

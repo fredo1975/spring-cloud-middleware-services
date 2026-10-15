@@ -31,9 +31,12 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
@@ -48,33 +51,105 @@ public class AllocineControllerTest {
 	private JwtDecoder 								jwtDecoder;
 	@MockitoBean
 	private AllocineService allocineService;
+
+	private FicheFilm ficheFilm(int id, String title) {
+		var ficheFilm = new FicheFilm(title, id, "url-" + id, 1);
+		ficheFilm.setId(id);
+		return ficheFilm;
+	}
+
 	@Test
 	@WithMockUser(roles = "batch")
 	public void getAllocineFicheFilmById() throws Exception {
-		var ficherFilm = new FicheFilm();
-		ficherFilm.setId(1);
-		ficherFilm.setAllocineFilmId(1);
-		ficherFilm.setPageNumber(1);
-		ficherFilm.setUrl("url");
-		ficherFilm.setTitle("title");
-		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt())).thenReturn(Optional.of(ficherFilm));
+		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt()))
+				.thenReturn(Optional.of(ficheFilm(1, "title")));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byId")
 				.param("id", String.valueOf(1))
 				.with(jwt().jwt(builder -> builder.subject("test")))
 				.with(csrf()))
 		.andExpect(status().isOk())
-		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+		.andExpect(jsonPath("$.id").value(1))
+		.andExpect(jsonPath("$.allocineFilmId").value(1))
+		.andExpect(jsonPath("$.title").value("title"))
+		.andExpect(jsonPath("$.url").value("url-1"));
 	}
+
+	@Test
+	@WithMockUser(roles = "batch")
+	public void getAllocineFicheFilmById_WhenNotFound_ShouldReturn404() throws Exception {
+		Mockito.when(allocineService.retrieveFicheFilm(org.mockito.Mockito.anyInt()))
+				.thenReturn(Optional.empty());
+		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byId")
+				.param("id", String.valueOf(999))
+				.with(jwt().jwt(builder -> builder.subject("test")))
+				.with(csrf()))
+		.andExpect(status().isNotFound());
+	}
+
 	@Test
 	@WithMockUser(roles = "batch")
 	public void getAllocineFicheFilmByTitle() throws Exception {
-		Mockito.when(allocineService.retrieveFicheFilmByTitle(org.mockito.Mockito.anyString())).thenReturn(List.of(new FicheFilm()));
+		Mockito.when(allocineService.retrieveFicheFilmByTitle(anyString()))
+				.thenReturn(List.of(ficheFilm(1, "title")));
 		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byTitle")
 				.param("title", "title")
 				.with(jwt().jwt(builder -> builder.subject("test")))
 				.with(csrf()))
 		.andExpect(status().isOk())
-		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+		.andExpect(jsonPath("$.length()").value(1))
+		.andExpect(jsonPath("$[0].title").value("title"));
+	}
+
+	@Test
+	@WithMockUser(roles = "batch")
+	public void getAllocineFicheFilmByTitle_WhenEmpty_ShouldFallBackToAllocine() throws Exception {
+		Mockito.when(allocineService.retrieveFicheFilmByTitle(anyString()))
+				.thenReturn(List.of());
+		Mockito.when(allocineService.extractFicheFilm(anyString()))
+				.thenReturn(Optional.of(ficheFilm(7, "scarface")));
+
+		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byTitle")
+				.param("title", "scarface")
+				.with(jwt().jwt(builder -> builder.subject("test")))
+				.with(csrf()))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.length()").value(1))
+		.andExpect(jsonPath("$[0].title").value("scarface"));
+
+		verify(allocineService).extractFicheFilm("scarface");
+	}
+
+	@Test
+	@WithMockUser(roles = "batch")
+	public void getAllocineFicheFilmByTitle_WhenOriginalTitleMatches_ShouldReturnIt() throws Exception {
+		Mockito.when(allocineService.retrieveFicheFilmByTitle("title")).thenReturn(List.of());
+		Mockito.when(allocineService.retrieveFicheFilmByTitle("original")).thenReturn(List.of(ficheFilm(3, "original")));
+
+		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byTitle")
+				.param("title", "title")
+				.param("titleO", "original")
+				.with(jwt().jwt(builder -> builder.subject("test")))
+				.with(csrf()))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$[0].title").value("original"));
+
+		verify(allocineService, Mockito.never()).extractFicheFilm(anyString());
+	}
+
+	@Test
+	@WithMockUser(roles = "batch")
+	public void getAllocineFicheFilmByTitle_WhenNothingFoundAnywhere_ShouldReturnEmptyList() throws Exception {
+		Mockito.when(allocineService.retrieveFicheFilmByTitle(anyString())).thenReturn(List.of());
+		Mockito.when(allocineService.extractFicheFilm(anyString())).thenReturn(Optional.empty());
+
+		mockmvc.perform(MockMvcRequestBuilders.get("/dvdtheque-allocine-service/byTitle")
+				.param("title", "unknown")
+				.with(jwt().jwt(builder -> builder.subject("test")))
+				.with(csrf()))
+		.andExpect(status().isOk())
+		.andExpect(jsonPath("$.length()").value(0));
 	}
 
 	@Test
@@ -95,6 +170,19 @@ public class AllocineControllerTest {
 				.with(jwt().jwt(builder -> builder.subject("test")))
 				.with(csrf()))
 		.andExpect(status().isOk())
-		.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+		.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+		.andExpect(jsonPath("$.content.length()").value(1))
+		.andExpect(jsonPath("$.content[0].title").value("title"));
+	}
+
+	@Test
+	@WithMockUser(roles = "batch")
+	public void launchAllocineScrapingFicheFilm_ShouldReturn204() throws Exception {
+		mockmvc.perform(MockMvcRequestBuilders.post("/dvdtheque-allocine-service/scraping-fichefilm")
+				.with(jwt().jwt(builder -> builder.subject("test")))
+				.with(csrf()))
+		.andExpect(status().isNoContent());
+
+		verify(allocineService).scrapAllAllocineFicheFilmMultithreaded();
 	}
 }

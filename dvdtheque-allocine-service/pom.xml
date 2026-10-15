@@ -17,6 +17,7 @@
         <spring-cloud.dependency.version>2025.1.3</spring-cloud.dependency.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <hazelcast.version>5.7.0</hazelcast.version>
+        <excludedGroups>live</excludedGroups>
     </properties>
     <dependencies>
         <dependency>
@@ -201,6 +202,15 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Tests tagged "live" scrape the real allocine.fr site and are excluded by default. -->
+                    <!-- Run them with: ./mvnw test -DexcludedGroups= -->
+                    <excludedGroups>${excludedGroups}</excludedGroups>
+                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>
