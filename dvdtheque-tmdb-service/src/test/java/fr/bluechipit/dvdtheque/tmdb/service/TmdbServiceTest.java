@@ -377,6 +377,35 @@ public class TmdbServiceTest {
         assertEquals("TMDB Search failed", ex.getMessage());
     }
 
+    @Test
+    @DisplayName("fetchTmdbCredits - returns null when TMDB returns no payload")
+    void fetchTmdbCredits_NullResponse() {
+        when(restTemplate.getForObject(anyString(), eq(Credits.class))).thenReturn(null);
+
+        assertNull(tmdbService.fetchTmdbCredits(5L));
+    }
+
+    @Test
+    @DisplayName("searchAllMoviesByTitle - returns empty when results list is empty")
+    void searchAllMoviesByTitle_EmptyResults() {
+        when(restTemplate.getForObject(anyString(), eq(SearchResults.class)))
+                .thenReturn(searchResults(List.of(), 1));
+
+        assertTrue(tmdbService.searchAllMoviesByTitle("x").isEmpty());
+        verify(restTemplate, times(1)).getForObject(anyString(), eq(SearchResults.class));
+    }
+
+    @Test
+    @DisplayName("fetchBestReleaseDate - returns today when the best country has no release dates")
+    void fetchBestReleaseDate_BestCountryWithoutDates() {
+        ReleaseDatesResults frCountry = new ReleaseDatesResults();
+        frCountry.setIso_3166_1("FR");
+        frCountry.setRelease_dates(List.of());
+        when(restTemplate.getForObject(anyString(), eq(ReleaseDates.class))).thenReturn(releaseDates(frCountry));
+
+        assertEquals(LocalDate.now(), tmdbService.fetchBestReleaseDate(1L));
+    }
+
     // Helper method to build the Record easily
     private Results createResults(Long id, String title, String date) {
         return new Results(

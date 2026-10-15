@@ -6,6 +6,7 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,34 @@ class OAuth2ClientSecurityConfigTest {
         Collection<GrantedAuthority> authorities = config.jwtGrantedAuthoritiesConverter().convert(jwt);
 
         assertTrue(authorities.stream().anyMatch(a -> "SCOPE_read".equals(a.getAuthority())));
+    }
+
+    @Test
+    @DisplayName("realm_access without a roles key keeps the default authorities (no NPE)")
+    void shouldNotFailWhenRealmAccessHasNoRoles() {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("scope", "read")
+                .claim("realm_access", Map.of("other", "value"))
+                .build();
+
+        Collection<GrantedAuthority> authorities = config.jwtGrantedAuthoritiesConverter().convert(jwt);
+
+        assertTrue(authorities.stream().anyMatch(a -> "SCOPE_read".equals(a.getAuthority())));
+    }
+
+    @Test
+    @DisplayName("null entries in the roles list are ignored")
+    void shouldIgnoreNullRoles() {
+        Jwt jwt = Jwt.withTokenValue("token")
+                .header("alg", "none")
+                .claim("realm_access", Map.of("roles", Arrays.asList("user", null)))
+                .build();
+
+        Collection<GrantedAuthority> authorities = config.jwtGrantedAuthoritiesConverter().convert(jwt);
+
+        assertTrue(authorities.stream().anyMatch(a -> "ROLE_user".equals(a.getAuthority())));
+        assertTrue(authorities.stream().noneMatch(a -> "ROLE_null".equals(a.getAuthority())));
     }
 
     @Test

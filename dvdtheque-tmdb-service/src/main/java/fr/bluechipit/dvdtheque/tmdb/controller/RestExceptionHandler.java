@@ -25,10 +25,9 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	protected ResponseEntity<Object> handleServerError(Exception ex) {
 		logger.error("handleServerError",ex);
-		ApiError apiError = new ApiError(HttpStatus.NOT_FOUND);
+		ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
 		apiError.setMessage(ex.getMessage());
 		apiError.setTimestamp(LocalDateTime.now());
-		apiError.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
 		return buildResponseEntity(apiError);
 	}
 	private ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
