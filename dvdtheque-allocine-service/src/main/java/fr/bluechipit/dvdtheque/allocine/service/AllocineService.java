@@ -331,11 +331,15 @@ public class AllocineService {
 		return Collections.emptyMap();
 	}
 
-	private Map<Integer, CritiquePresse> fetchCritiques(FicheFilm ficheFilm) throws IOException {
-		Document document = Jsoup.connect(ficheFilm.getUrl())
+	protected Document connect(String url) throws IOException {
+		return Jsoup.connect(url)
 				.userAgent(USER_AGENT)
 				.timeout(10000)
 				.get();
+	}
+
+	private Map<Integer, CritiquePresse> fetchCritiques(FicheFilm ficheFilm) throws IOException {
+		Document document = connect(ficheFilm.getUrl());
 
 		Map<Integer, CritiquePresse> critiquesMap = new HashMap<>();
 		Elements reviewSections = document.select(DIV_REVIEWS_PRESS_COMMENT);
@@ -457,10 +461,7 @@ public class AllocineService {
 					? BASE_URL + LIST_FILM_URL
 					: BASE_URL + LIST_FILM_URL + SEARCH_PAGE_DELIMITER + page.getNumPage();
 
-			Document document = Jsoup.connect(url)
-					.userAgent(USER_AGENT)
-					.timeout(10000)
-					.get();
+			Document document = connect(url);
 
 			return extractFicheFilmsFromDocument(document, page.getNumPage());
 

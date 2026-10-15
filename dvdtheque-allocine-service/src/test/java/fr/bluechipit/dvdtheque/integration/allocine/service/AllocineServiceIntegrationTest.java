@@ -6,6 +6,7 @@ import fr.bluechipit.dvdtheque.allocine.domain.FicheFilm;
 import fr.bluechipit.dvdtheque.allocine.config.test.HazelcastConfiguration;
 import fr.bluechipit.dvdtheque.allocine.service.AllocineService;
 import org.apache.commons.lang.StringUtils;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ public class AllocineServiceIntegrationTest {
 	}
 
 	@Test
+	@Tag("live")
 	@Transactional
 	//@Disabled
 	public void retrieveAllocineScrapingFicheFilmTest() throws IOException {
@@ -68,6 +70,7 @@ public class AllocineServiceIntegrationTest {
 	}
 
 	@Test
+	@Tag("live")
 	@Transactional
 	//@Disabled
 	public void retrieveAllocineScrapingUnitaryFicheFilmTest() throws IOException {
@@ -100,5 +103,34 @@ public class AllocineServiceIntegrationTest {
 		f = it.next();
 		assertNotNull(f);
 		assertThat(ficheFilmSaved.getTitle()).isEqualTo(f.title());
+	}
+
+	@Test
+	public void retrieveFicheFilmByTitle_AndById_ShouldPopulateCacheThenServeFromIt() {
+		FicheFilm ficheFilm = new FicheFilm("hermetic-cache-film", 99901, "url-cache", 1);
+		CritiquePresse cp = new CritiquePresse();
+		cp.setAuthor("cache-author");
+		cp.setBody("cache-body");
+		cp.setNewsSource("cache-source");
+		cp.setRating(3d);
+		cp.setFicheFilm(ficheFilm);
+		ficheFilm.addCritiquePresse(cp);
+		FicheFilm saved = allocineService.saveFicheFilm(ficheFilm);
+		assertNotNull(saved);
+
+		// First call goes to the database and populates the title cache
+		List<FicheFilm> byTitle = allocineService.retrieveFicheFilmByTitle(saved.getTitle());
+		assertThat(byTitle).isNotEmpty();
+		Optional<List<FicheFilm>> cachedByTitle =
+				allocineService.findInCacheByFicheFilmTitle(StringUtils.upperCase(saved.getTitle()));
+		assertThat(cachedByTitle).isPresent();
+		assertThat(cachedByTitle.get()).isNotEmpty();
+
+		// First call by allocine id goes to the database and populates the id cache
+		Optional<FicheFilm> byId = allocineService.findByFicheFilmId(saved.getAllocineFilmId());
+		assertThat(byId).isPresent();
+		Optional<FicheFilm> cachedById = allocineService.findInCacheByFicheFilmId(saved.getAllocineFilmId());
+		assertThat(cachedById).isPresent();
+		assertThat(cachedById.get().getAllocineFilmId()).isEqualTo(saved.getAllocineFilmId());
 	}
 }
