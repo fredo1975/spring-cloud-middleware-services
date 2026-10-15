@@ -56,8 +56,11 @@ public class OAuth2ClientSecurityConfig {
                 }
                 
                 List<String> roles = (List<String>) realmAccess.get("roles");
+                if (roles == null) {
+                    return grantedAuthorities;
+                }
 
-                final List<SimpleGrantedAuthority> keycloakAuthorities = roles.stream().map(role -> new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toList());
+                final List<SimpleGrantedAuthority> keycloakAuthorities = roles.stream().filter(role -> role != null).map(role -> new SimpleGrantedAuthority("ROLE_" + role)).collect(Collectors.toList());
                 grantedAuthorities.addAll(keycloakAuthorities);
 
                 return grantedAuthorities;

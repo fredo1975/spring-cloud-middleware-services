@@ -27,6 +27,8 @@ import static fr.bluechipit.dvdtheque.tmdb.controller.TmdbServiceController.*;
 @Service
 public class TmdbService {
     private static final Logger logger = LoggerFactory.getLogger(TmdbService.class);
+    private static final String LANGUAGE = "fr";
+    private static final int MAX_SEARCH_PAGES = 10;
 
     @Autowired
     private Environment environment;
@@ -37,7 +39,7 @@ public class TmdbService {
     public List<Results> searchAllMoviesByTitle(String title) {
         List<Results> allResults = new ArrayList<>();
         int currentPage = 1;
-        int totalPages;
+        int totalPages = 1;
 
         try {
             do {
@@ -49,7 +51,7 @@ public class TmdbService {
                     break;
                 }
                 currentPage++;
-            } while (currentPage <= totalPages && currentPage <= 10); // Safety cap at 10 pages
+            } while (currentPage <= totalPages && currentPage <= MAX_SEARCH_PAGES); // Safety cap
 
             return allResults.stream()
                     .filter(f -> f != null && StringUtils.hasText(f.release_date()))
@@ -66,7 +68,7 @@ public class TmdbService {
         String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty("themoviedb.search.movie.query"))
                 .queryParam("api_key", environment.getRequiredProperty("themoviedb.api.key"))
                 .queryParam("query", title)
-                .queryParam("language", "fr")
+                .queryParam("language", LANGUAGE)
                 .queryParam("page", page)
                 .toUriString();
         return restTemplate.getForObject(url, SearchResults.class);
@@ -135,7 +137,7 @@ public class TmdbService {
         String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_SEARCH_MOVIE_QUERY))
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
                 .queryParam("query", title)
-                .queryParam("language", "fr")
+                .queryParam("language", LANGUAGE)
                 .queryParam("page", pageNumber)
                 .toUriString();
 
@@ -169,7 +171,7 @@ public class TmdbService {
         String url = UriComponentsBuilder.fromUriString(environment.getRequiredProperty(TMDB_MOVIE_QUERY))
                 .path("/{tmdbId}")
                 .queryParam("api_key", environment.getRequiredProperty(TMDB_API_KEY))
-                .queryParam("language", "fr")
+                .queryParam("language", LANGUAGE)
                 .buildAndExpand(tmdbId)
                 .toUriString();
 
