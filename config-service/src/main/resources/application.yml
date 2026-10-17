@@ -4,7 +4,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
 spring:
   application:
     name: config-service
@@ -16,10 +19,5 @@ spring:
           skipSslValidation: true
           clone-on-start: true
           default-label: master
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://discovery-service:8761/eureka/
-  instance:
-    hostname: localhost
+          timeout: 10
+          force-pull: true

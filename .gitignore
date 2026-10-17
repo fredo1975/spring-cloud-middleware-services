@@ -1,4 +1,6 @@
 /.idea
+/logs/
+/config-service/logs/
 /config-service/.dockerignore
 /config-service/target/classes/fr/bluechipit/config/service/ConfigServiceApplication.class
 /config-service/target/classes/application.yml

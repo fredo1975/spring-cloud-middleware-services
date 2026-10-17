@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    config:
+      server:
+        composite:
+          - type: git
+            uri: https://github.com/fredo1975/spring-cloud-server-config.git
+            skipSslValidation: true
+            # lazy clone so a git outage cannot prevent startup; native fills the gap
+            clone-on-start: false
+            default-label: master
+            timeout: 10
+            force-pull: true
+          - type: native
+            search-locations: classpath:/fallback

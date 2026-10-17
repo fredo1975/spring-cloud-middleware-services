@@ -1,0 +1,8 @@
+# Fallback defaults served when the git backend is unreachable.
+# Activate with: --spring.profiles.active=fallback
+# These values only fill gaps; anything defined in the git repo takes precedence.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus
