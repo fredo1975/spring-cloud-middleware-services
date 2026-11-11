@@ -1,7 +1,16 @@
+spring:
+  application:
+    name: discovery-service
+  config:
+    import: configserver:http://localhost:8888?fail-fast=true
+
 server:
   port: 8761
 management:
   endpoints:
     web:
       exposure:
-        include: health, info
+        include: health, info, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always

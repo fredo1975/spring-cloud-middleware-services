@@ -27,4 +27,9 @@ scrape_configs:
     static_configs:
       - targets: ['127.0.0.1:8888']
 
-  # les autres services (gateway, discovery, etc.)
+  - job_name: 'discovery-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:8761']
+
+  # les autres services (gateway, etc.)
