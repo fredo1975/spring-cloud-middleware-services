@@ -6,7 +6,7 @@ pipeline {
     }
     environment {
         // Define as a comma-separated string
-        DEV_SERVERS = '192.168.1.105'
+        DEV_SERVERS = '192.168.1.105,192.168.1.133'
         PROD_SERVERS = '192.168.1.108,192.168.1.106'
 
         JAVA_OPTS = '-Djava.io.tmpdir=/var/tmp/exportDir'
