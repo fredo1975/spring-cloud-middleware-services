@@ -20,6 +20,8 @@ services:
       - "61614:61614" # stomp relay port
       - "9090:9090" # Port Prometheus
       - "3000:3000" # Port Grafana
+      - "8161:8161" # ActiveMQ Web Console
+      - "61616:61616" # ActiveMQ Broker Port
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     environment:
@@ -132,7 +134,7 @@ services:
     container_name: prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    # On le met aussi sur le network service pour qu'il voit les autres via localhost
+    # On le met aussi sur le network service pour qu'il voie les autres via localhost
     network_mode: "service:localhost"
     environment:
       - TZ=Europe/Paris
@@ -148,5 +150,22 @@ services:
     # mais comme 'localhost' (le service Alpine) mappe déjà beaucoup de ports,
     # on l'ajoute à la liste des ports du service 'localhost' en haut du fichier.
     network_mode: "service:localhost"
+  activemq:
+    image: apache/activemq:latest
+    container_name: activemq
+    environment:
+      - ACTIVEMQ_ADMIN_PASSWORD=admin
+      - ACTIVEMQ_ADMIN_USERNAME=admin
+      - TZ=Europe/Paris
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8161/admin/", "--output", "/dev/null"]
+      interval: 15s
+      timeout: 2s
+      retries: 3
+    network_mode: "service:localhost"
+    depends_on:
+      - localhost
+    volumes:
+      - "E:/dev/intellij/workspace/spring-cloud-middleware-services/activemq-config/activemq.xml:/opt/apache-activemq/conf/activemq.xml:ro"
 volumes:
   keycloak:
